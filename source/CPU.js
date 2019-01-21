@@ -258,7 +258,7 @@ function CPU(name, memory, prog_addr)
 
 	// Instructions
 	function inst_nop() {};
-    function inst_cmp() {var v = memory.get_byte(ip); e = a == v; l = a < v; g = a > v;} 
+	function inst_cmp() {var v = memory.get_byte(ip); e = a == v; l = a < v; g = a > v;} 
    	function inst_jmp() {ip = memory.get_word(ip) - 2;}
 	function inst_jsr() {push_word(ip+2); ip = memory.get_word(ip) -2}
 	function inst_ret() {ip = pop_word(); }
