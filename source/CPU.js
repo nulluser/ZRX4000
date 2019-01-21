@@ -10,17 +10,11 @@
 
 "use strict";
 
-
 // CPU
-//var cpu = (function () 
-// Pass in Memory and program load address
+// Pass in name, Memory, program and address
 function CPU(name, memory, prog_str, prog_addr)
 {
 	const MODULE = "[CPU]       ";
-	var local = {};		
-
-	// Public Interface
-	local.init = init;	
 	
 	// Private 
 	
@@ -39,6 +33,7 @@ function CPU(name, memory, prog_str, prog_addr)
 	
 	// TODO need jump on overflow and load flags to A
 	
+	// Instructions
     const NOP   = 0x00;     	// No op
     
 	const JMP   = 0x10;     	// Jump to address
@@ -264,28 +259,29 @@ function CPU(name, memory, prog_str, prog_addr)
 		{
 			var operand = 0;
 			
-			//consume operand
+			// parse operand, if needed
 			if (inst_table[found_inst].size > 0)
 			{
-				//var next = tokens[i];
 				// Add to resolve list if opperand is a label
 				if (is_label(next))
 				{
 					var label = get_label(next);
 					
-					// Need to add one to account for inst
+					// Need to add one to account for inst byte
 					resolve_table.push({addr:cur_prog+1, label:label});
 				}else 
+				// Check for char literal
 				if (is_literal(next))
 				{
 					operand = ascii(next[1]);
-					
 				} else
+				// Assume hex
 				{
 					// Get value of operand
 					operand = parseInt(next, 16); 
 				}
 				
+				// We consumed one token for the operand
 				cur_token++;
 			}
 
@@ -330,7 +326,7 @@ function CPU(name, memory, prog_str, prog_addr)
 	// True if is label
 	function is_literal(s)
 	{
-		return	s[0] == '\'' && s[s.length-1] == '\'' && s.length == 3;
+		return s[0] == '\'' && s[s.length-1] == '\'' && s.length == 3;
 	}	
 	
 	// True if is label
@@ -357,6 +353,7 @@ function CPU(name, memory, prog_str, prog_addr)
 				
 		var i = start;
 		
+		// Disassemble and consume operands
 		while(i <= end) 
 			i = disassemble_inst(i);
 		
@@ -377,8 +374,9 @@ function CPU(name, memory, prog_str, prog_addr)
 			return;
 		}
 		
+		// Inst name
 		main.log_console(pad_inst(inst_table[inst].text) + "   ");
-		
+
 		if (inst_table[inst].size == 0)	main.log_console(pad_inst("")); 
 		if (inst_table[inst].size == 1)	main.log_console(pad_inst(hex_byte(memory.get_byte(i+1)))); 
 		if (inst_table[inst].size == 2)	main.log_console(hex_word(memory.get_word(i+1)));
@@ -390,7 +388,7 @@ function CPU(name, memory, prog_str, prog_addr)
 		}
 		
 		//log(address_table);
-		//log_console("[" + find_addr(i) + "]");
+		//log_console("[" + find_addr_name(i) + "]");
 		
 		i += inst_table[inst].size + 1;	
 	
@@ -398,10 +396,10 @@ function CPU(name, memory, prog_str, prog_addr)
 		return i;
 	}		
 	
-	
-	function find_addr(i)
+	// Get name of address
+	function find_addr_name(i)
 	{
-		return ("");
+		/*return ("");
 
 		// See if we know address
 		for (var j = 0; j < address_table.length; j++)
@@ -410,7 +408,7 @@ function CPU(name, memory, prog_str, prog_addr)
 			
 			if (address_table[j].addr == i)
 				return address_table[j].label;
-		}
+		}*/
 		return "";
 	}
 	
@@ -422,9 +420,6 @@ function CPU(name, memory, prog_str, prog_addr)
 
 		return (str + pad).substring(0, pad.length);
 	}
-		
-	
-
 		
 	// Show Disassembly
 	function dump_stack(elements)
@@ -442,7 +437,6 @@ function CPU(name, memory, prog_str, prog_addr)
 		
 		main.log_console("[End of Stack]\n");*/
 	}		
-		
 	
 	/* End of Disassembler */
 	
@@ -465,6 +459,7 @@ function CPU(name, memory, prog_str, prog_addr)
 		prog_loaded = true;
 	}
 	
+	// Clear all flags
 	function reset_flags()
 	{
 		ip = prog_addr;			// Instruction pointer
@@ -539,6 +534,7 @@ function CPU(name, memory, prog_str, prog_addr)
 		// Get next inst
 		var inst = memory.get_byte(ip++);		
 		
+		// Catch undefined
 		if (inst_table[inst] == undefined)
 		{
 			main.log_console("Undefined inst [" + (hex_word(ip+1)) + "] " + hex_byte(inst) + "\n");
@@ -549,17 +545,17 @@ function CPU(name, memory, prog_str, prog_addr)
 		if (inst_table[inst].func != null)
 			inst_table[inst].func();
 			
+		// Display stack dump?
 		if (DISP_STACK)
 			for (var i = 0; i < 5; i++)
 				main.log_console("Stack["+i+"]" + hex_byte(stack[i]) + "\n");
 			
-		ip += inst_table[inst].size; // Consume operands
+		ip += inst_table[inst].size; // Consume operands, next ip
 		
 		inst_updates++;
 	}
 
 	// Instructions
-	
 	function inst_nop() {};
     function inst_cmp() {var v = memory.get_byte(ip); e = a == v; l = a < v; g = a > v;} 
    	function inst_jmp() {ip = memory.get_word(ip) - 2;}
@@ -595,11 +591,6 @@ function CPU(name, memory, prog_str, prog_addr)
 	
 	/* End of CPU */
 	
-	//return local;
-	
-	return {init:init,
-			update:update};
+	return {init:init, update:update};
 }
-
-
 
