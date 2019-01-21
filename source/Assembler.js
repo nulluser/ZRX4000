@@ -3,9 +3,6 @@
 	2019 nulluser, teth
 	
 	CPU Emulator
-	
-	Memory is shared between cores. Stack is local to core
-	
 */
 
 "use strict";
@@ -66,29 +63,21 @@ function Assembler(memory)
 	const IP_END = -1;			// Flag to indicate halted
 	
 	
-	// Instruction
-	//var inst_table = []; 		// Instruction loopup table
-	
 	// Assembler
 	var address_table = [];  	// Stores known addresses
 	var resolve_table = [];  	// Stores address that need resolved
 	var cur_token = 0;			// Index of current token
 	var cur_prog = 0;			// Location of next load 
 	var cur_inst_table = null;	// Instruction table of current cpu
-	
-	init();
-	
+		
 	/* 
 		Public 
 	*/
 	
-	// Core CPU init 
+	// Assembler Init
 	function init()
 	{
 		main.log_console(MODULE + "Init\n");	
-		
-	
-	//	load_program(prog_str);
 	}
 			
 	
@@ -381,26 +370,6 @@ function Assembler(memory)
 	}		
 	
 	/* End of Disassembler */
-	
-	
-	/* CPU  */
-	
-	// Load a test program
-	/*function load_program(prog_str)
-	{
-		//memory.clear();
-
-		reset_flags();
-		
-		assemble(prog_str);
-		
-		disassemble(prog_addr, prog_addr + 0x100);
-
-		if (DUMP_MEM) memory.dump(prog_addr, 0x100);
-		
-		prog_loaded = true;
-	}*/
-	
 
 	return {init:init, assemble:assemble};
 }

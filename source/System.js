@@ -43,7 +43,7 @@ function System()
 	const PROG3_ADDRESS = 0x3000;	// Program address for cpu1
 	
 	// Cores
-	const NUM_CORES = 1000;
+	const TEST_CORES = 10;			// Number of cores
 	
 	// Devices
 	var memory = null;				// Shared memory
@@ -52,7 +52,7 @@ function System()
 	var fb_updates = 0;				// Number of FB updates since last second
 
 	// Assemble
-	var assembler = null;
+	var assembler = null;			// Assembler object
 	
 
 	/* 
@@ -84,35 +84,38 @@ function System()
 		frame_buffer.init(memory);
 
 		io_init();
-		
+
+		// Create some cores
 		cpu_cores.push( CPU("CPU1", memory, 0x1000) );
 		cpu_cores.push( CPU("CPU2", memory, 0x2000) );
-		//cpu_cores.push( CPU("CPU3", memory, game, 0x3000) );
+		cpu_cores.push( CPU("CPU3", memory, 0x3000) );
 		
-		
+		// Create more cores
+		// They will all run the code at 0x4000
+		for (var i = 0; i < TEST_CORES; i++)
+			cpu_cores.push( CPU("CPUX" + i, memory, 0x4000) );
 		
 		// Setup instruction tables
 		for (var i = 0; i < cpu_cores.length; i++)
 			cpu_cores[i].pre_init();
 		
-		
 		// Create an assembler
 		assembler = Assembler(memory);
 		
-		//for (var i = 0; i < NUM_CORES; i++)
-		//	cpu_cores.push( CPU("CPUX" + i, memory, fb_test, 0x3000) );
-
-		assembler.assemble(cpu_cores[0].get_inst_table(), fb_test1, 0x1000);
-		assembler.assemble(cpu_cores[1].get_inst_table(), fb_test2, 0x2000);
-
+		
+		// Assemble with inst table from CPU 0
+		var inst_table = cpu_cores[0].get_inst_table();
+		
+		// Assemble some code into memory
+		assembler.assemble(inst_table, fb_test1,	0x1000);
+		assembler.assemble(inst_table, fb_test2,	0x2000);
+		assembler.assemble(inst_table, game,		0x3000);
+		assembler.assemble(inst_table, fb_test,		0x4000);
+		
 	
+		// Init cores
 		for (var i = 0; i < cpu_cores.length; i++)
 			cpu_cores[i].init();
-		
-				
-		
-		
-
 	}	
 			
 	// Setup IO Devices
@@ -142,7 +145,12 @@ function System()
 	// Second Update
 	function second()
 	{
-		main.log_console(`${MODULE} Framerate: ${fb_updates}\n` );
+		var total_inst = 0;
+		
+		for (var i = 0; i < TEST_CORES; i++)
+			total_inst += cpu_cores[i].get_inst_count();
+		
+		main.log_console(`${MODULE} Framerate: ${fb_updates} Total inst: ${total_inst}\n` );
 		fb_updates = 0;
 	}	
 	
@@ -157,18 +165,6 @@ function System()
 		frame_buffer.update();
 		
 		fb_updates++;
-		
-		//for (var i = 0; i < NUM_INST && !fb_update; i++) 
-//			step();
-
-		// Only update if sync was called
-		/*if (fb_update)
-		{
-			frame_buffer.update();
-			fb_updates++;
-			fb_update = 0;
-		}*/
-			//draw_buffer();
 	}
 	
 	/* Private */

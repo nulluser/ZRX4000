@@ -118,13 +118,13 @@ function CPU(name, memory, prog_addr)
 	// Core CPU init 
 	function init()
 	{
-		main.log_console(MODULE + "Init\n");	
+		main.log_console(`${MODULE} ${name} Init\n`);	
 		
 		stack = new Uint8Array(STACK_SIZE);		// Get Stack
 		
 		load_program();
 				
-		setInterval(second, SECOND_RATE);
+		//setInterval(second, SECOND_RATE);
 		
 		//setInterval(update, UPDATE_RATE); //  Internal update control
 	}
@@ -136,9 +136,9 @@ function CPU(name, memory, prog_addr)
 	// Second Update
 	function second()
 	{
-		main.log_console(`[${name}] Instruction Rate:   ${inst_updates}\n`);
+		//main.log_console(`[${name}] Instruction Rate:   ${inst_updates}\n`);
 		//fb_updates = 0;
-		inst_updates = 0;
+		//inst_updates = 0;
 	}	
 	
 	// Core Update
@@ -234,6 +234,16 @@ function CPU(name, memory, prog_addr)
 		return inst_table;
 	}
 	
+	// Get number of updates and reset
+	function get_inst_count()
+	{
+		var c = inst_updates;
+		
+		inst_updates = 0;
+		
+		return c;
+	}
+	
 	// Next inst
 	function step()
 	{		
@@ -303,6 +313,7 @@ function CPU(name, memory, prog_addr)
 	/* End of CPU */
 	
 	
-	return {init:init, pre_init:pre_init, update:update, get_inst_table:get_inst_table};
+	return {init:init, pre_init:pre_init, update:update, 
+			get_inst_table:get_inst_table, get_inst_count:get_inst_count};
 }
 
