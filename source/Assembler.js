@@ -93,6 +93,11 @@ function Assembler(memory)
 		disassemble(prog_addr, prog_addr + 0x100);
 	}
 	
+	
+	/* 
+		Private
+	*/	
+	
 	// Assemble all tokens
 	function assemble_tokens(tokens)
 	{
@@ -115,77 +120,99 @@ function Assembler(memory)
 			
 		if (token == "") return;
 			
-		// See if we have a label
+		// See if token is label
 		if (is_label(token))
 		{
-			var label = get_label(token)
-			
-			//log("Add Label: " + label);
-				
-			address_table.push({addr:cur_prog, label:label});
-				
+			assemble_label(token);	
 			return;
 		}
-			
-		// Look for inst in table
-		var found_inst = -1;
-		for (var it in cur_inst_table) 
-		{
-			if (token.toUpperCase() == cur_inst_table[it].text)
-			{
-				found_inst = it;
-			}
-		}
+
+		// See if token is instruction	
+		var inst = find_inst(token);
 					
 		// Found instruction, add it to program listing
-		if (found_inst != -1)
+		if (inst != -1)
 		{
-			var operand = 0;
-			
-			// parse operand, if needed
-			if (cur_inst_table[found_inst].size > 0)
-			{
-				// Add to resolve list if opperand is a label
-				if (is_label(next))
-				{
-					var label = get_label(next);
-					
-					// Need to add one to account for inst byte
-					resolve_table.push({addr:cur_prog+1, label:label});
-				}else 
-				// Check for char literal
-				if (is_literal(next))
-				{
-					operand = ascii(next[1]);
-				} else
-				// Assume hex
-				{
-					// Get value of operand
-					operand = parseInt(next, 16); 
-				}
-				
-				// We consumed one token for the operand
-				cur_token++;
-			}
-
-			add_inst(found_inst, operand);
-
+			assemble_inst(inst, next);
 			return;
 		}
 		
-		
-		// Check for DB, define byte
+		// See if token is a define byte
 		if (token == "DB")
-		{
-			if (is_literal(next))
-			{
-				add_byte(ascii(next[1]));
-					
-			} else
-				add_byte(parseInt(next, 16));
-		}
+			assemble_db(next);
 		
 		//main.log_console("Invalid Token: " + token + "\n");
+	}
+	
+	
+	// Look for inst in table
+	function find_inst(token)
+	{
+		var found_inst = -1;
+		for (var inst in cur_inst_table) 
+		{
+			if (token.toUpperCase() == cur_inst_table[inst].text)
+			{
+				return inst;
+			}
+		}
+		
+		return -1;
+	}
+	
+	
+	// Assemble a label
+	function assemble_label(token)
+	{
+		var label = get_label(token)
+			
+		//log("Add Label: " + label);
+				
+		address_table.push({addr:cur_prog, label:label});
+	}
+	
+	// Assemble an instruction
+	function assemble_inst(found_inst, next)
+	{
+		var operand = 0;
+			
+		// parse operand, if needed
+		if (cur_inst_table[found_inst].size > 0)
+		{
+			// Add to resolve list if opperand is a label
+			if (is_label(next))
+			{
+				var label = get_label(next);
+				
+				// Need to add one to account for inst byte
+				resolve_table.push({addr:cur_prog+1, label:label});
+			}else 
+			// Check for char literal
+			if (is_literal(next))
+			{
+				operand = ascii(next[1]);
+			} else
+			// Assume hex
+			{
+				// Get value of operand
+				operand = parseInt(next, 16); 
+			}
+			
+			// We consumed one token for the operand
+			cur_token++;
+		}
+
+		add_inst(found_inst, operand);	// Add to memory
+	}
+	
+		
+	// Assemble a define byte
+	function assemble_db(next)
+	{
+		if (is_literal(next))
+			add_byte(ascii(next[1]));
+		else
+			add_byte(parseInt(next, 16));
 	}
 	
 	// Add instruction to memory
