@@ -18,7 +18,6 @@ function Assembler(memory)
 	
 	// Private 
 	
-	
 	// TODO, Need to make these common
 	
 	// Instructions

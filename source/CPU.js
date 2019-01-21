@@ -85,11 +85,6 @@ function CPU(name, memory, prog_addr)
 	var stack = null;			// Stack
 	var inst_updates = 0;		// Instruction updates
 	
-	// Assembler
-	var address_table = [];  	// Stores known addresses
-	var resolve_table = [];  	// Stores address that need resolved
-	var cur_token = 0;			// Index of current token
-	var cur_prog = 0;			// Location of next load 
 	
 	// Registers
 	var ip = prog_addr;			// Instruction pointer
