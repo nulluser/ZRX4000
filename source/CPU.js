@@ -4,8 +4,7 @@
 	
 	CPU Emulator
 	
-	Memory is shared between cores. Stack is local to core
-	
+	Memory is shared between cores. Stack is local to core.
 */
 
 "use strict";
@@ -21,6 +20,7 @@ function CPU(name, memory, prog_addr)
 	// Config
 	const DEBUG = 0;			// Slow down for debugging
 	const DUMP_MEM = 0;			// Dump memory on load
+	const DUMP_MEM_SIZE = 0x100;// Dump Size
 	const DISP_STACK = 0;		// Displat stack during execution
 		
 	var NUM_INST = DEBUG ? 1 : 1000000;	// Instructions per update
@@ -33,7 +33,6 @@ function CPU(name, memory, prog_addr)
 	
 	// Instructions
 	const NOP   = 0x00;     	// No op
-    
 	const JMP   = 0x10;     	// Jump to address
 	const JSR   = 0x11;     	// Jump subroutine
 	const RET   = 0x12;    	 	// Return
@@ -41,23 +40,18 @@ function CPU(name, memory, prog_addr)
 	const JE    = 0x14;     	// Jump Equal
 	const JNE   = 0x15;     	// Jump Not Equal
 	const JG    = 0x16;     	// Jump greater
-
 	const LDA   = 0x20;     	// Load A with constant
 	const LDM   = 0x21;     	// Load A value from memory 
 	const STA   = 0x22;     	// Store A at memory location
-
 	const SP    = 0x30;     	// Set pointer address
 	const LP    = 0x31;     	// Load A into memory at pointer
 	const GP    = 0x32;     	// Get value at pointer
 	const IP    = 0x33;     	// Increment pointer
 	const AP    = 0x34;     	// Add a to pointer
-	
 	const PUSH  = 0x40;     	// Push A into stack
 	const POP   = 0x41;     	// Pop from stack into A
 	const CMP   = 0x50;     	// Compare
-
 	const OUT   = 0x80;     	// Output A
-    
 	const AND   = 0x90;     	// Set A to A & immediate
 	const OR    = 0x91;     	// Set A to A | immediate
 	const XOR   = 0x92;     	// Set A to A ^ immediate
@@ -67,21 +61,16 @@ function CPU(name, memory, prog_addr)
 	const ADD   = 0x96;     	// Set A to A + operand Z_256
 	const SUB   = 0x97;     	// Set A to A + operand Z_256
 	const NEG   = 0x98;     	// Set A to the additive inverse of A in Z_256
-	
 	const RND   = 0xA0;    	 	// Random number
 	const SYNC  = 0xB0;    		// Render framebuffer	
-	
 	const END  = 0xFF;    		// Halt
-	
 	const IP_END = -1;			// Flag to indicate halted
-	
 	
 	// Instruction
 	var inst_table = []; 		// Instruction loopup table
 		
 	// Stack
 	var stack = null;			// Stack
-	
 	
 	// Registers
 	var ip = prog_addr;			// Instruction pointer
@@ -92,12 +81,9 @@ function CPU(name, memory, prog_addr)
 	var g = 0;					// Greater
 	var p = 0;					// Memory pointer
 	
-	
 	// Monitoring
 	var inst_updates = 0;		// Instruction updates
-	
 	var fb_update = 0;			// True if frame buffer needs updating
-	
 	var prog_loaded = false;	// True if loaded
 
 	/* 
@@ -142,13 +128,9 @@ function CPU(name, memory, prog_addr)
 	// Load a test program
 	function load_program()
 	{
-		//memory.clear();
-
 		reset_flags();
 		
-		//assemble(prog_str);
-		
-		if (DUMP_MEM) memory.dump(prog_addr, 0x100);
+		if (DUMP_MEM) memory.dump(prog_addr, DUMP_MEM_SIZE);
 		
 		prog_loaded = true;
 	}
