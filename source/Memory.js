@@ -75,7 +75,7 @@ function Memory()
 		{
 			var hook = addr_hooks[i];
 			
-			if (a >= hook.start && hook.start + hook.length)
+			if (a >= hook.start && a < hook.start + hook.length)
 				return hook;
 		}
 		
