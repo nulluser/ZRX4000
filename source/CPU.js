@@ -24,10 +24,8 @@ function CPU(name, memory, prog_addr)
 	const DISP_STACK = 0;		// Displat stack during execution
 		
 	var NUM_INST = DEBUG ? 1 : 1000000;	// Instructions per update
-	//NUM_INST = 100;
 	
 	//const UPDATE_RATE = 1;	// CPU Update
-	const SECOND_RATE = 1000;	// Status update
 	
 	const STACK_SIZE = 32768;	// Stack space size
 	
@@ -54,7 +52,6 @@ function CPU(name, memory, prog_addr)
     const IP    = 0x33;     	// Increment pointer
 	const AP    = 0x34;     	// Add a to pointer
 	
-
     const PUSH  = 0x40;     	// Push A into stack
     const POP   = 0x41;     	// Pop from stack into A
     const CMP   = 0x50;     	// Compare
@@ -82,7 +79,6 @@ function CPU(name, memory, prog_addr)
 	// Instruction
 	var inst_table = []; 		// Instruction loopup table
 		
-	
 	// Stack
 	var stack = null;			// Stack
 	
@@ -123,8 +119,6 @@ function CPU(name, memory, prog_addr)
 		stack = new Uint8Array(STACK_SIZE);		// Get Stack
 		
 		load_program();
-				
-		//setInterval(second, SECOND_RATE);
 		
 		//setInterval(update, UPDATE_RATE); //  Internal update control
 	}
@@ -133,14 +127,6 @@ function CPU(name, memory, prog_addr)
 		Private
 	*/			
 			
-	// Second Update
-	function second()
-	{
-		//main.log_console(`[${name}] Instruction Rate:   ${inst_updates}\n`);
-		//fb_updates = 0;
-		//inst_updates = 0;
-	}	
-	
 	// Core Update
 	function update()
 	{
@@ -152,11 +138,7 @@ function CPU(name, memory, prog_addr)
 		
 		fb_update = 0;
 	}
-	/* Private */
-	
-	
-	/* CPU  */
-	
+		
 	// Load a test program
 	function load_program()
 	{
@@ -176,7 +158,6 @@ function CPU(name, memory, prog_addr)
 	{
 		ip = prog_addr; sp = 0; a = 0; e = 0; l = 0; g = 0; p = 0;					
 	}
-	
 
 	// Push byte to stack
 	function push_byte(v) { stack[sp++] = v; } 
@@ -189,7 +170,6 @@ function CPU(name, memory, prog_addr)
 	
 	// Pop word from stack. Poped as high byte, low byte
 	function pop_word(v) { var v = pop_byte()<<8; v |= pop_byte(); return v; } 
-	
 
 	// Setup Instruction types
 	function setup_inst()	
@@ -311,7 +291,6 @@ function CPU(name, memory, prog_addr)
 	function inst_end() {ip = IP_END;} 
 	
 	/* End of CPU */
-	
 	
 	return {init:init, pre_init:pre_init, update:update, 
 			get_inst_table:get_inst_table, get_inst_count:get_inst_count};
