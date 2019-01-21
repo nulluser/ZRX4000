@@ -11,7 +11,7 @@
 "use strict";
 
 // CPU
-// Pass in name, Memory, program and address
+// Pass in name, Memory, start address
 function CPU(name, memory, prog_addr)
 {
 	const MODULE = "[CPU]       ";
@@ -81,9 +81,10 @@ function CPU(name, memory, prog_addr)
 	
 	// Instruction
 	var inst_table = []; 		// Instruction loopup table
+		
 	
+	// Stack
 	var stack = null;			// Stack
-	var inst_updates = 0;		// Instruction updates
 	
 	
 	// Registers
@@ -95,6 +96,10 @@ function CPU(name, memory, prog_addr)
 	var g = 0;					// Greater
 	var p = 0;					// Memory pointer
 	
+	
+	// Monitoring
+	var inst_updates = 0;		// Instruction updates
+	
 	var fb_update = 0;			// True if frame buffer needs updating
 	
 	var prog_loaded = false;	// True if loaded
@@ -103,14 +108,12 @@ function CPU(name, memory, prog_addr)
 		Public 
 	*/
 	
+	//  Stage inst table. TODO: Need to remove
 	function pre_init()
 	{
 		main.log_console(MODULE + "Pre Init\n");	
 		setup_inst(); 		// Load instructions
-		
 	}
-	
-	
 	
 	// Core CPU init 
 	function init()
@@ -123,9 +126,12 @@ function CPU(name, memory, prog_addr)
 				
 		setInterval(second, SECOND_RATE);
 		
-		//setInterval(update, UPDATE_RATE);
+		//setInterval(update, UPDATE_RATE); //  Internal update control
 	}
 			
+	/* 
+		Private
+	*/			
 			
 	// Second Update
 	function second()
@@ -140,22 +146,12 @@ function CPU(name, memory, prog_addr)
 	{
 		if (!prog_loaded) return;
 		
+		// Process a chunk. Bail on Sync
 		for (var i = 0; i < NUM_INST && !fb_update; i++) 
 			step();
 		
 		fb_update = 0;
-		//fb_updates++;
-
-		// Only update if sync was called
-		/*if (fb_update)
-		{
-			frame_buffer.update();
-			fb_updates++;
-			fb_update = 0;
-		}*/
-			//draw_buffer();
 	}
-	
 	/* Private */
 	
 	
@@ -178,13 +174,7 @@ function CPU(name, memory, prog_addr)
 	// Clear all flags
 	function reset_flags()
 	{
-		ip = prog_addr;			// Instruction pointer
-		sp = 0;					// Stack pointer
-		a = 0;					// Accum
-		e = 0;					// Equal
-		l = 0;					// Less
-		g = 0;					// Greater
-		p = 0;					// Memory pointer
+		ip = prog_addr; sp = 0; a = 0; e = 0; l = 0; g = 0; p = 0;					
 	}
 	
 
