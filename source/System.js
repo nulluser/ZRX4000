@@ -30,7 +30,7 @@
 // System
 function System()
 {
-	const MODULE = "[SYSTEM]    ";
+	const MODULE = "[System]    ";
 
 	const UPDATE_RATE = 1;			// CPU Update (ms)
 	const SECOND_RATE = 1000;		// Status update
@@ -49,9 +49,11 @@ function System()
 	var memory = null;				// Shared memory
 	var cpu_cores = [];				// CPU Cores
 	var frame_buffer = null;		// Frame buffer
-
 	var fb_updates = 0;				// Number of FB updates since last second
 
+	// Assemble
+	var assembler = null;
+	
 
 	/* 
 		Public 
@@ -73,7 +75,7 @@ function System()
 	function connect_devices()
 	{
 		main.log(MODULE + "Connecting Devices");
-		
+				
 		// Setup main memory
 		memory = Memory();
 		memory.init();
@@ -83,16 +85,34 @@ function System()
 
 		io_init();
 		
-		cpu_cores.push( CPU("CPU1", memory, fb_test1, 0x1000) );
-		cpu_cores.push( CPU("CPU2", memory, fb_test2, 0x2000) );
-		cpu_cores.push( CPU("CPU3", memory, game, 0x3000) );
+		cpu_cores.push( CPU("CPU1", memory, 0x1000) );
+		cpu_cores.push( CPU("CPU2", memory, 0x2000) );
+		//cpu_cores.push( CPU("CPU3", memory, game, 0x3000) );
 		
+		
+		
+		// Setup instruction tables
+		for (var i = 0; i < cpu_cores.length; i++)
+			cpu_cores[i].pre_init();
+		
+		
+		// Create an assembler
+		assembler = Assembler(memory);
 		
 		//for (var i = 0; i < NUM_CORES; i++)
 		//	cpu_cores.push( CPU("CPUX" + i, memory, fb_test, 0x3000) );
-		
+
+		assembler.assemble(cpu_cores[0].get_inst_table(), fb_test1, 0x1000);
+		assembler.assemble(cpu_cores[1].get_inst_table(), fb_test2, 0x2000);
+
+	
 		for (var i = 0; i < cpu_cores.length; i++)
 			cpu_cores[i].init();
+		
+				
+		
+		
+
 	}	
 			
 	// Setup IO Devices

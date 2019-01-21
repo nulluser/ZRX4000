@@ -182,6 +182,8 @@ var main = (function ()
 	{
 		//return;
 		add_log(console_log, item + "");
+		
+		//console.log(item);
 	}
 
 	return local;
