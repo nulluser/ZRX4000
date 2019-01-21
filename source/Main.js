@@ -26,8 +26,8 @@ var main = (function ()
 	
 	// Private 
 	const MAX_LEN = 250; 			// Need weird size because of spaces, TODO fix
-	const MAX_LINES = 20;			// Log lines
-	const RENDER_TIME = 1000;		// DOM logging is slow, throttle
+	const MAX_LINES = 50;			// Log lines
+	const RENDER_TIME = 500;		// DOM logging is slow, throttle
 	
 	var debug_window;
 	var output_log = [];
@@ -55,19 +55,30 @@ var main = (function ()
 	}
 	
 	
+	/* 
+		TODO This logging mess needs to go 
+	*/
+	
+	
+	
 	/* Logging */
 	// This has to be done to get around cross site scripting 
 	function debug_init()
 	{
 		// Create frame buffer window
-		debug_window = window.open("", "debug_window", "width=512,height=512,directories=0,titlebar=0,toolbar=0,location=0,status=0,menubar=0,scrollbars=no,resizable=no");
+		//debug_window = window.open("", "debug_window", "width=512,height=512,directories=0,titlebar=0,toolbar=0,location=0,status=0,menubar=0,scrollbars=yes,resizable=no");
+
+		debug_window = window.open("", "debug_window", "width=512,height=512");
+
 		
 		var html = 
 		`
 		<!DOCTYPE html>
 		<html>
-		<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /></head>
-		<body style='padding:0px; margin:0px'>
+		<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<style> body {padding:0px; margin:0px; overflow:scroll-y;} </style>
+		</head>
+		<body>
 		<strong>
 		<code>
 		<div id="main-wrap" style="width:100%;">
@@ -160,7 +171,7 @@ var main = (function ()
 			}
 		}
 		
-		//render_main.log();
+		//render_log();
 	}
 
 

@@ -61,6 +61,8 @@ function Assembler(memory)
 		//			assemble_line(lines[i++], address_table, resolve_table);
 		
 		// Find tokens
+		// Split on space, tab, comma and new line
+		// This is dirty, can detect comments and garbage as tokens
 		var tokens = str.split(/[ ,\t\n]+/);
 				
 		// Assemble entire program
@@ -90,7 +92,7 @@ function Assembler(memory)
 			main.log_console(" " + resolve_table[i].label + "  " + hex_word(resolve_table[i].addr) + "\n");
 		
 		
-		disassemble(prog_addr, prog_addr + 0x100);
+		disassemble(prog_addr, prog_addr + 0x80);
 	}
 	
 	
@@ -121,6 +123,7 @@ function Assembler(memory)
 		if (token == "") return;
 			
 		// See if token is label
+		// TODO Need to also detect label with semicolon
 		if (is_label(token))
 		{
 			assemble_label(token);	
