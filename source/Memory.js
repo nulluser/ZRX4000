@@ -119,7 +119,8 @@ function Memory()
 	// Set word in memory
 	function set_word(a, v) 
 	{ 
-		set_byte(a, v >> 8); set_byte(a + 1, v & 0xff); 
+		set_byte(a, v >> 8); 
+		set_byte(a + 1, v & 0xff); 
 	}
 
 	// Show Disassembly
