@@ -48,7 +48,6 @@ var main = (function ()
 		system = System();
 		system.init();
 		
-		var t = 0;
 		//setInterval(function(){log_console("tesss222ssst " + t + "\n");t++; }, 100);
 		//setInterval(function(){log_output("tewwst " + t + "\n");t++; }, 100);
 		

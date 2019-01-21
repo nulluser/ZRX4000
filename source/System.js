@@ -43,7 +43,7 @@ function System()
 	const PROG3_ADDRESS = 0x3000;	// Program address for cpu1
 	
 	// Cores
-	const TEST_CORES = 10;			// Number of cores
+	const TEST_CORES = 6;			// Number of cores
 	
 	// Devices
 	var memory = null;				// Shared memory
@@ -102,7 +102,6 @@ function System()
 		// Create an assembler
 		assembler = Assembler(memory);
 		
-		
 		// Assemble with inst table from CPU 0
 		var inst_table = cpu_cores[0].get_inst_table();
 		
@@ -111,7 +110,6 @@ function System()
 		assembler.assemble(inst_table, fb_test2,	0x2000);
 		assembler.assemble(inst_table, game,		0x3000);
 		assembler.assemble(inst_table, fb_test,		0x4000);
-		
 	
 		// Init cores
 		for (var i = 0; i < cpu_cores.length; i++)
@@ -147,10 +145,11 @@ function System()
 	{
 		var total_inst = 0;
 		
-		for (var i = 0; i < TEST_CORES; i++)
+		for (var i = 0; i < cpu_cores.length; i++)
 			total_inst += cpu_cores[i].get_inst_count();
 		
 		main.log_console(`${MODULE} Framerate: ${fb_updates} Total inst: ${total_inst}\n` );
+
 		fb_updates = 0;
 	}	
 	
