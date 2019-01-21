@@ -32,44 +32,44 @@ function CPU(name, memory, prog_addr)
 	// TODO need jump on overflow and load flags to A
 	
 	// Instructions
-    const NOP   = 0x00;     	// No op
+	const NOP   = 0x00;     	// No op
     
 	const JMP   = 0x10;     	// Jump to address
 	const JSR   = 0x11;     	// Jump subroutine
 	const RET   = 0x12;    	 	// Return
-    const JL    = 0x13;     	// Jump if less
-    const JE    = 0x14;     	// Jump Equal
-    const JNE   = 0x15;     	// Jump Not Equal
-    const JG    = 0x16;     	// Jump greater
+	const JL    = 0x13;     	// Jump if less
+	const JE    = 0x14;     	// Jump Equal
+	const JNE   = 0x15;     	// Jump Not Equal
+	const JG    = 0x16;     	// Jump greater
 
-    const LDA   = 0x20;     	// Load A with constant
+	const LDA   = 0x20;     	// Load A with constant
 	const LDM   = 0x21;     	// Load A value from memory 
 	const STA   = 0x22;     	// Store A at memory location
 
-    const SP    = 0x30;     	// Set pointer address
-    const LP    = 0x31;     	// Load A into memory at pointer
-    const GP    = 0x32;     	// Get value at pointer
-    const IP    = 0x33;     	// Increment pointer
+	const SP    = 0x30;     	// Set pointer address
+	const LP    = 0x31;     	// Load A into memory at pointer
+	const GP    = 0x32;     	// Get value at pointer
+	const IP    = 0x33;     	// Increment pointer
 	const AP    = 0x34;     	// Add a to pointer
 	
-    const PUSH  = 0x40;     	// Push A into stack
-    const POP   = 0x41;     	// Pop from stack into A
-    const CMP   = 0x50;     	// Compare
+	const PUSH  = 0x40;     	// Push A into stack
+	const POP   = 0x41;     	// Pop from stack into A
+	const CMP   = 0x50;     	// Compare
 
-    const OUT   = 0x80;     	// Output A
+	const OUT   = 0x80;     	// Output A
     
 	const AND   = 0x90;     	// Set A to A & immediate
-    const OR    = 0x91;     	// Set A to A | immediate
-    const XOR   = 0x92;     	// Set A to A ^ immediate
-    const NOT   = 0x93;     	// Set A to bitwise negation of A
-    const SHL   = 0x94;     	// Shift A left by the number of bits indicated by immediate
-    const SHR   = 0x95;     	// Shift A right by the number of bits indicated by immediate
-    const ADD   = 0x96;     	// Set A to A + operand Z_256
+	const OR    = 0x91;     	// Set A to A | immediate
+	const XOR   = 0x92;     	// Set A to A ^ immediate
+	const NOT   = 0x93;     	// Set A to bitwise negation of A
+	const SHL   = 0x94;     	// Shift A left by the number of bits indicated by immediate
+	const SHR   = 0x95;     	// Shift A right by the number of bits indicated by immediate
+	const ADD   = 0x96;     	// Set A to A + operand Z_256
 	const SUB   = 0x97;     	// Set A to A + operand Z_256
-    const NEG   = 0x98;     	// Set A to the additive inverse of A in Z_256
+	const NEG   = 0x98;     	// Set A to the additive inverse of A in Z_256
 	
-    const RND   = 0xA0;    	 	// Random number
-    const SYNC  = 0xB0;    		// Render framebuffer	
+	const RND   = 0xA0;    	 	// Random number
+	const SYNC  = 0xB0;    		// Render framebuffer	
 	
 	const END  = 0xFF;    		// Halt
 	
