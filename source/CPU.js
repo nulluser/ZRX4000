@@ -32,6 +32,9 @@ function CPU(name, memory, start_addr)
 	const STACK_SIZE = 32768;				// Stack space size
 	//const UPDATE_RATE = 1;				// CPU Update
 	
+	// Errors
+	const ERROR_UI = 0x01;		// Unknown instruction
+	
 	// Instruction
 	var inst_table = []; 		// Instruction loopup table
 
@@ -105,12 +108,28 @@ function CPU(name, memory, start_addr)
 	{
 		if (!prog_loaded) return;
 		
-		var i = 0;
+		//var i = 0;
 		
-		// Process a chunk. Bail on Sync
-		for (i = 0; i < NUM_INST && !fb_update; i++) step();
+		//// Process a chunk. Bail on Sync
+		//for (i = 0; i < NUM_INST && !fb_update; i++) step();
 		
-		inst_updates += i;	
+		//inst_count = NUM_INST;
+		
+		try
+		{
+			step(NUM_INST);
+		}
+		catch(err)
+		{
+			if (err == ERROR_UI)
+			{
+				var a = ip-1;
+				main.log_console(`Undefined inst at [${hex_word(a)}] = (${hex_byte(memory.get_byte(a))}) \n`);
+				ip = IP_END;
+			}
+		}
+		
+		//inst_updates += i;	
 		
 		fb_update = 0;
 	}
@@ -225,32 +244,30 @@ function CPU(name, memory, start_addr)
 	function inst_out() {main.log_output(get_char(a));} 
 	function inst_end() {ip = IP_END;} 
 	
-	// Next inst
-	function step()
+	// Process count number of instructions
+	function step(count)
 	{		
-		// End of program
-		if (ip == IP_END) return;
-				
-		if (DEBUG) disassemble_inst(ip, 1);
-		
-		// Get next inst
-		var inst = inst_table[memory.get_byte(ip++)];
-		
-		// Catch undefined
-		if (inst === undefined)
+		var exec = count;	// Keep track of remaining
+	
+		//// Loop until done, or SYNC or HALT
+		while(exec-- && !fb_update && ip != IP_END)
 		{
-			main.log_console(`Undefined inst at [${hex_word(ip-1)}] = (${hex_byte(memory.get_byte(ip-1))}) \n`);
-			ip = IP_END;
-			return;
+			if (DEBUG) disassemble_inst(ip, 1);				// Dissassemble
+			
+			var inst = inst_table[memory.get_byte(ip++)];	// Get next inst
+			
+			if (inst === undefined) throw(ERROR_UI);		// Catch undefined
+
+			if (inst.f != null) inst.f();					// Execute
+
+			if (DUMP_STACK) dump_stack();					// Display stack dump
+
+			ip += inst.s;									// Consume operands, next ip
 		}
 		
-		// Execute
-		if (inst.f != null) inst.f();
-			
-		// Display stack dump?
-		if (DUMP_STACK) dump_stack();
-
-		ip += inst.s; // Consume operands, next ip
+		inst_updates += count - exec;
+		
+		fb_update = 0;
 	}
 	
 	/* End of CPU */
