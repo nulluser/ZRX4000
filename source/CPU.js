@@ -28,7 +28,7 @@ function CPU(name, memory, start_addr)
 	const DUMP_STACK_SZ = 0x10;			// Number of stack elements to display
 
 	// Config	
-	const NUM_INST = DEBUG ? 1 : 1000000;	// Instructions per update
+	const NUM_INST = DEBUG ? 1 : 200000;	// Instructions per update
 	const STACK_SIZE = 32768;				// Stack space size
 	//const UPDATE_RATE = 1;				// CPU Update
 	
@@ -234,14 +234,12 @@ function CPU(name, memory, start_addr)
 		if (DEBUG) disassemble_inst(ip, 1);
 		
 		// Get next inst
-		var inst_byte = memory.get_byte(ip++);		
-		
-		var inst = inst_table[inst_byte];
+		var inst = inst_table[memory.get_byte(ip++)];
 		
 		// Catch undefined
 		if (inst === undefined)
 		{
-			main.log_console(`Undefined inst at [${hex_word(ip-1)}] = (${hex_byte(inst_byte)}) \n`);
+			main.log_console(`Undefined inst at [${hex_word(ip-1)}] = (${hex_byte(memory.get_byte(ip-1))}) \n`);
 			ip = IP_END;
 			return;
 		}
@@ -253,8 +251,6 @@ function CPU(name, memory, start_addr)
 		if (DUMP_STACK) dump_stack();
 
 		ip += inst.s; // Consume operands, next ip
-		
-		
 	}
 	
 	/* End of CPU */
