@@ -178,7 +178,7 @@ function Assembler(memory)
 		var operand = 0;
 			
 		// parse operand, if needed
-		if (cur_inst_table[found_inst].size > 0)
+		if (cur_inst_table[found_inst].s > 0)
 		{
 			// Add to resolve list if opperand is a label
 			if (is_label(next))
@@ -224,8 +224,8 @@ function Assembler(memory)
 		// Add instruction
 		add_byte(inst);
 		
-		if (cur_inst_table[inst].size == 1) add_byte(p1);
-		if (cur_inst_table[inst].size == 2) add_word(p1);
+		if (cur_inst_table[inst].s == 1) add_byte(p1);
+		if (cur_inst_table[inst].s == 2) add_word(p1);
 	}
 	
 	// Add instruction byte to program
@@ -288,9 +288,9 @@ function Assembler(memory)
 		// Inst name
 		main.log_console(pad_inst(cur_inst_table[inst].text) + "   ");
 
-		if (cur_inst_table[inst].size == 0)	main.log_console(pad_inst("")); 
-		if (cur_inst_table[inst].size == 1)	main.log_console(pad_inst(hex_byte(memory.get_byte(i+1)))); 
-		if (cur_inst_table[inst].size == 2)	main.log_console(hex_word(memory.get_word(i+1)));
+		if (cur_inst_table[inst].s == 0)	main.log_console(pad_inst("")); 
+		if (cur_inst_table[inst].s == 1)	main.log_console(pad_inst(hex_byte(memory.get_byte(i+1)))); 
+		if (cur_inst_table[inst].s == 2)	main.log_console(hex_word(memory.get_word(i+1)));
 	
 		if (flags)
 		{
@@ -301,7 +301,7 @@ function Assembler(memory)
 		//log(address_table);
 		//log_console("[" + find_addr_name(i) + "]");
 		
-		i += cur_inst_table[inst].size + 1;	
+		i += cur_inst_table[inst].s + 1;	
 	
 		main.log_console("\n");
 		return i;

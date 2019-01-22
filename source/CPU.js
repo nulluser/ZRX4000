@@ -143,38 +143,39 @@ function CPU(name, memory, start_addr)
 	// Setup Instruction types
 	function setup_inst()	
 	{
-		inst_table[0x00] = {text:"NOP", m:M_NONE, size:0, f:inst_nop }; // No Operation	
-		inst_table[0x10] = {text:"JMP", m:M_NONE, size:2, f:inst_jmp }; // Jump to address
-		inst_table[0x11] = {text:"JSR", m:M_NONE, size:2, f:inst_jsr }; // Jump subroutine
-		inst_table[0x12] = {text:"RET", m:M_NONE, size:0, f:inst_ret }; // Return
-		inst_table[0x13] = {text:"JL",  m:M_NONE, size:2, f:inst_jl  }; // Jump if less
-		inst_table[0x14] = {text:"JE",  m:M_NONE, size:2, f:inst_je  }; // Jump Equal
-		inst_table[0x15] = {text:"JNE", m:M_NONE, size:2, f:inst_jne }; // Jump Not Equal
-		inst_table[0x16] = {text:"JG",  m:M_NONE, size:2, f:inst_jg  }; // Jump greater
-		inst_table[0x20] = {text:"LDA", m:M_NONE, size:1, f:inst_lda }; // Load A with constant
-		inst_table[0x21] = {text:"LDM", m:M_NONE, size:2, f:inst_ldm }; // Load A value from memory 
-		inst_table[0x22] = {text:"STA", m:M_NONE, size:2, f:inst_sta }; // Store A at memory location
-		inst_table[0x30] = {text:"SP",  m:M_NONE, size:2, f:inst_sp  }; // Set pointer address
-		inst_table[0x31] = {text:"LP",  m:M_NONE, size:0, f:inst_lp  }; // Load A into memory at pointer
-		inst_table[0x32] = {text:"GP",  m:M_NONE, size:0, f:inst_gp  }; // Get value at pointer
-		inst_table[0x33] = {text:"IP",  m:M_NONE, size:0, f:inst_ip  }; // Increment pointer
-		inst_table[0x34] = {text:"AP",  m:M_NONE, size:0, f:inst_ap  }; // Add a to pointer
-		inst_table[0x40] = {text:"PUSH",m:M_NONE, size:0, f:inst_push}; // Push A into stack
-		inst_table[0x41] = {text:"POP", m:M_NONE, size:0, f:inst_pop }; // Pop from stack into A
-		inst_table[0x50] = {text:"CMP", m:M_NONE, size:1, f:inst_cmp }; // Compare
-		inst_table[0x80] = {text:"OUT", m:M_NONE, size:0, f:inst_out }; // Output A
-		inst_table[0x90] = {text:"AND", m:M_NONE, size:1, f:inst_and }; // Set A to A & immediate
-		inst_table[0x91] = {text:"OR",  m:M_NONE, size:1, f:inst_or  }; // Set A to A | immediate
-		inst_table[0x92] = {text:"XOR", m:M_NONE, size:1, f:inst_xor }; // Set A to A ^ immediate
-		inst_table[0x93] = {text:"NOT", m:M_NONE, size:1, f:inst_not }; // Set A to bitwise negation of A
-		inst_table[0x94] = {text:"SHL", m:M_NONE, size:1, f:inst_shl }; // Shift A left by immediate bits
-		inst_table[0x95] = {text:"SHR", m:M_NONE, size:1, f:inst_shr }; // Shift A right by the immediate bits
-		inst_table[0x96] = {text:"ADD", m:M_NONE, size:1, f:inst_add }; // Set A to A + operand Z_256
-		inst_table[0x97] = {text:"SUB", m:M_NONE, size:1, f:inst_sub }; // Set A to A + operand Z_256
-		inst_table[0x98] = {text:"NEG", m:M_NONE, size:0, f:inst_neg }; // Set A to the additive inverse of A in Z_256
-		inst_table[0xA0] = {text:"RND", m:M_NONE, size:0, f:inst_rnd }; // Random number
-		inst_table[0xB0] = {text:"SYNC",m:M_NONE, size:0, f:inst_sync}; // Render framebuffer
-		inst_table[0xFF] = {text:"END", m:M_NONE, size:0, f:inst_end }; // Halt
+		//                  Diss test   Inst mide Size Func Ptr
+		inst_table[0x00] = {text:"NOP", m:M_NONE, s:0, f:inst_nop }; // No Operation	
+		inst_table[0x10] = {text:"JMP", m:M_NONE, s:2, f:inst_jmp }; // Jump to address
+		inst_table[0x11] = {text:"JSR", m:M_NONE, s:2, f:inst_jsr }; // Jump subroutine
+		inst_table[0x12] = {text:"RET", m:M_NONE, s:0, f:inst_ret }; // Return
+		inst_table[0x13] = {text:"JL",  m:M_NONE, s:2, f:inst_jl  }; // Jump if less
+		inst_table[0x14] = {text:"JE",  m:M_NONE, s:2, f:inst_je  }; // Jump Equal
+		inst_table[0x15] = {text:"JNE", m:M_NONE, s:2, f:inst_jne }; // Jump Not Equal
+		inst_table[0x16] = {text:"JG",  m:M_NONE, s:2, f:inst_jg  }; // Jump greater
+		inst_table[0x20] = {text:"LDA", m:M_NONE, s:1, f:inst_lda }; // Load A with constant
+		inst_table[0x21] = {text:"LDM", m:M_NONE, s:2, f:inst_ldm }; // Load A value from memory 
+		inst_table[0x22] = {text:"STA", m:M_NONE, s:2, f:inst_sta }; // Store A at memory location
+		inst_table[0x30] = {text:"SP",  m:M_NONE, s:2, f:inst_sp  }; // Set pointer address
+		inst_table[0x31] = {text:"LP",  m:M_NONE, s:0, f:inst_lp  }; // Load A into memory at pointer
+		inst_table[0x32] = {text:"GP",  m:M_NONE, s:0, f:inst_gp  }; // Get value at pointer
+		inst_table[0x33] = {text:"IP",  m:M_NONE, s:0, f:inst_ip  }; // Increment pointer
+		inst_table[0x34] = {text:"AP",  m:M_NONE, s:0, f:inst_ap  }; // Add a to pointer
+		inst_table[0x40] = {text:"PUSH",m:M_NONE, s:0, f:inst_push}; // Push A into stack
+		inst_table[0x41] = {text:"POP", m:M_NONE, s:0, f:inst_pop }; // Pop from stack into A
+		inst_table[0x50] = {text:"CMP", m:M_NONE, s:1, f:inst_cmp }; // Compare
+		inst_table[0x80] = {text:"OUT", m:M_NONE, s:0, f:inst_out }; // Output A
+		inst_table[0x90] = {text:"AND", m:M_NONE, s:1, f:inst_and }; // Set A to A & immediate
+		inst_table[0x91] = {text:"OR",  m:M_NONE, s:1, f:inst_or  }; // Set A to A | immediate
+		inst_table[0x92] = {text:"XOR", m:M_NONE, s:1, f:inst_xor }; // Set A to A ^ immediate
+		inst_table[0x93] = {text:"NOT", m:M_NONE, s:1, f:inst_not }; // Set A to bitwise negation of A
+		inst_table[0x94] = {text:"SHL", m:M_NONE, s:1, f:inst_shl }; // Shift A left by immediate bits
+		inst_table[0x95] = {text:"SHR", m:M_NONE, s:1, f:inst_shr }; // Shift A right by the immediate bits
+		inst_table[0x96] = {text:"ADD", m:M_NONE, s:1, f:inst_add }; // Set A to A + operand Z_256
+		inst_table[0x97] = {text:"SUB", m:M_NONE, s:1, f:inst_sub }; // Set A to A + operand Z_256
+		inst_table[0x98] = {text:"NEG", m:M_NONE, s:0, f:inst_neg }; // Set A to the additive inverse of A in Z_256
+		inst_table[0xA0] = {text:"RND", m:M_NONE, s:0, f:inst_rnd }; // Random number
+		inst_table[0xB0] = {text:"SYNC",m:M_NONE, s:0, f:inst_sync}; // Render framebuffer
+		inst_table[0xFF] = {text:"END", m:M_NONE, s:0, f:inst_end }; // Halt
 	}
 
 		// Instructions
@@ -237,7 +238,7 @@ function CPU(name, memory, start_addr)
 			for (var i = 0; i < 5; i++)
 				main.log_console("Stack["+i+"]" + hex_byte(stack[i]) + "\n");
 			
-		ip += inst_table[inst].size; // Consume operands, next ip
+		ip += inst_table[inst].s; // Consume operands, next ip
 		
 		inst_updates++;
 	}
