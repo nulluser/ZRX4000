@@ -20,24 +20,24 @@ function CPU(name, memory, start_addr)
 					get_inst_table:get_inst_table, 
 					get_inst_count:get_inst_count};
 	
-	// Config
+	// Debugging
 	const DEBUG = 0;					// Slow down for debugging
 	const DUMP_MEM = 0;					// Dump memory on load
 	const DUMP_MEM_SIZE = 0x100;		// Dump Size
-	const DISP_STACK = 0;				// Displat stack during execution
-		
-	var NUM_INST = DEBUG ? 1 : 1000000;	// Instructions per update
-	
-	//const UPDATE_RATE = 1;	// CPU Update
-	
-	const STACK_SIZE = 32768;	// Stack space size
+	const DUMP_STACK = 0;				// Displat stack during execution
+	const DUMP_STACK_SZ = 0x10;			// Number of stack elements to display
+
+	// Config	
+	const NUM_INST = DEBUG ? 1 : 1000000;	// Instructions per update
+	const STACK_SIZE = 32768;				// Stack space size
+	//const UPDATE_RATE = 1;				// CPU Update
 	
 	// Instruction
 	var inst_table = []; 		// Instruction loopup table
 
 	// Instruction modes
 	const M_NONE = 0x00;		// No Mode (test)
-	const M_IMM = 0x01;			// Immediate mode
+	const M_IMM  = 0x01;		// Immediate mode
 	const IP_END = -1;			// Flag to indicate halted
 		
 	// Stack
@@ -105,8 +105,12 @@ function CPU(name, memory, start_addr)
 	{
 		if (!prog_loaded) return;
 		
+		var i = 0;
+		
 		// Process a chunk. Bail on Sync
-		for (var i = 0; i < NUM_INST && !fb_update; i++) step();
+		for (i = 0; i < NUM_INST && !fb_update; i++) step();
+		
+		inst_updates += i;	
 		
 		fb_update = 0;
 	}
@@ -119,6 +123,15 @@ function CPU(name, memory, start_addr)
 		if (DUMP_MEM) memory.dump(start_addr, DUMP_MEM_SIZE);
 		
 		prog_loaded = true;
+	}
+	
+	
+	function dump_stack()
+	{
+		main.log_console(`Stack:\n`);
+		for (var i = 0; i < DUMP_STACK_SZ; i++)
+			main.log_console(` [${i}] ${hex_byte(stack[i])}\n`);
+		ip = IP_END;
 	}
 	
 	// Clear all flags
@@ -221,26 +234,27 @@ function CPU(name, memory, start_addr)
 		if (DEBUG) disassemble_inst(ip, 1);
 		
 		// Get next inst
-		var inst = memory.get_byte(ip++);		
+		var inst_byte = memory.get_byte(ip++);		
+		
+		var inst = inst_table[inst_byte];
 		
 		// Catch undefined
-		if (inst_table[inst] == undefined)
+		if (inst === undefined)
 		{
-			main.log_console("Undefined inst [" + (hex_word(ip+1)) + "] " + hex_byte(inst) + "\n");
+			main.log_console(`Undefined inst at [${hex_word(ip-1)}] = (${hex_byte(inst_byte)}) \n`);
+			ip = IP_END;
 			return;
 		}
 		
 		// Execute
-		if (inst_table[inst].f != null) inst_table[inst].f();
+		if (inst.f != null) inst.f();
 			
 		// Display stack dump?
-		if (DISP_STACK)
-			for (var i = 0; i < 5; i++)
-				main.log_console("Stack["+i+"]" + hex_byte(stack[i]) + "\n");
-			
-		ip += inst_table[inst].s; // Consume operands, next ip
+		if (DUMP_STACK) dump_stack();
+
+		ip += inst.s; // Consume operands, next ip
 		
-		inst_updates++;
+		
 	}
 	
 	/* End of CPU */

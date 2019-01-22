@@ -91,7 +91,7 @@ function Assembler(memory)
 		for (var i = 0; i < resolve_table.length; i++)
 			main.log_console(" " + resolve_table[i].label + "  " + hex_word(resolve_table[i].addr) + "\n");
 				
-		disassemble(prog_addr, prog_addr + 0x80);
+		disassemble(prog_addr, prog_addr + 0x20);
 	}
 	
 	/* 
