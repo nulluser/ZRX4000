@@ -184,18 +184,41 @@ function CPU(name, memory, start_addr)
 		inst_table[0x14] = {text:"JE",  m:M_NONE, s:2, f:inst_je  }; // Jump Equal
 		inst_table[0x15] = {text:"JNE", m:M_NONE, s:2, f:inst_jne }; // Jump Not Equal
 		inst_table[0x16] = {text:"JG",  m:M_NONE, s:2, f:inst_jg  }; // Jump greater
+
 		inst_table[0x20] = {text:"LDA", m:M_NONE, s:1, f:inst_lda }; // Load A with constant
-		inst_table[0x21] = {text:"LDM", m:M_NONE, s:2, f:inst_ldm }; // Load A value from memory 
-		inst_table[0x22] = {text:"STA", m:M_NONE, s:2, f:inst_sta }; // Store A at memory location
+		inst_table[0x21] = {text:"LDX", m:M_NONE, s:1, f:inst_ldx }; // Load X with constant
+		inst_table[0x22] = {text:"LDY", m:M_NONE, s:1, f:inst_ldy }; // Load Y with constant
+		inst_table[0x23] = {text:"LDM", m:M_NONE, s:2, f:inst_ldm }; // Load A value from memory 
+		inst_table[0x24] = {text:"STA", m:M_NONE, s:2, f:inst_sta }; // Store A at memory location
+		inst_table[0x25] = {text:"STX", m:M_NONE, s:2, f:inst_stx }; // Store X at memory location
+		inst_table[0x26] = {text:"STY", m:M_NONE, s:2, f:inst_sty }; // Store Y at memory location
+		inst_table[0x27] = {text:"TXA", m:M_NONE, s:2, f:inst_txa }; // Transfre X to A
+		inst_table[0x28] = {text:"TAX", m:M_NONE, s:2, f:inst_tax }; // Transfer A to X
+		inst_table[0x29] = {text:"TYA", m:M_NONE, s:2, f:inst_tya }; // Transfre X to A
+		inst_table[0x2A] = {text:"TAY", m:M_NONE, s:2, f:inst_tay }; // Transfer A to X
+		
 		inst_table[0x30] = {text:"SP",  m:M_NONE, s:2, f:inst_sp  }; // Set pointer address
 		inst_table[0x31] = {text:"LP",  m:M_NONE, s:0, f:inst_lp  }; // Load A into memory at pointer
 		inst_table[0x32] = {text:"GP",  m:M_NONE, s:0, f:inst_gp  }; // Get value at pointer
 		inst_table[0x33] = {text:"IP",  m:M_NONE, s:0, f:inst_ip  }; // Increment pointer
 		inst_table[0x34] = {text:"AP",  m:M_NONE, s:0, f:inst_ap  }; // Add a to pointer
+
 		inst_table[0x40] = {text:"PUSH",m:M_NONE, s:0, f:inst_push}; // Push A into stack
 		inst_table[0x41] = {text:"POP", m:M_NONE, s:0, f:inst_pop }; // Pop from stack into A
-		inst_table[0x50] = {text:"CMP", m:M_NONE, s:1, f:inst_cmp }; // Compare
-		inst_table[0x80] = {text:"OUT", m:M_NONE, s:0, f:inst_out }; // Output A
+
+		inst_table[0x50] = {text:"CMP", m:M_NONE, s:1, f:inst_cmp }; // Compare with A
+		inst_table[0x51] = {text:"CPX", m:M_NONE, s:1, f:inst_cpx }; // Compare with X
+		inst_table[0x52] = {text:"CPY", m:M_NONE, s:1, f:inst_cpy }; // Compare with Y
+
+		inst_table[0x60] = {text:"INC", m:M_NONE, s:1, f:inst_inc }; // Increment A
+		inst_table[0x61] = {text:"DEC", m:M_NONE, s:1, f:inst_dec }; // Decrement A
+		inst_table[0x62] = {text:"INX", m:M_NONE, s:1, f:inst_inx }; // Increment X
+		inst_table[0x63] = {text:"DEX", m:M_NONE, s:1, f:inst_dex }; // Decrement X
+		inst_table[0x64] = {text:"INY", m:M_NONE, s:1, f:inst_iny }; // Increment Y
+		inst_table[0x65] = {text:"DEY", m:M_NONE, s:1, f:inst_dey }; // Decrement Y
+
+		inst_table[0x80] = {text:"OUT", m:M_NONE, s:0, f:inst_out }; // Output A to console
+
 		inst_table[0x90] = {text:"AND", m:M_NONE, s:1, f:inst_and }; // Set A to A & immediate
 		inst_table[0x91] = {text:"OR",  m:M_NONE, s:1, f:inst_or  }; // Set A to A | immediate
 		inst_table[0x92] = {text:"XOR", m:M_NONE, s:1, f:inst_xor }; // Set A to A ^ immediate
@@ -204,15 +227,18 @@ function CPU(name, memory, start_addr)
 		inst_table[0x95] = {text:"SHR", m:M_NONE, s:1, f:inst_shr }; // Shift A right by the immediate bits
 		inst_table[0x96] = {text:"ADD", m:M_NONE, s:1, f:inst_add }; // Set A to A + operand Z_256
 		inst_table[0x97] = {text:"SUB", m:M_NONE, s:1, f:inst_sub }; // Set A to A + operand Z_256
-		inst_table[0x98] = {text:"NEG", m:M_NONE, s:0, f:inst_neg }; // Set A to the additive inverse of A in Z_256
-		inst_table[0xA0] = {text:"RND", m:M_NONE, s:0, f:inst_rnd }; // Random number
-		inst_table[0xB0] = {text:"SYNC",m:M_NONE, s:0, f:inst_sync}; // Render framebuffer
+		inst_table[0x98] = {text:"MUL", m:M_NONE, s:1, f:inst_mul }; // Set A to A * operand Z_256
+		inst_table[0x99] = {text:"DIV", m:M_NONE, s:1, f:inst_div }; // Set A to A / operand Z_256
+		inst_table[0x9A] = {text:"NEG", m:M_NONE, s:0, f:inst_neg }; // Set A to the additive inverse of A in Z_256
+
+		inst_table[0xB0] = {text:"RND", m:M_NONE, s:0, f:inst_rnd }; // Random number
+		inst_table[0xC0] = {text:"SYNC",m:M_NONE, s:0, f:inst_sync}; // Render framebuffer
 		inst_table[0xFF] = {text:"END", m:M_NONE, s:0, f:inst_end }; // Halt
 	}
 
-		// Instructions
+	// Instructions
 	function inst_nop() {};
-	function inst_cmp() {var v = memory.get_byte(ip); e = a == v; l = a < v; g = a > v;} 
+	
    	function inst_jmp() {ip = memory.get_word(ip) - 2;}
 	function inst_jsr() {push_word(ip+2); ip = memory.get_word(ip) -2}
 	function inst_ret() {ip = pop_word(); }
@@ -220,16 +246,40 @@ function CPU(name, memory, start_addr)
 	function inst_je()  {if (e) ip = memory.get_word(ip) - 2;} 
 	function inst_jne() {if (!e)ip = memory.get_word(ip) - 2;} 
 	function inst_jg()  {if (g) ip = memory.get_word(ip) - 2;} 
+
 	function inst_sp()  {p = memory.get_word(ip)} 
 	function inst_lp()  {memory.set_byte(p, a);} 
 	function inst_gp()  {a = memory.get_byte(p);} 
 	function inst_ip()  {p++;} 
 	function inst_ap()  {p+=a;} 
-	function inst_lda() {a = memory.get_byte(ip);} 
+
+	function inst_lda() {a = memory.get_byte(ip);}
+	function inst_ldx() {x = memory.get_byte(ip);}
+	function inst_ldy() {y = memory.get_byte(ip);}
+	
 	function inst_ldm() {a = memory.get_byte(memory.get_word(ip));} 
 	function inst_sta() {memory.set_byte(memory.get_word(ip), a);}
+	function inst_stx() {memory.set_byte(memory.get_word(ip), x);}
+	function inst_sty() {memory.set_byte(memory.get_word(ip), y);}
+
+	function inst_tax() {x = a;}
+	function inst_txa() {a = x;}
+	function inst_tay() {x = a;}
+	function inst_tya() {a = x;}
+	
 	function inst_push(){push_byte(a);} 
 	function inst_pop() {a = pop_byte();} 
+	function inst_cmp() {var v = memory.get_byte(ip); e = a == v; l = a < v; g = a > v;} 
+	function inst_cpx() {var v = memory.get_byte(ip); e = a == v; l = a < v; g = a > v;} 
+	function inst_cpy() {var v = memory.get_byte(ip); e = a == v; l = a < v; g = a > v;} 
+		
+	function inst_inc() {a = (a + 1) & 0xff;}
+	function inst_dec() {a = (a - 1) & 0xff;}
+	function inst_inx() {x = (x + 1) & 0xff;}
+	function inst_dex() {x = (x - 1) & 0xff;}
+	function inst_iny() {y = (y + 1) & 0xff;}
+	function inst_dey() {y = (y - 1) & 0xff;}
+	
 	function inst_and() {a = a & memory.get_byte(ip);} 
 	function inst_or()  {a = a | memory.get_byte(ip);} 
 	function inst_xor() {a = a ^ memory.get_byte(ip);} 
@@ -238,7 +288,10 @@ function CPU(name, memory, start_addr)
 	function inst_shr() {a = a >> memory.get_byte(ip);} 
 	function inst_add() {a = (a + memory.get_byte(ip)) & 0xff;}
 	function inst_sub() {a = (a - memory.get_byte(ip)) & 0xff;}
+	function inst_mul() {a = (a * memory.get_byte(ip)) & 0xff;}
+	function inst_div() {a = (a / memory.get_byte(ip)) & 0xff;}
 	function inst_neg() {a = (65536 - a) & 0xff;}
+	
 	function inst_rnd() {a = (Math.random() * 255) & 0xff;} 
 	function inst_sync(){fb_update=1;} 
 	function inst_out() {main.log_output(get_char(a));} 
@@ -247,10 +300,9 @@ function CPU(name, memory, start_addr)
 	// Process count number of instructions
 	function step(count)
 	{		
-		var exec = count;	// Keep track of remaining
-	
-		//// Loop until done, or SYNC or HALT
-		while(exec-- && !fb_update && ip != IP_END)
+		var exec = count;									// Keep track of remaining
+		
+		while(exec-- && !fb_update && ip != IP_END)			// Loop until done, or SYNC or HALT
 		{
 			if (DEBUG) disassemble_inst(ip, 1);				// Dissassemble
 			
