@@ -57,6 +57,9 @@ function CPU(name, memory, start_addr)
 	var g = 0;					// Greater
 	var p = 0;					// Memory pointer
 	
+	// Other
+	var T = 0;					// Temp for internal use
+	
 	// Monitoring
 	var inst_updates = 0;		// Instruction updates
 	var fb_update = 0;			// True if frame buffer needs updating
@@ -108,28 +111,17 @@ function CPU(name, memory, start_addr)
 	{
 		if (!prog_loaded) return;
 		
-		//var i = 0;
+		var r = step(NUM_INST); // Process a chunk
 		
-		//// Process a chunk. Bail on Sync
-		//for (i = 0; i < NUM_INST && !fb_update; i++) step();
-		
-		//inst_count = NUM_INST;
-		
-		try
+		if (r > 0)				// Deal with CPU errors
 		{
-			step(NUM_INST);
-		}
-		catch(err)
-		{
-			if (err == ERROR_UI)
+			if (r == ERROR_UI)
 			{
 				var a = ip-1;
 				main.log_console(`Undefined inst at [${hex_word(a)}] = (${hex_byte(memory.get_byte(a))}) \n`);
 				ip = IP_END;
 			}
 		}
-		
-		//inst_updates += i;	
 		
 		fb_update = 0;
 	}
@@ -269,9 +261,9 @@ function CPU(name, memory, start_addr)
 	
 	function inst_push(){push_byte(a);} 
 	function inst_pop() {a = pop_byte();} 
-	function inst_cmp() {var v = memory.get_byte(ip); e = a == v; l = a < v; g = a > v;} 
-	function inst_cpx() {var v = memory.get_byte(ip); e = a == v; l = a < v; g = a > v;} 
-	function inst_cpy() {var v = memory.get_byte(ip); e = a == v; l = a < v; g = a > v;} 
+	function inst_cmp() {T = memory.get_byte(ip); e = a == T; l = a < T; g = a > T;} 
+	function inst_cpx() {T = memory.get_byte(ip); e = x == T; l = x < T; g = x > T;} 
+	function inst_cpy() {T = memory.get_byte(ip); e = y == T; l = y < T; g = y > T;} 
 		
 	function inst_inc() {a = (a + 1) & 0xff;}
 	function inst_dec() {a = (a - 1) & 0xff;}
@@ -308,7 +300,7 @@ function CPU(name, memory, start_addr)
 			
 			var inst = inst_table[memory.get_byte(ip++)];	// Get next inst
 			
-			if (inst === undefined) throw(ERROR_UI);		// Catch undefined
+			if (inst === undefined) return(ERROR_UI);		// Catch undefined
 
 			if (inst.f != null) inst.f();					// Execute
 
@@ -319,7 +311,7 @@ function CPU(name, memory, start_addr)
 		
 		inst_updates += count - exec;
 		
-		fb_update = 0;
+		return 0;
 	}
 	
 	/* End of CPU */
