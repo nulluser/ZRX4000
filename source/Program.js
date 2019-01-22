@@ -18,13 +18,11 @@ var game =
 */
 
  `
-			
  
  // Display Start Message
 start:		SP		startstring:
 			JSR		printstr:
-
-			JSR 	graphtest:
+			
 			
 // Core loop
 mainloop:	JSR		checkkeys:

@@ -56,10 +56,7 @@ function CPU(name, memory, start_addr)
 	var l = 0;					// Less
 	var g = 0;					// Greater
 	var p = 0;					// Memory pointer
-	
-	// Other
-	var T = 0;					// Temp for internal use
-	
+
 	// Monitoring
 	var inst_updates = 0;		// Instruction updates
 	var fb_update = 0;			// True if frame buffer needs updating
@@ -136,7 +133,7 @@ function CPU(name, memory, start_addr)
 		prog_loaded = true;
 	}
 	
-	
+	// Display current stack
 	function dump_stack()
 	{
 		main.log_console(`Stack:\n`);
@@ -167,7 +164,7 @@ function CPU(name, memory, start_addr)
 	// Setup Instruction types
 	function setup_inst()	
 	{
-		//                  Diss test   Inst mide Size Func Ptr
+		//                  Diss text   Inst mide Size Func Ptr
 		inst_table[0x00] = {text:"NOP", m:M_NONE, s:0, f:inst_nop }; // No Operation	
 		inst_table[0x10] = {text:"JMP", m:M_NONE, s:2, f:inst_jmp }; // Jump to address
 		inst_table[0x11] = {text:"JSR", m:M_NONE, s:2, f:inst_jsr }; // Jump subroutine
@@ -186,8 +183,8 @@ function CPU(name, memory, start_addr)
 		inst_table[0x26] = {text:"STY", m:M_NONE, s:2, f:inst_sty }; // Store Y at memory location
 		inst_table[0x27] = {text:"TXA", m:M_NONE, s:2, f:inst_txa }; // Transfre X to A
 		inst_table[0x28] = {text:"TAX", m:M_NONE, s:2, f:inst_tax }; // Transfer A to X
-		inst_table[0x29] = {text:"TYA", m:M_NONE, s:2, f:inst_tya }; // Transfre X to A
-		inst_table[0x2A] = {text:"TAY", m:M_NONE, s:2, f:inst_tay }; // Transfer A to X
+		inst_table[0x29] = {text:"TYA", m:M_NONE, s:2, f:inst_tya }; // Transfre Y to A
+		inst_table[0x2A] = {text:"TAY", m:M_NONE, s:2, f:inst_tay }; // Transfer A to Y
 		
 		inst_table[0x30] = {text:"SP",  m:M_NONE, s:2, f:inst_sp  }; // Set pointer address
 		inst_table[0x31] = {text:"LP",  m:M_NONE, s:0, f:inst_lp  }; // Load A into memory at pointer
@@ -229,6 +226,9 @@ function CPU(name, memory, start_addr)
 	}
 
 	// Instructions
+	
+	function compare(v1, v2) { e = v1 == v2; l = v1 < v2; g = v1 > v2; }
+	
 	function inst_nop() {};
 	
    	function inst_jmp() {ip = memory.get_word(ip) - 2;}
@@ -261,9 +261,9 @@ function CPU(name, memory, start_addr)
 	
 	function inst_push(){push_byte(a);} 
 	function inst_pop() {a = pop_byte();} 
-	function inst_cmp() {T = memory.get_byte(ip); e = a == T; l = a < T; g = a > T;} 
-	function inst_cpx() {T = memory.get_byte(ip); e = x == T; l = x < T; g = x > T;} 
-	function inst_cpy() {T = memory.get_byte(ip); e = y == T; l = y < T; g = y > T;} 
+	function inst_cmp() {compare(a, memory.get_byte(ip));} 
+	function inst_cpx() {compare(x, memory.get_byte(ip));} 
+	function inst_cpy() {compare(y, memory.get_byte(ip));} 
 		
 	function inst_inc() {a = (a + 1) & 0xff;}
 	function inst_dec() {a = (a - 1) & 0xff;}

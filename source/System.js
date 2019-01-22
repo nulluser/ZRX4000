@@ -106,10 +106,10 @@ function System()
 		var inst_table = cpu_cores[0].get_inst_table();
 		
 		// Assemble some code into memory
-		assembler.assemble(inst_table, fb_test1,	0x1000);
-		assembler.assemble(inst_table, fb_test2,	0x2000);
-		assembler.assemble(inst_table, game,		0x3000);
-		assembler.assemble(inst_table, fb_test,		0x4000);
+		assembler.assemble(inst_table, game,		0x1000);
+		assembler.assemble(inst_table, fb_test,		0x2000);
+		assembler.assemble(inst_table, fb_test1,	0x3000);
+		assembler.assemble(inst_table, fb_test2,	0x4000);
 	
 		// Init cores
 		for (var i = 0; i < cpu_cores.length; i++)
