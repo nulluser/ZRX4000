@@ -91,9 +91,9 @@ function System()
 		cpu_cores.push( CPU("CPU3", memory, 0x3000) );
 		
 		// Create more cores
-		// They will all run the code at 0x4000
+		// They will all run the code at 0x2000, frame buffer test
 		for (var i = 0; i < TEST_CORES; i++)
-			cpu_cores.push( CPU("CPUX" + i, memory, 0x4000) );
+			cpu_cores.push( CPU("CPUX" + i, memory, 0x2000) );
 		
 		// Setup instruction tables
 		for (var i = 0; i < cpu_cores.length; i++)
