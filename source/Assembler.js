@@ -353,4 +353,3 @@ function Assembler(memory)
 
 	return {init:init, assemble:assemble};
 }
-

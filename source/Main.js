@@ -195,4 +195,3 @@ var main = (function ()
 			log_output : log_output,
 			log : log};
 }());
-

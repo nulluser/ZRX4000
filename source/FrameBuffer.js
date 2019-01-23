@@ -160,5 +160,3 @@ function FrameBuffer(base_addr)
 			update : update};
 }
 
-
-
