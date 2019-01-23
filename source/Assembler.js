@@ -85,11 +85,11 @@ function Assembler(memory)
 		// Show address table
 		main.log_console("Address Table\n");
 		for (var i = 0; i < address_table.length; i++)
-			main.log_console(" " + address_table[i].label + "  " + hex_word(address_table[i].addr) + "\n");
+			main.log_console(` ${address_table[i].label} ${hex_word(address_table[i].addr)}\n`);
 
 		main.log_console("Resolve Table\n");
 		for (var i = 0; i < resolve_table.length; i++)
-			main.log_console(" " + resolve_table[i].label + "  " + hex_word(resolve_table[i].addr) + "\n");
+			main.log_console(` ${resolve_table[i].label} ${hex_word(resolve_table[i].addr)} \n`);
 				
 		disassemble(prog_addr, prog_addr + 0x20);
 	}
