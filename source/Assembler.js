@@ -281,7 +281,7 @@ function Assembler(memory)
 		//main.log_console(hex_byte(inst));
 		if (cur_inst_table[inst] == undefined)
 		{
-			main.log_console("Undefined inst: [" + hex_word(i) +"] " + inst + "\n");
+			main.log_console(`Undefined inst: [${hex_word(i)}] ${inst}\n`);
 			return;
 		}
 		
@@ -294,8 +294,8 @@ function Assembler(memory)
 	
 		if (flags)
 		{
-			main.log_console("  IP: " + hex_word(ip) + "    A: " + hex_byte(a) + " SP: " + hex_word(sp) + 
-							 " P: " + hex_word(p) + " E: " + (e?1:0) + " G: " + (g?1:0) + "L " + (l?1:0));
+			main.log_console(`  IP: ${hex_word(ip)} A: ${hex_byte(a)} + SP: ${hex_word(sp)} ` + 
+							 `   P: ${hex_word(p)} E: ${(e?1:0)} G: ${(g?1:0)} L ${(l?1:0)} ` );
 		}
 		
 		//log(address_table);
