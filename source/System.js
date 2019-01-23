@@ -80,9 +80,11 @@ function System()
 		memory = Memory();
 		memory.init();
 
+		// Setup frame buffer
 		frame_buffer = FrameBuffer(FB_ADDR);
 		frame_buffer.init(memory);
 
+		// Setup IO. Need to mae module
 		io_init();
 
 		// Create some cores
@@ -144,7 +146,8 @@ function System()
 	function second()
 	{
 		var total_inst = 0;
-		
+
+		// Compute total instructions since last
 		for (var i = 0; i < cpu_cores.length; i++)
 			total_inst += cpu_cores[i].get_inst_count();
 		
