@@ -88,7 +88,7 @@ function System()
 		// Setup IO. Need to mae module
 		io_init();
 
-		CPU.pre_init(); 		// Load instructions
+		CPU.setup_inst(); 		// Load instructions
 		
 		// Create some cores
 		cpu_cores.push( new CPU("CPU1", memory, 0x1000) );

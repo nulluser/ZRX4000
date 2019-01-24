@@ -17,8 +17,9 @@ class CPU
 {
 	constructor (name, memory, start_addr)
 	{
+		/* Static Members */
 		CPU.MODULE = "[CPU]       ";
-
+		
 		// Debugging
 		CPU.DEBUG = 0;					// Slow down for debugging
 		CPU.DUMP_MEM = 0;					// Dump memory on load
@@ -38,10 +39,8 @@ class CPU
 		CPU.M_NONE = 0x00;		// No Mode (test)
 		CPU.M_IMM  = 0x01;		// Immediate mode
 		CPU.IP_END = -1;			// Flag to indicate halted
-			
 
-		// Variables
-			
+		/* Variables */
 		this.name = name;
 		this.memory = memory;
 		this.start_addr = start_addr;
@@ -76,13 +75,6 @@ class CPU
 	/* 
 		Public 
 	*/
-	
-	//  Stage inst table. TODO: Need to remove
-	static pre_init()
-	{
-		main.log_console(this.MODULE + "Pre Init\n");	
-		CPU.setup_inst(); 		// Load instructions
-	}
 	
 	// Core CPU init 
 	init()
@@ -244,6 +236,8 @@ class CPU
 	// Setup Instruction types
 	static setup_inst()	
 	{
+		main.log_console(this.MODULE + "Inst table config\n");	
+		
 		CPU.inst_table = [];
 		
 		//                  Diss text   Inst mide Size Func Ptr
