@@ -88,6 +88,8 @@ function System()
 		// Setup IO. Need to mae module
 		io_init();
 
+		CPU.pre_init(); 		// Load instructions
+		
 		// Create some cores
 		cpu_cores.push( new CPU("CPU1", memory, 0x1000) );
 		//cpu_cores.push( new CPU("CPU2", memory, 0x2000) );
@@ -99,8 +101,8 @@ function System()
 			cpu_cores.push( new CPU("CPUX" + i, memory, 0x1000) );
 		
 		// Setup instruction tables
-		for (var i = 0; i < cpu_cores.length; i++)
-			cpu_cores[i].pre_init();
+		//for (var i = 0; i < cpu_cores.length; i++)
+//			cpu_cores[i].pre_init();
 		
 		// Create an assembler
 		assembler = Assembler(memory);

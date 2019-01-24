@@ -33,9 +33,6 @@ class CPU
 		
 		// Errors
 		CPU.ERROR_UI = 0x01;		// Unknown instruction
-	
-		// Instruction
-		CPU.inst_table = []; 		// Instruction loopup table
 
 		// Instruction modes
 		CPU.M_NONE = 0x00;		// No Mode (test)
@@ -81,7 +78,7 @@ class CPU
 	*/
 	
 	//  Stage inst table. TODO: Need to remove
-	pre_init()
+	static pre_init()
 	{
 		main.log_console(this.MODULE + "Pre Init\n");	
 		CPU.setup_inst(); 		// Load instructions
@@ -247,6 +244,8 @@ class CPU
 	// Setup Instruction types
 	static setup_inst()	
 	{
+		CPU.inst_table = [];
+		
 		//                  Diss text   Inst mide Size Func Ptr
 		CPU.inst_table[0x00] = {text:"NOP", m:CPU.M_NONE, s:0, f:CPU.inst_nop }; // No Operation	
 		CPU.inst_table[0x10] = {text:"JMP", m:CPU.M_NONE, s:2, f:CPU.inst_jmp }; // Jump to address
