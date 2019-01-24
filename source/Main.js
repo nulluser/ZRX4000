@@ -49,6 +49,7 @@ var main = (function ()
 	
 	/* 
 		TODO This logging mess needs to go 
+		This is needde so the console does not get flooded and lock the browser up
 	*/
 	
 	
@@ -170,6 +171,7 @@ var main = (function ()
 	function log(item)
 	{
 		debug_window.console.log(item);		
+		console.log(item);		
 	}
 	
 	// Log CPU Output

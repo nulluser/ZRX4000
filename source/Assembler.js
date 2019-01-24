@@ -45,7 +45,7 @@ function Assembler(memory)
 
 		if (cur_inst_table == null)
 		{
-			log_console("No inst table");
+			main.log_console("No inst table");
 		}
 		
 		cur_prog = prog_addr;
@@ -91,7 +91,9 @@ function Assembler(memory)
 		for (var i = 0; i < resolve_table.length; i++)
 			main.log_console(` ${resolve_table[i].label} ${hex_word(resolve_table[i].addr)} \n`);
 				
-		disassemble(prog_addr, prog_addr + 0x20);
+		
+		if (cur_inst_table != undefined)				
+			disassemble(prog_addr, prog_addr + 0x20);
 	}
 	
 	/* 
@@ -277,7 +279,7 @@ function Assembler(memory)
 		main.log_console(hex_word(i) + " "); // Address
 
 		var inst = memory.get_byte(i);	// instruction
-		
+
 		//main.log_console(hex_byte(inst));
 		if (cur_inst_table[inst] == undefined)
 		{

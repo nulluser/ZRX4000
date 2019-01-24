@@ -32,6 +32,7 @@ function System()
 {
 	const MODULE = "[System]    ";
 
+	//const UPDATE_RATE = 1;			// CPU Update (ms)
 	const UPDATE_RATE = 1;			// CPU Update (ms)
 	const SECOND_RATE = 1000;		// Status update
 
@@ -43,7 +44,7 @@ function System()
 	const PROG3_ADDRESS = 0x3000;	// Program address for cpu1
 	
 	// Cores
-	const TEST_CORES = 4;			// Number of cores
+	const TEST_CORES = 10;			// Number of cores
 	
 	// Devices
 	var memory = null;				// Shared memory
@@ -88,14 +89,14 @@ function System()
 		io_init();
 
 		// Create some cores
-		cpu_cores.push( CPU("CPU1", memory, 0x1000) );
-		cpu_cores.push( CPU("CPU2", memory, 0x2000) );
-		cpu_cores.push( CPU("CPU3", memory, 0x3000) );
+		cpu_cores.push( new CPU("CPU1", memory, 0x1000) );
+		//cpu_cores.push( new CPU("CPU2", memory, 0x2000) );
+		//cpu_cores.push( new CPU("CPU3", memory, 0x3000) );
 		
 		// Create more cores
 		// They will all run the code at 0x2000, frame buffer test
 		for (var i = 0; i < TEST_CORES; i++)
-			cpu_cores.push( CPU("CPUX" + i, memory, 0x2000) );
+			cpu_cores.push( new CPU("CPUX" + i, memory, 0x1000) );
 		
 		// Setup instruction tables
 		for (var i = 0; i < cpu_cores.length; i++)
@@ -104,14 +105,13 @@ function System()
 		// Create an assembler
 		assembler = Assembler(memory);
 		
-		// Assemble with inst table from CPU 0
-		var inst_table = cpu_cores[0].get_inst_table();
-		
 		// Assemble some code into memory
-		assembler.assemble(inst_table, game,		0x1000);
-		assembler.assemble(inst_table, fb_test,		0x2000);
-		assembler.assemble(inst_table, fb_test1,	0x3000);
-		assembler.assemble(inst_table, fb_test2,	0x4000);
+		
+		assembler.assemble(CPU.inst_table, fb_test,		0x1000);
+		//assembler.assemble(CPU.inst_table, fb_test1,	0x2000);
+		//assembler.assemble(CPU.inst_table, fb_test2,	0x3000);
+		//assembler.assemble(CPU.inst_table, game,		0x4000);
+	
 	
 		// Init cores
 		for (var i = 0; i < cpu_cores.length; i++)
