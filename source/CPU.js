@@ -51,7 +51,8 @@ class CPU
 			
 		// Stack
 		//this.stack = null;			// Stack
-	
+
+		// CPU State
 		this.state = {stack:null, ip:0, sp:0, a:0, x:0, y:0, e:0, l:0, g:0, p:0, fb_udpate:0};
 		
 	
