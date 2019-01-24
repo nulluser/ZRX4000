@@ -85,10 +85,10 @@ function System()
 		frame_buffer = FrameBuffer(FB_ADDR);
 		frame_buffer.init(memory);
 
-		// Setup IO. Need to mae module
+		// Setup IO. Need to make module
 		io_init();
 
-		CPU.setup_inst(); 		// Load instructions
+		CPU.configure(); 		// Load instructions
 		
 		// Create some cores
 		cpu_cores.push( new CPU("CPU1", memory, 0x1000) );
@@ -98,22 +98,17 @@ function System()
 		// Create more cores
 		// They will all run the code at 0x2000, frame buffer test
 		for (var i = 0; i < TEST_CORES; i++)
-			cpu_cores.push( new CPU("CPUX" + i, memory, 0x1000) );
-		
-		// Setup instruction tables
-		//for (var i = 0; i < cpu_cores.length; i++)
-//			cpu_cores[i].pre_init();
+			cpu_cores.push( new CPU("CPUX" + i, memory, 0x1000) );		
 		
 		// Create an assembler
 		assembler = Assembler(memory);
 		
 		// Assemble some code into memory
 		
-		assembler.assemble(CPU.inst_table, fb_test,		0x1000);
+		assembler.assemble(CPU, fb_test,		0x1000);
 		//assembler.assemble(CPU.inst_table, fb_test1,	0x2000);
 		//assembler.assemble(CPU.inst_table, fb_test2,	0x3000);
 		//assembler.assemble(CPU.inst_table, game,		0x4000);
-	
 	
 		// Init cores
 		for (var i = 0; i < cpu_cores.length; i++)

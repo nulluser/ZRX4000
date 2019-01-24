@@ -36,12 +36,12 @@ function Assembler(memory)
 	/* Assembler */
 			
 	// Assemble a string
-	function assemble(inst_table, str, prog_addr)
+	function assemble(cpu, str, prog_addr)
 	{
 		main.log(`[${name}] Assemble\n`);
 		//main.log(str);
 
-		cur_inst_table = inst_table;
+		cur_inst_table = cpu.inst_table;
 
 		if (cur_inst_table == null)
 		{

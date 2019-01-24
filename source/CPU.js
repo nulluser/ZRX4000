@@ -234,7 +234,7 @@ class CPU
 
 	
 	// Setup Instruction types
-	static setup_inst()	
+	static configure()	
 	{
 		main.log_console(this.MODULE + "Inst table config\n");	
 		
