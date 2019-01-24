@@ -87,16 +87,9 @@ class CPU
 		
 		//setInterval(update, UPDATE_RATE); //  Internal update control
 	}
-			
-	// Return for assembler
-
-	 get_inst_table()
-	{
-		return CPU.inst_table;
-	}
 	
 	// Get number of updates and reset
-	 get_inst_count()
+	get_inst_count()
 	{
 		var c = this.inst_updates;
 		this.inst_updates = 0;
@@ -108,9 +101,11 @@ class CPU
 	*/			
 			
 	// Core Update
-	 update()
+	update()
 	{
 		if (!this.prog_loaded) return;
+		
+		this.inst_updates = 0;
 		
 		var r = this.step(CPU.NUM_INST); // Process a chunk
 		
@@ -125,10 +120,12 @@ class CPU
 		}
 		
 		this.state.fb_update = 0;
+		
+		return this.inst_updates;
 	}
 		
 	// Load a test program
-	 load_program()
+	load_program()
 	{
 		this.reset_flags();
 		
@@ -138,7 +135,7 @@ class CPU
 	}
 	
 	// Display current stack
-	 dump_stack()
+	dump_stack()
 	{
 		main.log_console(`Stack:\n`);
 		for (var i = 0; i < CPU.DUMP_STACK_SZ; i++)
@@ -189,7 +186,7 @@ class CPU
 	}		
 	
 	// Get name of address
-	 find_addr_name(i)
+	find_addr_name(i)
 	{
 		/*return ("");
 
@@ -205,7 +202,7 @@ class CPU
 	}
 	
 	// Clear all flags
-	 reset_flags()
+	reset_flags()
 	{
 		main.log_console(`Reset Flags ${hex_word(this.start_addr)}`);
 		
@@ -221,16 +218,16 @@ class CPU
 	}
 
 	// Push byte to stack
-	 static push_byte(s, v) { s.stack[s.sp++] = v; } 
+	static push_byte(s, v) { s.stack[s.sp++] = v; } 
 	
 	// Pop byte from stack
-	 static pop_byte(s, v) { return s.stack[--s.sp]; } 
+	static pop_byte(s, v) { return s.stack[--s.sp]; } 
 		
 	// Push word to stack. Pushed as low byte, high byte
-	 static push_word(s, v) { CPU.push_byte(s, v&0xff); CPU.push_byte(s, v>>8); } 
+	static push_word(s, v) { CPU.push_byte(s, v&0xff); CPU.push_byte(s, v>>8); } 
 	
 	// Pop word from stack. Poped as high byte, low byte
-	 static pop_word(s, v) { var v = CPU.pop_byte(s,0)<<8; v |= CPU.pop_byte(s,0); return v; } 
+	static pop_word(s, v) { var v = CPU.pop_byte(s,0)<<8; v |= CPU.pop_byte(s,0); return v; } 
 
 	
 	// Setup Instruction types
@@ -305,68 +302,69 @@ class CPU
 	
 	 static compare(s, v1, v2) { s.e = v1 == v2;s. l = v1 < v2; s.g = v1 > v2; }
 	
-	 static inst_nop(m, s) {};
+	 static inst_nop (m, s) {};
 	
-   	 static inst_jmp(m, s) {s.ip = m.get_word(s.ip) - 2;}
-	 static inst_jsr(m, s) {CPU.push_word(s, s.ip+2); s.ip = m.get_word(s.ip) - 2;}
-	 static inst_ret(m, s) {s.ip = CPU.pop_word(s); }
-	 static inst_jl(m, s)  {if (s.l) s.ip = m.get_word(s.ip) - 2;} 
-	 static inst_je(m, s)  {if (s.e) s.ip = m.get_word(s.ip) - 2;} 
-	 static inst_jne(m, s) {if (!s.e)s.ip = m.get_word(s.ip) - 2;} 
-	 static inst_jg(m, s)  {if (s.g) s.ip = m.get_word(s.ip) - 2;} 
+   	 static inst_jmp (m, s) {s.ip = m.get_word(s.ip) - 2;}
+	 static inst_jsr (m, s) {CPU.push_word(s, s.ip+2); s.ip = m.get_word(s.ip) - 2;}
+	 static inst_ret (m, s) {s.ip = CPU.pop_word(s); }
+	 static inst_jl  (m, s) {if (s.l) s.ip = m.get_word(s.ip) - 2;} 
+	 static inst_je  (m, s) {if (s.e) s.ip = m.get_word(s.ip) - 2;} 
+	 static inst_jne (m, s) {if (!s.e)s.ip = m.get_word(s.ip) - 2;} 
+	 static inst_jg  (m, s) {if (s.g) s.ip = m.get_word(s.ip) - 2;} 
 
-	 static inst_sp(m, s)  {s.p = m.get_word(s.ip)} 
-	 static inst_lp(m, s)  {m.set_byte(s.p, s.a);} 
-	 static inst_gp(m, s)  {s.a = m.get_byte(s.p);} 
-	 static inst_ip(m, s)  {s.p++;} 
-	 static inst_ap(m, s)  {s.p+=s.a;} 
+	 static inst_sp  (m, s) {s.p = m.get_word(s.ip)} 
+	 static inst_lp  (m, s) {m.set_byte(s.p, s.a);} 
+	 static inst_gp  (m, s) {s.a = m.get_byte(s.p);} 
+	 static inst_ip  (m, s) {s.p++;} 
+	 static inst_ap  (m, s) {s.p+=s.a;}  
 
-	 static inst_lda(m, s) {s.a = m.get_byte(s.ip);}
-	 static inst_ldx(m, s) {s.x = m.get_byte(s.ip);}
-	 static inst_ldy(m, s) {s.y = m.get_byte(s.ip);}
+	 static inst_lda (m, s) {s.a = m.get_byte(s.ip);}
+	 static inst_ldx (m, s) {s.x = m.get_byte(s.ip);}
+	 static inst_ldy (m, s) {s.y = m.get_byte(s.ip);}
 	
-	 static inst_ldm(m, s) {s.a = m.get_byte(m.get_word(s.ip));} 
-	 static inst_sta(m, s) {m.set_byte(m.get_word(s.ip), s.a);}
-	 static inst_stx(m, s) {m.set_byte(m.get_word(s.ip), s.x);}
-	 static inst_sty(m, s) {m.set_byte(m.get_word(s.ip), s.y);}
+	 static inst_ldm (m, s) {s.a = m.get_byte(m.get_word(s.ip));} 
+	 static inst_sta (m, s) {m.set_byte(m.get_word(s.ip), s.a);}
+	 static inst_stx (m, s) {m.set_byte(m.get_word(s.ip), s.x);}
+	 static inst_sty (m, s) {m.set_byte(m.get_word(s.ip), s.y);}
 
-	 static inst_tax(m, s) {s.x = s.a;}
-	 static inst_txa(m, s) {s.a = s.x;}
-	 static inst_tay(m, s) {s.x = s.a;}
-	 static inst_tya(m, s) {s.a = s.x;}
+	 static inst_tax (m, s) {s.x = s.a;}
+	 static inst_txa (m, s) {s.a = s.x;}
+	 static inst_tay (m, s) {s.x = s.a;}
+	 static inst_tya (m, s) {s.a = s.x;}
 	
-	 static inst_push(m, s){CPU.push_byte(s, s.a);} 
-	 static inst_pop(m, s) {s.a = CPU.pop_byte(s);} 
-	 static inst_cmp(m, s) {CPU.compare(s, s.a, m.get_byte(s.ip));} 
-	 static inst_cpx(m, s) {CPU.compare(s, s.x, m.get_byte(s.ip));} 
-	 static inst_cpy(m, s) {CPU.compare(s, s.y, m.get_byte(s.ip));} 
+	 static inst_push(m, s) {CPU.push_byte(s, s.a);} 
+	 static inst_pop (m, s) {s.a = CPU.pop_byte(s);} 
+	 static inst_cmp (m, s) {CPU.compare(s, s.a, m.get_byte(s.ip));} 
+	 static inst_cpx (m, s) {CPU.compare(s, s.x, m.get_byte(s.ip));} 
+	 static inst_cpy (m, s) {CPU.compare(s, s.y, m.get_byte(s.ip));} 
 		
-	 static inst_inc(m, s) {s.a = (s.a + 1) & 0xff;}
-	 static inst_dec(m, s) {s.a = (s.a - 1) & 0xff;}
-	 static inst_inx(m, s) {s.x = (s.x + 1) & 0xff;}
-	 static inst_dex(m, s) {s.x = (s.x - 1) & 0xff;}
-	 static inst_iny(m, s) {s.y = (s.y + 1) & 0xff;}
-	 static inst_dey(m, s) {s.y = (s.y - 1) & 0xff;}
+	 static inst_inc (m, s) {s.a = (s.a + 1) & 0xff;}
+	 static inst_dec (m, s) {s.a = (s.a - 1) & 0xff;}
+	 static inst_inx (m, s) {s.x = (s.x + 1) & 0xff;}
+	 static inst_dex (m, s) {s.x = (s.x - 1) & 0xff;}
+	 static inst_iny (m, s) {s.y = (s.y + 1) & 0xff;}
+	 static inst_dey (m, s) {s.y = (s.y - 1) & 0xff;}
 	
-	 static inst_and(m, s) {s.a = s.a & m.get_byte(s.ip);} 
-	 static inst_or(m, s)  {s.a = s.a | m.get_byte(s.ip);} 
-	 static inst_xor(m, s) {s.a = s.a ^ m.get_byte(s.ip);} 
-	 static inst_not(m, s) {s.a = ~s.a;} 
-	 static inst_shl(m, s) {s.a = s.a << m.get_byte(s.ip);} 
-	 static inst_shr(m, s) {s.a = s.a >> m.get_byte(s.ip);} 
-	 static inst_add(m, s) {s.a = (s.a + m.get_byte(s.ip)) & 0xff;}
-	 static inst_sub(m, s) {s.a = (s.a - m.get_byte(s.ip)) & 0xff;}
-	 static inst_mul(m, s) {s.a = (s.a * m.get_byte(s.ip)) & 0xff;}
-	 static inst_div(m, s) {s.a = (s.a / m.get_byte(s.ip)) & 0xff;}
-	 static inst_neg(m, s) {s.a = (65536 - s.a) & 0xff;}
+	 static inst_and (m, s) {s.a = s.a & m.get_byte(s.ip);} 
+	 static inst_or  (m, s) {s.a = s.a | m.get_byte(s.ip);} 
+	 static inst_xor (m, s) {s.a = s.a ^ m.get_byte(s.ip);} 
+	 static inst_not (m, s) {s.a = ~s.a;} 
+	 static inst_shl (m, s) {s.a = s.a << m.get_byte(s.ip);} 
+	 static inst_shr (m, s) {s.a = s.a >> m.get_byte(s.ip);} 
+	 static inst_add (m, s) {s.a = (s.a + m.get_byte(s.ip)) & 0xff;}
+	 static inst_sub (m, s) {s.a = (s.a - m.get_byte(s.ip)) & 0xff;}
+	 static inst_mul (m, s) {s.a = (s.a * m.get_byte(s.ip)) & 0xff;}
+	 static inst_div (m, s) {s.a = (s.a / m.get_byte(s.ip)) & 0xff;}
+	 static inst_neg (m, s) {s.a = (65536 - s.a) & 0xff;}
 	
-	 static inst_rnd(m, s) {s.a = (Math.random() * 255) & 0xff;} 
-	 static inst_sync(m, s){s.fb_update=1;} 
-	 static inst_out(m, s) {main.log_output(get_char(s.a));} 
-	 static inst_end(m, s) {s.ip = CPU.IP_END;} 
+	 static inst_rnd (m, s) {s.a = (Math.random() * 255) & 0xff;} 
+	 static inst_sync(m, s) {s.fb_update=1;} 
+	 static inst_out (m, s) {main.log_output(get_char(s.a));} 
+	 static inst_end (m, s) {s.ip = CPU.IP_END;} 
 	 
 
 	// Process count number of instructions
+	// Return number procesed or 0
 	step(count)
 	{
 		//console.log("Step: " + count);

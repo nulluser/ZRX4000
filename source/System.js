@@ -50,10 +50,13 @@ function System()
 	var memory = null;				// Shared memory
 	var cpu_cores = [];				// CPU Cores
 	var frame_buffer = null;		// Frame buffer
-	var fb_updates = 0;				// Number of FB updates since last second
-
+	
 	// Assemble
 	var assembler = null;			// Assembler object
+
+	// Status
+	var total_inst = 0;				// Instructions in since last second
+	var fb_updates = 0;				// Number of FB updates since last second
 	
 
 	/* 
@@ -142,14 +145,9 @@ function System()
 	// Second Update
 	function second()
 	{
-		var total_inst = 0;
-
-		// Compute total instructions since last
-		for (var i = 0; i < cpu_cores.length; i++)
-			total_inst += cpu_cores[i].get_inst_count();
-		
 		main.log_console(`${MODULE} Framerate: ${fb_updates} Total inst: ${total_inst}\n` );
-
+		
+		total_inst = 0;
 		fb_updates = 0;
 	}	
 	
@@ -159,7 +157,7 @@ function System()
 		//console.log("Update");
 		
 		for (var i = 0; i < cpu_cores.length; i++)
-			cpu_cores[i].update();
+			total_inst += cpu_cores[i].update();
 	
 		frame_buffer.update();
 		
