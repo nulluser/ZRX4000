@@ -43,7 +43,7 @@ class CPU
 		CPU.IP_END = -1;			// Flag to indicate halted
 			
 
-		// Varibles
+		// Variables
 			
 		this.name = name;
 		this.memory = memory;
