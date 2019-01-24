@@ -88,14 +88,7 @@ class CPU
 		//setInterval(update, UPDATE_RATE); //  Internal update control
 	}
 	
-	// Get number of updates and reset
-	get_inst_count()
-	{
-		var c = this.inst_updates;
-		this.inst_updates = 0;
-		return c;
-	}			
-			
+	
 	/* 
 		Private
 	*/			
