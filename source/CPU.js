@@ -22,54 +22,50 @@ class CPU
 		
 		// Debugging
 		CPU.DEBUG = 0;					// Slow down for debugging
-		CPU.DUMP_MEM = 0;					// Dump memory on load
+		CPU.DUMP_MEM = 0;				// Dump memory on load
 		CPU.DUMP_MEM_SIZE = 0x100;		// Dump Size
 		CPU.DUMP_STACK = 0;				// Displat stack during execution
-		CPU.DUMP_STACK_SZ = 0x10;			// Number of stack elements to display
+		CPU.DUMP_STACK_SZ = 0x10;		// Number of stack elements to display
 
 		// Config	
 		CPU.NUM_INST = CPU.DEBUG ? 1 : 1000000;	// Instructions per update
-		CPU.STACK_SIZE = 32768;				// Stack space size
-		//const UPDATE_RATE = 1;				// CPU Update
+		CPU.STACK_SIZE = 32768;			// Stack space size
+		//const UPDATE_RATE = 1;		// CPU Update
 		
 		// Errors
-		CPU.ERROR_UI = 0x01;		// Unknown instruction
+		CPU.ERROR_UI = 0x01;			// Unknown instruction
 
 		// Instruction modes
-		CPU.M_NONE = 0x00;		// No Mode (test)
-		CPU.M_IMM  = 0x01;		// Immediate mode
-		CPU.IP_END = -1;			// Flag to indicate halted
+		CPU.M_NONE = 0x00;				// No Mode (test)
+		CPU.M_IMM  = 0x01;				// Immediate mode
+		CPU.IP_END = -1;				// Flag to indicate halted
 
 		/* Variables */
 		this.name = name;
 		this.memory = memory;
 		this.start_addr = start_addr;
-			
-		// Stack
-		//this.stack = null;			// Stack
 
 		// CPU State
-		this.state = {stack:null, ip:0, sp:0, a:0, x:0, y:0, e:0, l:0, g:0, p:0, fb_udpate:0};
-		
-	
-		/*// Registers
-		this.ip = 0;					// Instruction pointer
-		this.sp = 0;					// Stack pointer
-		this.a = 0;					// Accum
-		this.x = 0;					// X
-		this.y = 0;					// Y
-		this.e = 0;					// Equal
-		this.l = 0;					// Less
-		this.g = 0;					// Greater
-		this.p = 0;					// Memory pointer*/
+		this.state = 
+		{
+			stack:null, 			// Local stack
+			ip:0, 					// Instruction pointer
+			sp:0,					// Stack Pointer
+			a:0,					// Accum
+			x:0, 					// X
+			y:0, 					// Y
+			e:0, 					// E // TODO Need combine into FLAGS register
+			l:0, 					// L
+			g:0, 					// G
+			p:0, 					// Pointer
+			fb_udpate:0				// Frame buffer update 
+		};
 	
 		// Monitoring
 		this.inst_updates = 0;		// Instruction updates
-		//this.fb_update = 0;			// True if frame buffer needs updating
 		this.prog_loaded = false;	// True if loaded
 		
 		main.log_console(`Loaded CPU ${name} at ${hex_word(start_addr)}\n`);
-		
 	}
 	
 	/* 
@@ -136,7 +132,7 @@ class CPU
 		this.ip = this.IP_END;
 	}
 	
-		// Pad inst for display 
+	// Pad inst for display 
 	pad_inst(str) {var pad = "    ";return (str + pad).substring(0, pad.length);}
 	
 	
@@ -159,9 +155,9 @@ class CPU
 		// Inst name
 		main.log_console(this.pad_inst(inst.text) + "   ");
 
-		if (inst.s == 0)	main.log_console(this.pad_inst("")); 
-		if (inst.s == 1)	main.log_console(this.pad_inst(hex_byte(this.memory.get_byte(i+1)))); 
-		if (inst.s == 2)	main.log_console(hex_word(this.memory.get_word(i+1)));
+		if (inst.s == 0) main.log_console(this.pad_inst("")); 
+		if (inst.s == 1) main.log_console(this.pad_inst(hex_byte(this.memory.get_byte(i+1)))); 
+		if (inst.s == 2) main.log_console(hex_word(this.memory.get_word(i+1)));
 	
 		if (flags)
 		{
@@ -169,31 +165,12 @@ class CPU
 							 `   P: ${hex_word(this.state.p)} E: ${(this.state.e?1:0)} G: ${(this.state.g?1:0)} L ${(this.state.l?1:0)} ` );
 		}
 		
-		//log(address_table);
-		//log_console("[" + find_addr_name(i) + "]");
-		
-		i += inst.s + 1;	
+		//i += inst.s + 1;	// Advance ip
 	
 		main.log_console("\n");
-		return i;
+		//return i;
 	}		
-	
-	// Get name of address
-	find_addr_name(i)
-	{
-		/*return ("");
-
-		// See if we know address
-		for (var j = 0; j < address_table.length; j++)
-		{
-			log(address_table[j].label  + " " + hex_word(address_table[j].addr) + " Target " + hex_word(i));
-			
-			if (address_table[j].addr == i)
-				return address_table[j].label;
-		}*/
-		return "";
-	}
-	
+		
 	// Clear all flags
 	reset_flags()
 	{
@@ -223,7 +200,7 @@ class CPU
 	static pop_word(s, v) { var v = CPU.pop_byte(s,0)<<8; v |= CPU.pop_byte(s,0); return v; } 
 
 	
-	// Setup Instruction types
+	// Setup Instruction table. called once. Static
 	static configure()	
 	{
 		main.log_console(this.MODULE + "Inst table config\n");	
