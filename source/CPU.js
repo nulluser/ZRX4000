@@ -87,6 +87,11 @@ class CPU
 		CPU.inst_table[0x64] = {text:"INY", m:CPU.M_NONE, s:0, f:CPU.inst_iny }; // Increment Y
 		CPU.inst_table[0x65] = {text:"DEY", m:CPU.M_NONE, s:0, f:CPU.inst_dey }; // Decrement Y
 
+		CPU.inst_table[0x70] = {text:"TSA", m:CPU.M_NONE, s:0, f:CPU.inst_tsa }; // Transfer Status to A
+		CPU.inst_table[0x71] = {text:"TAS", m:CPU.M_NONE, s:0, f:CPU.inst_tas }; // Transfer A to Status
+		CPU.inst_table[0x72] = {text:"CLC", m:CPU.M_NONE, s:0, f:CPU.inst_clc }; // Clear Carry
+		CPU.inst_table[0x73] = {text:"SET", m:CPU.M_NONE, s:0, f:CPU.inst_sec }; // Set Carry
+		
 		CPU.inst_table[0x80] = {text:"OUT", m:CPU.M_NONE, s:0, f:CPU.inst_out }; // Output A to console
 
 		CPU.inst_table[0x90] = {text:"AND", m:CPU.M_NONE, s:1, f:CPU.inst_and }; // Set A to A & immediate
@@ -132,6 +137,7 @@ class CPU
 			e:0, 					// E // TODO Need combine into FLAGS register
 			l:0, 					// L
 			g:0, 					// G
+			c:0,					// Carry
 			p:0, 					// Pointer
 			fb_udpate:0				// Frame buffer update 
 		};
@@ -167,7 +173,7 @@ class CPU
 			{
 				var a = this.state.ip-1;
 				main.log_console(`${CPU.MODULE} ${this.name} Undefined inst at [${hex_word(a)}] = (${hex_byte(this.memory.get_byte(a))}) \n`);
-				program_loaded = 0;
+				this.program_loaded = 0;
 				this.ip = CPU.IP_END;
 			} else
 			if (r == CPU.ERROR_UIF)
@@ -317,17 +323,23 @@ class CPU
 	static inst_iny (m, s) {s.y = (s.y + 1) & 0xff;}
 	static inst_dey (m, s) {s.y = (s.y - 1) & 0xff;}
 	
+	static inst_tsa(m, s) {s.a = (s.e << 3) | (s.l << 2) | (s.g << 1) | s.c;}
+    static inst_tas(m, s) {s.e = s.a >> 3; s.l = (s.a >> 2) & 1; s.g = (s.a >> 1) & 1; s.c = s.a & 1; }
+    static inst_clc(m, s) {s.c = 0;}
+    static inst_sec(m, s) {s.c = 1;}
+	
 	static inst_and (m, s) {s.a = s.a & m.get_byte(s.ip);} 
 	static inst_or  (m, s) {s.a = s.a | m.get_byte(s.ip);} 
 	static inst_xor (m, s) {s.a = s.a ^ m.get_byte(s.ip);} 
 	static inst_not (m, s) {s.a = ~s.a;} 
 	static inst_shl (m, s) {s.a = s.a << m.get_byte(s.ip);} 
 	static inst_shr (m, s) {s.a = s.a >> m.get_byte(s.ip);} 
-	static inst_add (m, s) {s.a = (s.a + m.get_byte(s.ip)) & 0xff;}
-	static inst_addp (m, s){s.p = (s.p + m.get_byte(s.ip)) & 0xffff;}
+	
+	static inst_add(m, s) {var sum = s.a + m.get_byte(s.ip); s.a = sum & 0xff; s.c = sum &0x0100}
+	static inst_addp(m, s) {s.p = (s.p + m.get_byte(s.ip)) & 0xffff;}
 	static inst_addx(m, s) {s.x = (s.x + s.a) & 0xff;}
 	static inst_sub (m, s) {s.a = (s.a - m.get_byte(s.ip)) & 0xff;}
-	static inst_subp (m, s){s.p = (s.p - m.get_byte(s.ip)) & 0xffff;}
+	static inst_subp(m, s) {s.p = (s.p - m.get_byte(s.ip)) & 0xffff;}
 	static inst_mul (m, s) {s.a = (s.a * m.get_byte(s.ip)) & 0xff;}
 	static inst_div (m, s) {s.a = (s.a / m.get_byte(s.ip)) & 0xff;}
 	static inst_neg (m, s) {s.a = (65536 - s.a) & 0xff;}
