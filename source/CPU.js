@@ -103,10 +103,9 @@ class CPU
 		CPU.inst_table[0xB0] = {text:"RND", m:CPU.M_NONE, s:0, f:CPU.inst_rnd }; // Random number
 		CPU.inst_table[0xC0] = {text:"SYNC",m:CPU.M_NONE, s:0, f:CPU.inst_sync}; // Render framebuffer
 		CPU.inst_table[0xFF] = {text:"END", m:CPU.M_NONE, s:0, f:CPU.inst_end }; // Halt*/
-		
-		console.log(CPU.inst_table);
 	}	
 	
+	// Instance Constructor
 	constructor (name, memory, start_addr)
 	{
 		/* Variables */

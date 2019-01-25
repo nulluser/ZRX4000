@@ -57,7 +57,7 @@ function FrameBuffer(base_addr)
 	// Init
 	function init(memory)
 	{
-		main.log(MODULE + "Init\n");	
+		main.log_console(`${MODULE} Init\n`);	
 				
 		// Get context
 		canvas = document.getElementById("fbuffer");

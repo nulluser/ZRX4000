@@ -45,7 +45,7 @@ function Memory()
 	// Init
 	function init()
 	{
-		main.log(MODULE + "Init\n");	
+		main.log_console(`${MODULE} Init\n`);	
 	
 		data = new Uint8Array(MEM_SIZE);		// Get Memory	
 	}
@@ -55,7 +55,7 @@ function Memory()
 	//  That is, the frame buffer will see address 0x0001 instead of 0xD001
 	function add_hook(start, length, readcb, writecb)
 	{
-		main.log(`${MODULE} Hooking address ${hex_word(start)}-${hex_word(start+length)}\n`);
+		main.log_console(`${MODULE} Hooking address ${hex_word(start)}-${hex_word(start+length)}\n`);
 		
 		addr_hooks.push({start:start, length:length, read:readcb, write:writecb});
 	}		
@@ -126,7 +126,7 @@ function Memory()
 	// Show Disassembly
 	function dump(start, length)
 	{
-		main.log_console("[Memory Dump]\n");
+		main.log_console(`${MODULE} [Memory Dump]\n`);
 				
 		var i = start;
 		
@@ -150,8 +150,6 @@ function Memory()
 			i += 16;
 		}
 
-		
-		main.log_console("[End of Memory]\n");
 	}	
 	
 	// Public Interface

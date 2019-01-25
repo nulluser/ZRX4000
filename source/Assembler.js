@@ -38,7 +38,7 @@ function Assembler(memory)
 	// Assemble a string
 	function assemble(cpu, str, prog_addr)
 	{
-		main.log(`[${name}] Assemble\n`);
+		main.log_console(`${MODULE} [Assemble]\n`);
 		//main.log(str);
 
 		cur_inst_table = cpu.inst_table;
@@ -83,13 +83,14 @@ function Assembler(memory)
 		}
 		
 		// Show address table
-		main.log_console(`${MODULE} Address Table\n`);
+		main.log_console(`${MODULE} [Address Table]\n`);
 		for (var i = 0; i < address_table.length; i++)
 			main.log_console(`${MODULE}   ${address_table[i].label.padEnd(16)} ${hex_word(address_table[i].addr)}\n`);
 
+		/* For Debugging 
 		main.log_console(`${MODULE} Resolve Table\n`);
 		for (var i = 0; i < resolve_table.length; i++)
-			main.log_console(`${MODULE}   ${resolve_table[i].label.padEnd(16)} ${hex_word(resolve_table[i].addr)} \n`);
+			main.log_console(`${MODULE}   ${resolve_table[i].label.padEnd(16)} ${hex_word(resolve_table[i].addr)} \n`);*/
 				
 		
 		if (cur_inst_table != undefined)				
@@ -269,8 +270,6 @@ function Assembler(memory)
 		// Disassemble and consume operands
 		while(i <= end) 
 			i = disassemble_inst(i);
-		
-		main.log_console(`${MODULE} [End of Disassembly]\n`);
 	}
 	
 	// Disassemble single inst 
