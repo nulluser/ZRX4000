@@ -32,8 +32,8 @@ function System()
 {
 	const MODULE = "[System]    ";
 
-	//const UPDATE_RATE = 1;			// CPU Update (ms)
-	const UPDATE_RATE = 1;			// CPU Update (ms)
+	//const UPDATE_RATE = 1;		// CPU Update (ms)
+	const UPDATE_RATE = 0;			// CPU Update (ms)
 	const SECOND_RATE = 1000;		// Status update
 
 	// Memory
@@ -44,7 +44,7 @@ function System()
 	const PROG3_ADDRESS = 0x3000;	// Program address for cpu1
 	
 	// Cores
-	const TEST_CORES = 10;			// Number of cores
+	const TEST_CORES = 0;			// Number of cores
 	
 	// Devices
 	var memory = null;				// Shared memory
@@ -57,7 +57,7 @@ function System()
 	// Status
 	var total_inst = 0;				// Instructions in since last second
 	var fb_updates = 0;				// Number of FB updates since last second
-	
+	var update_enable = 0;			// Allow cores to run if true
 
 	/* 
 		Public 
@@ -66,7 +66,7 @@ function System()
 	// Core CPU init 
 	function init()
 	{
-		main.log_console(MODULE + "Init\n");	
+		main.log_console(`${MODULE} Init\n`);	
 
 		connect_devices();
 		
@@ -78,7 +78,12 @@ function System()
 	// Hook devices into system
 	function connect_devices()
 	{
-		main.log(MODULE + "Connecting Devices");
+		main.log_console(`${MODULE} Connecting Devices\n`);
+				
+
+		// Setup CPU
+		CPU.configure(); 		// Load instructions				
+				
 				
 		// Setup main memory
 		memory = Memory();
@@ -90,8 +95,18 @@ function System()
 
 		// Setup IO. Need to make module
 		io_init();
-
-		CPU.configure(); 		// Load instructions
+		
+		// Create an assembler
+		assembler = Assembler(memory);
+		
+		// Assemble some code into memory
+		
+		assembler.assemble(CPU, fb_test,		0x1000);
+		//assembler.assemble(CPU, inst_test,		0x1000);
+		
+		//assembler.assemble(CPU.inst_table, fb_test1,	0x2000);
+		//assembler.assemble(CPU.inst_table, fb_test2,	0x3000);
+		//assembler.assemble(CPU.inst_table, game,		0x4000);		
 		
 		// Create some cores
 		cpu_cores.push( new CPU("CPU1", memory, 0x1000) );
@@ -103,19 +118,11 @@ function System()
 		for (var i = 0; i < TEST_CORES; i++)
 			cpu_cores.push( new CPU("CPUX" + i, memory, 0x1000) );		
 		
-		// Create an assembler
-		assembler = Assembler(memory);
+		update_enable = true;
 		
-		// Assemble some code into memory
-		
-		assembler.assemble(CPU, fb_test,		0x1000);
-		//assembler.assemble(CPU.inst_table, fb_test1,	0x2000);
-		//assembler.assemble(CPU.inst_table, fb_test2,	0x3000);
-		//assembler.assemble(CPU.inst_table, game,		0x4000);
-	
 		// Init cores
-		for (var i = 0; i < cpu_cores.length; i++)
-			cpu_cores[i].init();
+		//for (var i = 0; i < cpu_cores.length; i++)
+//			cpu_cores[i].init();
 	}	
 			
 	// Setup IO Devices
@@ -145,7 +152,7 @@ function System()
 	// Second Update
 	function second()
 	{
-		main.log_console(`${MODULE} Framerate: ${fb_updates} Total inst: ${total_inst}\n` );
+		main.log_console(`${MODULE} Frame Rate: ${fb_updates} Inst Rate: ${total_inst}\n` );
 		
 		total_inst = 0;
 		fb_updates = 0;
@@ -154,6 +161,8 @@ function System()
 	// Core Update
 	function update()
 	{
+		if (!update_enable) return;
+
 		//console.log("Update");
 		
 		for (var i = 0; i < cpu_cores.length; i++)

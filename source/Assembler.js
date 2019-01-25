@@ -83,13 +83,13 @@ function Assembler(memory)
 		}
 		
 		// Show address table
-		main.log_console("Address Table\n");
+		main.log_console(`${MODULE} Address Table\n`);
 		for (var i = 0; i < address_table.length; i++)
-			main.log_console(` ${address_table[i].label} ${hex_word(address_table[i].addr)}\n`);
+			main.log_console(`${MODULE}   ${address_table[i].label.padEnd(16)} ${hex_word(address_table[i].addr)}\n`);
 
-		main.log_console("Resolve Table\n");
+		main.log_console(`${MODULE} Resolve Table\n`);
 		for (var i = 0; i < resolve_table.length; i++)
-			main.log_console(` ${resolve_table[i].label} ${hex_word(resolve_table[i].addr)} \n`);
+			main.log_console(`${MODULE}   ${resolve_table[i].label.padEnd(16)} ${hex_word(resolve_table[i].addr)} \n`);
 				
 		
 		if (cur_inst_table != undefined)				
@@ -262,7 +262,7 @@ function Assembler(memory)
 	// Show Disassembly
 	function disassemble(start, end)
 	{
-		main.log_console("[Disassembly]\n");
+		main.log_console(`${MODULE} [Disassembly]\n`);
 				
 		var i = start;
 		
@@ -270,13 +270,13 @@ function Assembler(memory)
 		while(i <= end) 
 			i = disassemble_inst(i);
 		
-		main.log_console("[End of Disassembly]\n");
+		main.log_console(`${MODULE} [End of Disassembly]\n`);
 	}
 	
 	// Disassemble single inst 
 	function disassemble_inst(i, flags)
 	{
-		main.log_console(hex_word(i) + " "); // Address
+		main.log_console(`${MODULE}   ${hex_word(i)}    `); // Address
 
 		var inst = memory.get_byte(i);	// instruction
 
@@ -288,18 +288,13 @@ function Assembler(memory)
 		}
 		
 		// Inst name
-		main.log_console(pad_inst(cur_inst_table[inst].text) + "   ");
+		main.log_console(cur_inst_table[inst].text.padEnd(6) + "   ");
 
-		if (cur_inst_table[inst].s == 0)	main.log_console(pad_inst("")); 
-		if (cur_inst_table[inst].s == 1)	main.log_console(pad_inst(hex_byte(memory.get_byte(i+1)))); 
+		if (cur_inst_table[inst].s == 0)	main.log_console("    "); 
+		if (cur_inst_table[inst].s == 1)	main.log_console(hex_byte(memory.get_byte(i+1)).padEnd(4)); 
 		if (cur_inst_table[inst].s == 2)	main.log_console(hex_word(memory.get_word(i+1)));
 	
-		if (flags)
-		{
-			main.log_console(`  IP: ${hex_word(ip)} A: ${hex_byte(a)} + SP: ${hex_word(sp)} ` + 
-							 `   P: ${hex_word(p)} E: ${(e?1:0)} G: ${(g?1:0)} L ${(l?1:0)} ` );
-		}
-		
+	
 		//log(address_table);
 		//log_console("[" + find_addr_name(i) + "]");
 		

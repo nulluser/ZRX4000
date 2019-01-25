@@ -337,7 +337,7 @@ getkeylp:
 			GP
 			CMP		00
 			JNE		getkeydone:
-			IP
+			INP
 			
 			POP
 			ADD		1
@@ -364,7 +364,7 @@ printstr:	GP
 			JE		printdone:
 		
 			OUT
-			IP
+			INP
 			JMP		printstr:
 		
 printdone:		
@@ -381,7 +381,7 @@ graphtest:	LDA		00
 		
 loop:		RND
 			LP
-			IP
+			INP
 		
 			LDM 	counter1:		// Increment counter low byte
 			ADD 	1
@@ -453,7 +453,7 @@ graphtest:	LDA		00
 loop:		
 			RND
 			LP
-			IP
+			INP
 		
 			LDM 	counter1:		// Increment counter low byte
 			ADD 	1
@@ -510,7 +510,7 @@ loop:
 			
 			
 			LP
-			IP
+			INP
 		
 			LDM 	counter1:		// Increment counter low byte
 			ADD 	1
@@ -561,7 +561,7 @@ loop:
 			
 
 			LP
-			IP
+			INP
 		
 			LDM 	counter1:		// Increment counter low byte
 			ADD 	1
@@ -587,4 +587,41 @@ counter2:	DB		0
 
 `;
 /* End of Program */
+
+
+
+
+
+
+// Generic testing
+var inst_test = 
+ `
+  
+ lp:		PUSH
+			POP
+			PUSH
+			POP
+			PUSH
+			POP
+			PUSH
+			POP
+			PUSH
+			POP
+			PUSH
+			POP
+			TAX
+			TXA
+ 
+ 
+ 
+			JMP lp:
+
+
+`
+
+
+
+
+
+
 

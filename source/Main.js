@@ -14,7 +14,7 @@
 // Main system object
 var main = (function () 
 {
-	var MODULE = "[Main]";
+	var MODULE = "[Main]       ";
 	
 	// Private 
 	const MAX_LEN = 250; 			// Need weird size because of spaces, TODO fix
