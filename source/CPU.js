@@ -334,14 +334,15 @@ class CPU
 	 
 
 	// Process count number of instructions
-	// Return number procesed or 0
+	// Return error code or 0
 	step(count)
 	{
 		//console.log("Step: " + count);
 	
-		var exec = count;									// Keep track of remaining
+		var exec = count; // Keep track of remaining
 		
-		while(exec-- && !this.state.fb_update && this.state.ip != CPU.IP_END)			// Loop until done, or SYNC or HALT
+		// Loop until done, or SYNC or HALT
+		while(exec-- && !this.state.fb_update && this.state.ip != CPU.IP_END)
 		{
 			if (CPU.DEBUG) this.disassemble_inst(this.state.ip, 1);				// Dissassemble
 			
@@ -350,13 +351,13 @@ class CPU
 			//main.log(inst);
 			//main.log(hex_byte(this.memory.get_byte(this.state.ip-1)));
 			
-			if (inst === undefined) return(CPU.ERROR_UI);		// Catch undefined
+			if (inst === undefined) return(CPU.ERROR_UI);			// Catch undefined
 
-			if (inst.f != null) inst.f(this.memory, this.state);					// Execute
+			if (inst.f != null) inst.f(this.memory, this.state);	// Execute
 
 			if (CPU.DUMP_STACK) this.dump_stack();					// Display stack dump
 
-			this.state.ip += inst.s;									// Consume operands, next ip
+			this.state.ip += inst.s;								// Consume operands, next ip
 		}
 		
 		this.inst_updates += count - exec;
