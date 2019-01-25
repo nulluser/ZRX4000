@@ -93,8 +93,8 @@ function Assembler(memory)
 			main.log_console(`${MODULE}   ${resolve_table[i].label.padEnd(16)} ${hex_word(resolve_table[i].addr)} \n`);*/
 				
 		
-		if (cur_inst_table != undefined)				
-			disassemble(prog_addr, prog_addr + 0x20);
+		//if (cur_inst_table != undefined)				
+			disassemble(main.log, prog_addr, prog_addr + 0x40);
 	}
 	
 	/* 
@@ -261,7 +261,7 @@ function Assembler(memory)
 	/* Disassembler */
 	
 	// Show Disassembly
-	function disassemble(start, end)
+	function disassemble(target, start, end)
 	{
 		main.log_console(`${MODULE} [Disassembly]\n`);
 				
@@ -269,29 +269,31 @@ function Assembler(memory)
 		
 		// Disassemble and consume operands
 		while(i <= end) 
-			i = disassemble_inst(i);
+			i = disassemble_inst(target, i);
 	}
 	
 	// Disassemble single inst 
-	function disassemble_inst(i, flags)
+	function disassemble_inst(target, i, flags)
 	{
-		main.log_console(`${MODULE}   ${hex_word(i)}    `); // Address
+		var out = "";
+
+		out += `${MODULE}   ${hex_word(i)}    `; // Address
 
 		var inst = memory.get_byte(i);	// instruction
-
+		
 		//main.log_console(hex_byte(inst));
 		if (cur_inst_table[inst] == undefined)
 		{
-			main.log_console(`Undefined inst: [${hex_word(i)}] ${inst}\n`);
+			out += `Undefined inst: [${hex_word(i)}] ${inst}\n`;
 			return;
 		}
 		
 		// Inst name
-		main.log_console(cur_inst_table[inst].text.padEnd(6) + "   ");
+		out += cur_inst_table[inst].text.padEnd(6) + "   ";
 
-		if (cur_inst_table[inst].s == 0)	main.log_console("    "); 
-		if (cur_inst_table[inst].s == 1)	main.log_console(hex_byte(memory.get_byte(i+1)).padEnd(4)); 
-		if (cur_inst_table[inst].s == 2)	main.log_console(hex_word(memory.get_word(i+1)));
+		if (cur_inst_table[inst].s == 0)	out += "    "; 
+		if (cur_inst_table[inst].s == 1)	out += hex_byte(memory.get_byte(i+1)).padEnd(4); 
+		if (cur_inst_table[inst].s == 2)	out += hex_word(memory.get_word(i+1));
 	
 	
 		//log(address_table);
@@ -299,7 +301,9 @@ function Assembler(memory)
 		
 		i += cur_inst_table[inst].s + 1;	
 	
-		main.log_console("\n");
+		out += "\n";
+		
+		target(out);
 		return i;
 	}		
 	

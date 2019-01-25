@@ -622,6 +622,227 @@ var inst_test =
 
 
 
+// scroll vert
+var vert_scroll = 
+ `
+ 
+ // Test frame buffer. Remove for game
+ lp:		JSR	fire:
+			JMP lp:
+			
+
+/* Test code */
+fire:		LDA		00
+			STA		counter1:	// Low byte
+			STA		counter2:	// High byte
+			
+
+
+		
+		SP		D000		// Set pointer to frame buffer base
+		
+		
+loop:		
+			addp	40
+			gp
+			subp	40
+			
+			LP
+			INP
+			
+			
+			LDM 	counter1:		// Increment counter low byte
+			ADD 	1
+			STA 	counter1:
+		
+			CMP 	00				// Rolled over?
+			JNE 	loop:
+		
+			LDM 	counter2: 		// High byte counter
+			ADD 	1
+			STA 	counter2:
+			CMP 	10
+			JL 		loop:
+	
+	
+	
+	
+	
+	
+
+			// Seed lower line
+
+			SP		DFC0		// Set pointer to frame buffer base
+			lda 	40
+fire1:	
+
+
+			PUSH
+			RND
+			LP
+			INP
+			POP
+			
+			DEC
+			CMP		0
+
+
+			JNE 	fire1:
+			
+	
+	
+	
+	
+	
+	
+	
+	
+			SYNC					// Sync framebuffer
+			RET
+			
+
+// Program data
+					
+counter1:	DB		0				// Counters for graphics test
+counter2:	DB		0
+
+`;
+/* End of Program */
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Fire
+var fire = 
+ `
+ 
+ // Test frame buffer. Remove for game
+ lp:		JSR	fire:
+			JMP lp:
+			
+
+/* Test code */
+fire:		LDA		00
+			STA		counter1:	// Low byte
+			STA		counter2:	// High byte
+			
+
+
+		
+		SP		D000		// Set pointer to frame buffer base
+		
+		
+loop:		
+			lda 	0
+			tax
+			
+			addp	40				
+			gp						// Get pixel one row down
+			
+			shr 1
+			addx
+			subp	40
+
+		
+			gp						// Get pixel at current
+			shr 1
+			addx
+			
+			
+
+
+			
+
+			txa
+			
+			cmp 0
+			JE	loop1:
+			
+			dec
+			
+			
+loop1:
+			
+			LP
+			INP
+			
+			
+			LDM 	counter1:		// Increment counter low byte
+			ADD 	1
+			STA 	counter1:
+		
+			CMP 	00				// Rolled over?
+			JNE 	loop:
+		
+			LDM 	counter2: 		// High byte counter
+			ADD 	1
+			STA 	counter2:
+			CMP 	10
+			JL 		loop:
+	
+	
+	
+	
+	
+	
+
+			// Seed lower line
+
+			SP		DFC0		// Set pointer to frame buffer base
+			lda 	40
+fire1:	
+
+
+			PUSH
+			RND
+			LP
+			INP
+			POP
+			
+			DEC
+			CMP		0
+
+
+			JNE 	fire1:
+			
+	
+	
+	
+	
+	
+	
+	
+	
+			SYNC					// Sync framebuffer
+			RET
+			
+
+// Program data
+					
+counter1:	DB		0				// Counters for graphics test
+counter2:	DB		0
+
+`;
+/* End of Program */
+	
 
 
 

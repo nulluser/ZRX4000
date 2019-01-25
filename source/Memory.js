@@ -86,6 +86,14 @@ function Memory()
 	// Get byte from memory
 	function get_byte(a) 
 	{ 
+		if (!(a >= 0 && a <= 65536))
+		{
+			main.log_console("Mem access error " + a);
+			return 0; 
+		}
+		
+	
+	
 		var h = find_hook(a);
 		
 		if (h != null)

@@ -61,16 +61,17 @@ class CPU
 		CPU.inst_table[0x24] = {text:"STA", m:CPU.M_NONE, s:2, f:CPU.inst_sta }; // Store A at memory location
 		CPU.inst_table[0x25] = {text:"STX", m:CPU.M_NONE, s:2, f:CPU.inst_stx }; // Store X at memory location
 		CPU.inst_table[0x26] = {text:"STY", m:CPU.M_NONE, s:2, f:CPU.inst_sty }; // Store Y at memory location
-		CPU.inst_table[0x27] = {text:"TXA", m:CPU.M_NONE, s:2, f:CPU.inst_txa }; // Transfre X to A
-		CPU.inst_table[0x28] = {text:"TAX", m:CPU.M_NONE, s:2, f:CPU.inst_tax }; // Transfer A to X
-		CPU.inst_table[0x29] = {text:"TYA", m:CPU.M_NONE, s:2, f:CPU.inst_tya }; // Transfre Y to A
-		CPU.inst_table[0x2A] = {text:"TAY", m:CPU.M_NONE, s:2, f:CPU.inst_tay }; // Transfer A to Y
+		CPU.inst_table[0x27] = {text:"TXA", m:CPU.M_NONE, s:0, f:CPU.inst_txa }; // Transfre X to A
+		CPU.inst_table[0x28] = {text:"TAX", m:CPU.M_NONE, s:0, f:CPU.inst_tax }; // Transfer A to X
+		CPU.inst_table[0x29] = {text:"TYA", m:CPU.M_NONE, s:0, f:CPU.inst_tya }; // Transfre Y to A
+		CPU.inst_table[0x2A] = {text:"TAY", m:CPU.M_NONE, s:0, f:CPU.inst_tay }; // Transfer A to Y
 		
 		CPU.inst_table[0x30] = {text:"SP",  m:CPU.M_NONE, s:2, f:CPU.inst_sp  }; // Set pointer address
 		CPU.inst_table[0x31] = {text:"LP",  m:CPU.M_NONE, s:0, f:CPU.inst_lp  }; // Load A into memory at pointer
 		CPU.inst_table[0x32] = {text:"GP",  m:CPU.M_NONE, s:0, f:CPU.inst_gp  }; // Get value at pointer
 		CPU.inst_table[0x33] = {text:"INP", m:CPU.M_NONE, s:0, f:CPU.inst_inp  }; // Increment pointer
-		CPU.inst_table[0x34] = {text:"AP",  m:CPU.M_NONE, s:0, f:CPU.inst_ap  }; // Add a to pointer
+		CPU.inst_table[0x34] = {text:"DEP", m:CPU.M_NONE, s:0, f:CPU.inst_dep  }; // Increment pointer
+		CPU.inst_table[0x35] = {text:"AP",  m:CPU.M_NONE, s:0, f:CPU.inst_ap  }; // Add a to pointer
 
 		CPU.inst_table[0x40] = {text:"PUSH",m:CPU.M_NONE, s:0, f:CPU.inst_push}; // Push A into stack
 		CPU.inst_table[0x41] = {text:"POP", m:CPU.M_NONE, s:0, f:CPU.inst_pop }; // Pop from stack into A
@@ -79,12 +80,12 @@ class CPU
 		CPU.inst_table[0x51] = {text:"CPX", m:CPU.M_NONE, s:1, f:CPU.inst_cpx }; // Compare with X
 		CPU.inst_table[0x52] = {text:"CPY", m:CPU.M_NONE, s:1, f:CPU.inst_cpy }; // Compare with Y
 
-		CPU.inst_table[0x60] = {text:"INC", m:CPU.M_NONE, s:1, f:CPU.inst_inc }; // Increment A
-		CPU.inst_table[0x61] = {text:"DEC", m:CPU.M_NONE, s:1, f:CPU.inst_dec }; // Decrement A
-		CPU.inst_table[0x62] = {text:"INX", m:CPU.M_NONE, s:1, f:CPU.inst_inx }; // Increment X
-		CPU.inst_table[0x63] = {text:"DEX", m:CPU.M_NONE, s:1, f:CPU.inst_dex }; // Decrement X
-		CPU.inst_table[0x64] = {text:"INY", m:CPU.M_NONE, s:1, f:CPU.inst_iny }; // Increment Y
-		CPU.inst_table[0x65] = {text:"DEY", m:CPU.M_NONE, s:1, f:CPU.inst_dey }; // Decrement Y
+		CPU.inst_table[0x60] = {text:"INC", m:CPU.M_NONE, s:0, f:CPU.inst_inc }; // Increment A
+		CPU.inst_table[0x61] = {text:"DEC", m:CPU.M_NONE, s:0, f:CPU.inst_dec }; // Decrement A
+		CPU.inst_table[0x62] = {text:"INX", m:CPU.M_NONE, s:0, f:CPU.inst_inx }; // Increment X
+		CPU.inst_table[0x63] = {text:"DEX", m:CPU.M_NONE, s:0, f:CPU.inst_dex }; // Decrement X
+		CPU.inst_table[0x64] = {text:"INY", m:CPU.M_NONE, s:0, f:CPU.inst_iny }; // Increment Y
+		CPU.inst_table[0x65] = {text:"DEY", m:CPU.M_NONE, s:0, f:CPU.inst_dey }; // Decrement Y
 
 		CPU.inst_table[0x80] = {text:"OUT", m:CPU.M_NONE, s:0, f:CPU.inst_out }; // Output A to console
 
@@ -95,11 +96,17 @@ class CPU
 		CPU.inst_table[0x94] = {text:"SHL", m:CPU.M_NONE, s:1, f:CPU.inst_shl }; // Shift A left by immediate bits
 		CPU.inst_table[0x95] = {text:"SHR", m:CPU.M_NONE, s:1, f:CPU.inst_shr }; // Shift A right by the immediate bits
 		CPU.inst_table[0x96] = {text:"ADD", m:CPU.M_NONE, s:1, f:CPU.inst_add }; // Set A to A + operand Z_256
-		CPU.inst_table[0x97] = {text:"SUB", m:CPU.M_NONE, s:1, f:CPU.inst_sub }; // Set A to A + operand Z_256
-		CPU.inst_table[0x98] = {text:"MUL", m:CPU.M_NONE, s:1, f:CPU.inst_mul }; // Set A to A * operand Z_256
-		CPU.inst_table[0x99] = {text:"DIV", m:CPU.M_NONE, s:1, f:CPU.inst_div }; // Set A to A / operand Z_256
-		CPU.inst_table[0x9A] = {text:"NEG", m:CPU.M_NONE, s:0, f:CPU.inst_neg }; // Set A to the additive inverse of A in Z_256
+		CPU.inst_table[0x97] = {text:"ADDP", m:CPU.M_NONE, s:1, f:CPU.inst_addp }; // Set A to A + X Z_256
+		CPU.inst_table[0x98] = {text:"ADDX", m:CPU.M_NONE, s:0, f:CPU.inst_addx }; // Set A to A + X Z_256
+		CPU.inst_table[0x99] = {text:"SUB", m:CPU.M_NONE, s:1, f:CPU.inst_sub }; // Set A to A + operand Z_256
+		CPU.inst_table[0x9A] = {text:"SUBP", m:CPU.M_NONE, s:1, f:CPU.inst_subp }; // Set A to A + operand Z_256
+		CPU.inst_table[0x9B] = {text:"MUL", m:CPU.M_NONE, s:1, f:CPU.inst_mul }; // Set A to A * operand Z_256
+		CPU.inst_table[0x9C] = {text:"DIV", m:CPU.M_NONE, s:1, f:CPU.inst_div }; // Set A to A / operand Z_256
+		CPU.inst_table[0x9D] = {text:"NEG", m:CPU.M_NONE, s:0, f:CPU.inst_neg }; // Set A to the additive inverse of A in Z_256
 
+		
+		
+		
 		CPU.inst_table[0xB0] = {text:"RND", m:CPU.M_NONE, s:0, f:CPU.inst_rnd }; // Random number
 		CPU.inst_table[0xC0] = {text:"SYNC",m:CPU.M_NONE, s:0, f:CPU.inst_sync}; // Render framebuffer
 		CPU.inst_table[0xFF] = {text:"END", m:CPU.M_NONE, s:0, f:CPU.inst_end }; // Halt*/
@@ -159,13 +166,14 @@ class CPU
 			if (r == CPU.ERROR_UI)
 			{
 				var a = this.state.ip-1;
-				main.log_console(`Undefined inst at [${hex_word(a)}] = (${hex_byte(this.memory.get_byte(a))}) \n`);
+				main.log_console(`${CPU.MODULE} ${this.name} Undefined inst at [${hex_word(a)}] = (${hex_byte(this.memory.get_byte(a))}) \n`);
+				program_loaded = 0;
 				this.ip = CPU.IP_END;
 			} else
 			if (r == CPU.ERROR_UIF)
 			{
 				var a = this.state.ip-1;
-				main.log_console(`Undefined inst function at [${hex_word(a)}] = (${hex_byte(this.memory.get_byte(a))}) \n`);
+				main.log_console(`${CPU.MODULE} ${this.name} Undefined inst function at [${hex_word(a)}] = (${hex_byte(this.memory.get_byte(a))}) \n`);
 				this.ip = CPU.IP_END;
 			}			
 		}
@@ -191,6 +199,7 @@ class CPU
 	
 	disassemble_inst(i, flags)
 	{
+		
 		main.log_console(hex_word(i) + " "); // Address
 
 		var inst_byte = this.memory.get_byte(i);	// instruction
@@ -214,8 +223,14 @@ class CPU
 	
 		if (flags)
 		{
-			main.log_console(`  IP: ${hex_word(this.state.ip)} A: ${hex_byte(this.state.a)} SP: ${hex_word(this.state.sp)} ` + 
-							 `   P: ${hex_word(this.state.p)} E: ${(this.state.e?1:0)} G: ${(this.state.g?1:0)} L ${(this.state.l?1:0)} ` );
+			main.log_console(`  IP: ${hex_word(this.state.ip)} `+
+							`X: ${hex_byte(this.state.x)} ` + 
+							`Y: ${hex_byte(this.state.y)} ` + 
+							`S: ${hex_word(this.state.a)} ` + 
+							`P: ${hex_word(this.state.p)} ` +
+							`E: ${(this.state.e?1:0)} ` + 
+							`G: ${(this.state.g?1:0)} ` + 
+							`L ${(this.state.l?1:0)} ` );
 		}
 		
 		//i += inst.s + 1;	// Advance ip
@@ -270,7 +285,9 @@ class CPU
 	static inst_sp  (m, s) {s.p = m.get_word(s.ip)} 
 	static inst_lp  (m, s) {m.set_byte(s.p, s.a);} 
 	static inst_gp  (m, s) {s.a = m.get_byte(s.p);} 
-	static inst_inp  (m, s) {s.p++;} 
+	static inst_inp (m, s) {s.p = (s.p+1) & 0xffff;} 
+	static inst_dep (m, s) {s.p = (s.p-1) & 0xffff;} 
+	
 	static inst_ap  (m, s) {s.p+=s.a;}  
 
 	static inst_lda (m, s) {s.a = m.get_byte(s.ip);}
@@ -307,7 +324,10 @@ class CPU
 	static inst_shl (m, s) {s.a = s.a << m.get_byte(s.ip);} 
 	static inst_shr (m, s) {s.a = s.a >> m.get_byte(s.ip);} 
 	static inst_add (m, s) {s.a = (s.a + m.get_byte(s.ip)) & 0xff;}
+	static inst_addp (m, s){s.p = (s.p + m.get_byte(s.ip)) & 0xffff;}
+	static inst_addx(m, s) {s.x = (s.x + s.a) & 0xff;}
 	static inst_sub (m, s) {s.a = (s.a - m.get_byte(s.ip)) & 0xff;}
+	static inst_subp (m, s){s.p = (s.p - m.get_byte(s.ip)) & 0xffff;}
 	static inst_mul (m, s) {s.a = (s.a * m.get_byte(s.ip)) & 0xff;}
 	static inst_div (m, s) {s.a = (s.a / m.get_byte(s.ip)) & 0xff;}
 	static inst_neg (m, s) {s.a = (65536 - s.a) & 0xff;}
@@ -324,10 +344,18 @@ class CPU
 	{
 		var exec = 0; // Keep track of remaining
 		
+
+		
+		var end =  Date.now() + 10;
+		
 		// Loop until done, or SYNC or HALT
-		while(++exec < num_exec && !this.state.fb_update && this.state.ip != CPU.IP_END)
+		//while(exec < num_exec && !this.state.fb_update && this.state.ip != CPU.IP_END && Date.now() < end)
+		while(this.state.ip != CPU.IP_END && Date.now() < end)
 		{
-			if (CPU.DEBUG) this.disassemble_inst(this.state.ip, 1);				// Dissassemble
+			if (CPU.DEBUG) 
+			{
+				this.disassemble_inst(this.state.ip, 1);				// Dissassemble
+			}
 			
 			var inst = CPU.inst_table[this.memory.get_byte(this.state.ip++)];	// Get next inst
 			
@@ -339,9 +367,11 @@ class CPU
 			if (CPU.DUMP_STACK) this.dump_stack();					// Display stack dump
 
 			this.state.ip += inst.s;								// Consume operands, next ip
+			exec++;
 		}
 		
 		this.inst_updates += exec;
+		
 		
 		return 0;
 	}

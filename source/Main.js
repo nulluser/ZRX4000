@@ -17,7 +17,7 @@ var main = (function ()
 	var MODULE = "[Main]       ";
 	
 	// Private 
-	const MAX_LEN = 250; 			// Need weird size because of spaces, TODO fix
+	const MAX_LEN = 300; 			// Need weird size because of spaces, TODO fix
 	const MAX_LINES = 50;			// Log lines
 	const RENDER_TIME = 500;		// DOM logging is slow, throttle
 	
@@ -171,6 +171,9 @@ var main = (function ()
 	function log(item)
 	{
 		debug_window.console.log(item);		
+		
+		item = replace_all(item, "\n", "");
+		
 		console.log(item);		
 	}
 	

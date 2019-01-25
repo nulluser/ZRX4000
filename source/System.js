@@ -32,7 +32,7 @@ function System()
 {
 	const MODULE = "[System]    ";
 
-	//const UPDATE_RATE = 1;		// CPU Update (ms)
+	//const UPDATE_RATE = 10;		// CPU Update (ms)
 	const UPDATE_RATE = 0;			// CPU Update (ms)
 	const SECOND_RATE = 1000;		// Status update
 
@@ -44,7 +44,7 @@ function System()
 	const PROG3_ADDRESS = 0x3000;	// Program address for cpu1
 	
 	// Cores
-	const TEST_CORES = 0;			// Number of cores
+	const TEST_CORES = 1;			// Number of cores
 	
 	// Devices
 	var memory = null;				// Shared memory
@@ -101,7 +101,9 @@ function System()
 		
 		// Assemble some code into memory
 		
-		assembler.assemble(CPU, fb_test,		0x1000);
+		//assembler.assemble(CPU, fb_test,		0x1000);
+		assembler.assemble(CPU, fire,		0x1000);
+		
 		//assembler.assemble(CPU, inst_test,		0x1000);
 		
 		//assembler.assemble(CPU.inst_table, fb_test1,	0x2000);
