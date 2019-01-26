@@ -16,6 +16,9 @@ function Assembler(memory)
 	// Private 
 	
 	// Assembler
+	
+	const DEBUG = 0;			// True for assembly debug
+	
 	var address_table = [];  	// Stores known addresses
 	var resolve_table = [];  	// Stores address that need resolved
 	var cur_token = 0;			// Index of current token
@@ -143,16 +146,17 @@ function Assembler(memory)
 	// Assemble token
 	function assemble_token(token, next)
 	{
-		//main.log("Token[" + cur_token + "]: " + token);
+		if (DEBUG)
+			main.log("Token[" + cur_token + "]: " + token + "\n");
 			
-		if (token == "") return;
+		if (token == "") return 0;
 			
 		// See if token is label
 		// TODO Need to also detect label with semicolon
 		if (is_label(token))
 		{
 			assemble_label(token);	
-			return;
+			return 0;
 		}
 
 		// See if token is instruction	
@@ -162,15 +166,20 @@ function Assembler(memory)
 		if (inst != -1)
 		{
 			assemble_inst(inst, next);
-			return;
+			return 0;
 		}
 		
 		// See if token is a define byte
 		if (token == "DB")
+		{
 			assemble_db(next);
+			return 0;
+		}
 			
+			
+		main.log_console(`Invalid Token: (${token})\n`);
 		
-		//main.log_console("Invalid Token: " + token + "\n");
+		return 1;
 	}
 	
 	
@@ -303,10 +312,16 @@ function Assembler(memory)
 		}
 		
 		if (is_literal(next))
+		{
 			add_byte(ascii(next[1]));
-		else
-			add_byte(parseInt(next, 16));
+			
+		} else
+		if (is_immediate(next))
+		{
+			add_byte(parseInt(next.substr(1, next.length-1), 16)); 
+		}
 		
+		cur_token += 1;
 		
 		return 0;
 	}

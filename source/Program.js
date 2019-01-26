@@ -8,6 +8,84 @@
 "use strict";
 
 
+// Generic FB test
+// This one generally works
+var fb_test = 
+ `
+ 
+main:		JSR		graphfill:			// Fill screen with random
+mainloop:	JSR		graphinc:			// Modify 
+			JMP		mainloop:
+			
+
+/* Fill Graph with random */
+graphfill:	SP		D000			//  pointer to frame buffer base
+		
+			LDX		#0
+			LDY		#0
+		
+graphfill1:		
+			RND						// Random fill
+			LP
+			INP
+			
+			INX 
+			CPX 	#00				// Rolled over?
+			JNE 	graphfill1:
+			
+			INY
+			CPY 	#10
+			JL 		graphfill1:		// Not done?
+	
+			SYNC					// Sync framebuffer
+			RET
+						
+			
+/* Increment values */
+graphinc:	SP		D000			//  Pointer to frame buffer base
+		
+			LDX		#0
+			LDY		#0
+		
+graphinc1:		
+			GP
+			INC
+			LP
+			INP
+		
+			INX
+		
+			CPX 	#00				// Rolled over?
+			JNE 	graphinc1:
+		
+			INY
+			CPY 	#10
+			JL 		graphinc1:
+	
+			SYNC					// Sync framebuffer
+			RET
+			
+			
+`;
+/* End of Program */
+	
+
+
+
+
+
+
+
+
+
+/******** FROM HERE DOWN OLD INSTRUCTIONS NOT UPDATED ****************/
+
+
+
+
+
+
+
 var game = 
  /*Start of program*/
  
@@ -434,99 +512,7 @@ startstring:						// Startup String
 
 	
 	
-// Generic FB test
-// This one generally works
-var fb_test = 
- `
- 
- // Test frame buffer. Remove for game
- 
-			JSR	graphfill:
- 
- lp:		
- 			JSR	graphinc:
-			JMP lp:
-			
 
-/* Test code */
-graphfill:	LDA		#00
-			STA		counter1:	// Low byte
-			STA		counter2:	// High byte
-			
-			SP		D000		//  pointer to frame buffer base
-		
-graphfill1:		
-			RND
-			LP
-			INP
-		
-			LDA 	counter1:		// Increment counter low byte
-			ADD 	#1
-			STA 	counter1:
-		
-			CMP 	#00				// Rolled over?
-			JNE 	graphfill1:
-		
-			LDA 	counter2: 		// High byte counter
-			ADD 	#1
-			STA 	counter2:
-			CMP 	#10
-			JL 		graphfill1:
-	
-			SYNC					// Sync framebuffer
-			RET
-			
-			
-/* Test code */
-graphinc:	LDA		#00
-			STA		counter1:	// Low byte
-			STA		counter2:	// High byte
-			
-			SP		D000		//  pointer to frame buffer base
-		
-graphinc1:		
-			GP
-			INC
-			LP
-			INP
-		
-			LDA 	counter1:		// Increment counter low byte
-			ADD 	#1
-			STA 	counter1:
-		
-			CMP 	#00				// Rolled over?
-			JNE 	graphinc1:
-		
-			LDA 	counter2: 		// High byte counter
-			ADD 	#1
-			STA 	counter2:
-			CMP 	#10
-			JL 		graphinc1:
-	
-			SYNC					// Sync framebuffer
-			RET
-			
-			
-			
-			
-						
-			
-			
-			
-			
-			
-			
-			
-			
-
-// Program data
-					
-counter1:	DB		0				// Counters for graphics test
-counter2:	DB		0
-
-`;
-/* End of Program */
-	
 	
 	
 	
