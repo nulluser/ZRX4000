@@ -127,9 +127,8 @@ class CPU
 		
 	}	
 	
-	// load inst slot
+	// Load inst slot
 	static INST(op, text, mode, func){ CPU.inst_table[op] = {text:text, m:mode, f:func}; };
-
 	
 	
 	// Instance Constructor
@@ -214,10 +213,7 @@ class CPU
 			main.log_console(` [${i}] ${hex_byte(stack[i])}\n`);
 		this.ip = this.IP_END;
 	}
-	
-	// Pad inst for display 
-	pad_inst(str) {var pad = "    ";return (str + pad).substring(0, pad.length);}
-	
+		
 	// Disassemble single instruction
 	disassemble_inst(i, flags)
 	{
@@ -236,11 +232,11 @@ class CPU
 		}
 		
 		// Inst name
-		main.log_console(this.pad_inst(inst.text) + "   ");
+		main.log_console(inst.text.padEnd(6) + "   ");
 
-		if (inst.s == 0) main.log_console(this.pad_inst("")); 
-		if (inst.s == 1) main.log_console(this.pad_inst(hex_byte(this.memory.get_byte(i+1)))); 
-		if (inst.s == 2) main.log_console(hex_word(this.memory.get_word(i+1)));
+		if (inst.s == 0) main.log_console("      "); 
+		if (inst.s == 1) main.log_console(hex_byte(this.memory.get_byte(i+1)).padEnd(6)); 
+		if (inst.s == 2) main.log_console(hex_word(this.memory.get_word(i+1)).padEnd(6));
 	
 		if (flags)
 		{
