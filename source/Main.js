@@ -18,12 +18,15 @@ var main = (function ()
 	
 	// Private 
 	const MAX_LEN = 300; 			// Need weird size because of spaces, TODO fix
-	const MAX_LINES = 50;			// Log lines
-	const RENDER_TIME = 500;		// DOM logging is slow, throttle
+	const MAX_LINES = 100;			// Log lines
+	const RENDER_TIME = 250;		// DOM logging is slow, throttle
 	
-	var debug_window;
-	var output_log = [];
-	var console_log = [];
+	var debug_window;				// Popup debug window
+	var output_log = [];			// Program output log
+	var output_log_change = false;	// True if render needed
+	var console_log = [];			// Console log
+	var console_log_change = false;	// True if render needed
+	
 	var system = null;
 	
 	function init()
@@ -35,7 +38,7 @@ var main = (function ()
 		log_output("[Program Output]\n");
 		log_console(MODULE + "Init\n");
 		
-		render_log();
+		render_logs();
 		
 		system = System();
 		system.init();
@@ -43,7 +46,7 @@ var main = (function ()
 		//setInterval(function(){log_console("tesss222ssst " + t + "\n");t++; }, 100);
 		//setInterval(function(){log_output("tewwst " + t + "\n");t++; }, 100);
 		
-		setInterval(render_log, RENDER_TIME);
+		setInterval(render_logs, RENDER_TIME);
 	}
 	
 	
@@ -103,22 +106,44 @@ var main = (function ()
 		
 		return d;
 	}
-
-	// Display current log
-	function render_log()
+	
+	
+	function scroll_down()
 	{
-		var out = debug_window.document.getElementById("output");
+		var scrollingElement = (debug_window.document.scrollingElement || debug_window.document.body);
+		scrollingElement.scrollTop = scrollingElement.scrollHeight;
+	}
+	
+	
+	
+	function render_log(lines, divn)
+	{
+		var out = debug_window.document.getElementById(divn);
 		
 		out.innerHTML = "";
 		
-		for  (var i = 0; i < output_log.length; i++)
-			out.innerHTML += output_log[i] + "<br>";
-		
-		var con = debug_window.document.getElementById("console");
-		
-		con.innerHTML = "";
-		for  (var i = 0; i < console_log.length; i++)
-			con.innerHTML += " " + console_log[i] + "<br>";
+		for  (var i = 0; i < lines.length; i++)
+			out.innerHTML += lines[i] + "<br>";
+
+		//scroll_down();
+	}	
+	
+	
+	
+	// Display current log
+	function render_logs()
+	{
+		if (output_log_change)
+		{
+			render_log(output_log, "output")
+			output_log_change = false;
+		}
+
+		if (console_log_change)
+		{
+			render_log(console_log, "console")
+			console_log_change = false;
+		}
 	}
 
 	// True if newline in string
@@ -182,6 +207,7 @@ var main = (function ()
 	{
 		//return;
 		add_log(output_log, item + "");
+		output_log_change = true;
 	}
 
 	// Log console messages
@@ -189,6 +215,7 @@ var main = (function ()
 	{
 		//return;
 		add_log(console_log, item + "");
+		console_log_change = true;
 		
 		//console.log(item);
 	}

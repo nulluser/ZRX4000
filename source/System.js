@@ -44,7 +44,7 @@ function System()
 	const PROG3_ADDRESS = 0x3000;	// Program address for cpu1
 	
 	// Cores
-	const TEST_CORES = 6;			// Number of cores
+	const TEST_CORES = 0;			// Number of cores
 	
 	// Devices
 	var memory = null;				// Shared memory

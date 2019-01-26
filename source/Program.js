@@ -435,41 +435,88 @@ startstring:						// Startup String
 	
 	
 // Generic FB test
+// This one generally works
 var fb_test = 
  `
  
  // Test frame buffer. Remove for game
- lp:		JSR	graphtest:
+ 
+			JSR	graphfill:
+ 
+ lp:		
+ 			JSR	graphinc:
 			JMP lp:
 			
 
 /* Test code */
-graphtest:	LDA		00
+graphfill:	LDA		#00
 			STA		counter1:	// Low byte
 			STA		counter2:	// High byte
 			
-			SP		D000		// Set pointer to frame buffer base
+			SP		D000		//  pointer to frame buffer base
 		
-loop:		
+graphfill1:		
 			RND
 			LP
 			INP
 		
-			LDM 	counter1:		// Increment counter low byte
-			ADD 	1
+			LDA 	counter1:		// Increment counter low byte
+			ADD 	#1
 			STA 	counter1:
 		
-			CMP 	00				// Rolled over?
-			JNE 	loop:
+			CMP 	#00				// Rolled over?
+			JNE 	graphfill1:
 		
-			LDM 	counter2: 		// High byte counter
-			ADD 	1
+			LDA 	counter2: 		// High byte counter
+			ADD 	#1
 			STA 	counter2:
-			CMP 	10
-			JL 		loop:
+			CMP 	#10
+			JL 		graphfill1:
 	
 			SYNC					// Sync framebuffer
 			RET
+			
+			
+/* Test code */
+graphinc:	LDA		#00
+			STA		counter1:	// Low byte
+			STA		counter2:	// High byte
+			
+			SP		D000		//  pointer to frame buffer base
+		
+graphinc1:		
+			GP
+			INC
+			LP
+			INP
+		
+			LDA 	counter1:		// Increment counter low byte
+			ADD 	#1
+			STA 	counter1:
+		
+			CMP 	#00				// Rolled over?
+			JNE 	graphinc1:
+		
+			LDA 	counter2: 		// High byte counter
+			ADD 	#1
+			STA 	counter2:
+			CMP 	#10
+			JL 		graphinc1:
+	
+			SYNC					// Sync framebuffer
+			RET
+			
+			
+			
+			
+						
+			
+			
+			
+			
+			
+			
+			
 			
 
 // Program data

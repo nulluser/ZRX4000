@@ -20,7 +20,8 @@ function Assembler(memory)
 	var resolve_table = [];  	// Stores address that need resolved
 	var cur_token = 0;			// Index of current token
 	var cur_prog = 0;			// Location of next load 
-	var cur_inst_table = null;	// Instruction table of current cpu
+	
+	var cur_cpu = null;
 		
 	/* 
 		Public 
@@ -41,29 +42,51 @@ function Assembler(memory)
 		main.log_console(`${MODULE} [Assemble]\n`);
 		//main.log(str);
 
-		cur_inst_table = cpu.inst_table;
-
-		if (cur_inst_table == null)
-		{
-			main.log_console("No inst table");
-		}
+		cur_cpu = CPU;
 		
 		cur_prog = prog_addr;
 		
 		address_table = [];
 		resolve_table = [];
 
-		// Need to strip comments
-		// Split into lines
-		//var lines = str.split(/\r?\n/); 
-		//var i =0;
-		//while (i < lines.length)
-		//			assemble_line(lines[i++], address_table, resolve_table);
+		var lines = str.split(/[\n]+/);
 		
-		// Find tokens
-		// Split on space, tab, comma and new line
-		// This is dirty, can detect comments and garbage as tokens
-		var tokens = str.split(/[ ,\t\n]+/);
+		var tokens = [];//str.split(/[ ,\t\n]+/);
+		
+		//console.log(lines);
+		
+		// Break lines apart into tokens
+		for (var i = 0; i < lines.length; i++)
+		{
+			if (lines[i] == "") continue; // blank lines
+			
+			// Remove comments
+			var p = lines[i].indexOf("//");
+			if (p != -1) lines[i] = lines[i].substr(0, p);
+
+			// Add to token list
+			var t = lines[i].split(/[ \t]+/);
+			for (var j = 0; j < t.length; j++)
+			{	
+				if (t[j].length > 0)
+					tokens.push(t[j]);
+			}
+		}
+		
+		
+		// Remove block comments
+		for (var i = 0; i < tokens.length; i++)
+		{
+			if (tokens[i] == "/*")
+			{
+				while(tokens[i] != "*/" && i < tokens.length) 
+					tokens.splice(i, 1);
+
+				tokens.splice(i, 1);			// Remove */
+			}
+		}
+		
+		//console.log(tokens);
 				
 		// Assemble entire program
 		assemble_tokens(tokens);
@@ -93,8 +116,9 @@ function Assembler(memory)
 			main.log_console(`${MODULE}   ${resolve_table[i].label.padEnd(16)} ${hex_word(resolve_table[i].addr)} \n`);*/
 				
 		
-		//if (cur_inst_table != undefined)				
-			disassemble(main.log, prog_addr, prog_addr + 0x40);
+		///disassemble(main.log, prog_addr, prog_addr + 0x40);
+		disassemble(main.log_console, prog_addr, prog_addr + 0x40);
+		
 	}
 	
 	/* 
@@ -132,7 +156,7 @@ function Assembler(memory)
 		}
 
 		// See if token is instruction	
-		var inst = find_inst(token);
+		var inst = find_inst(token, CPU.M_ANY);
 					
 		// Found instruction, add it to program listing
 		if (inst != -1)
@@ -144,20 +168,26 @@ function Assembler(memory)
 		// See if token is a define byte
 		if (token == "DB")
 			assemble_db(next);
+			
 		
 		//main.log_console("Invalid Token: " + token + "\n");
 	}
 	
 	
 	// Look for inst in table
-	function find_inst(token)
+	function find_inst(token, mode)
 	{
 		var found_inst = -1;
-		for (var inst in cur_inst_table) 
+		for (var inst in cur_cpu.inst_table) 
 		{
-			if (token.toUpperCase() == cur_inst_table[inst].text)
+			if (token.toUpperCase() == cur_cpu.inst_table[inst].text)
 			{
-				return inst;
+				// Just match the text
+				if (mode == CPU.M_ANY) return inst;
+					
+				// Also match mode
+				if (cur_cpu.inst_table[inst].m == mode)
+					return inst;
 			}
 		}
 		
@@ -179,56 +209,118 @@ function Assembler(memory)
 	function assemble_inst(found_inst, next)
 	{
 		var operand = 0;
+		
+		var inst = cur_cpu.inst_table[found_inst];
 			
-		// parse operand, if needed
-		if (cur_inst_table[found_inst].s > 0)
+		//console.log("Inst: " + inst.text + " next: " + next);
+			
+		// Implied mode
+		if (inst.s == 0)
 		{
-			// Add to resolve list if opperand is a label
-			if (is_label(next))
-			{
-				var label = get_label(next);
-				
-				// Need to add one to account for inst byte
-				resolve_table.push({addr:cur_prog+1, label:label});
-			}else 
-			// Check for char literal
-			if (is_literal(next))
-			{
-				operand = ascii(next[1]);
-			} else
-			// Assume hex
-			{
-				// Get value of operand
-				operand = parseInt(next, 16); 
-			}
-			
-			// We consumed one token for the operand
-			cur_token++;
+			add_inst(found_inst, CPU.M_IMP, 0);	// Add to memory
+			return;
 		}
 
-		add_inst(found_inst, operand);	// Add to memory
+
+		var mode = CPU.N_NONE;	// No mod known yet
+			
+		// parse operand
+
+		if (next == undefined)
+		{
+			main.log_console("Operand expected");
+			return 1;
+		}
+		
+		// Add to resolve list if opperand is a label
+		if (is_label(next))
+		{
+			var label = get_label(next);
+			
+			// Need to add one to account for inst byte
+			resolve_table.push({addr:cur_prog+1, label:label});
+			
+			mode = CPU.M_DIR;
+			
+		}else 
+		// Check for char literal
+		if (is_literal(next))
+		{
+			operand = ascii(next[1]);
+			
+			mode = CPU.M_IMM;
+		} else
+		if (is_immediate(next))
+		{
+			
+			operand = parseInt(next.substr(1, next.length-1), 16); 
+			mode = CPU.M_IMM;
+			
+		} else
+		if (is_address(next))
+		{
+			operand = parseInt(next, 16); 
+			
+			mode = CPU.M_DIR;
+		} else
+		// Assume hex
+		{
+			main.log_console(`Invalid operand ${next}\n`);
+			
+			// Get value of operand
+			//operand = parseInt(next, 16); 
+			return 1;
+		}
+		
+		
+		// Adjust instruction for known address mode
+		found_inst = find_inst(inst.text, mode);
+		
+		if (found_inst == -1)
+		{
+			main.log_console(`${MODULE} Address mode not found for ${inst.text} \n`);
+			
+			return 1;
+		}
+		
+	
+		cur_token += inst.s > 0 ? 1 : 0;		// Consume operands
+		
+		add_inst(found_inst, mode, operand);	// Add to memory
 	}
 	
 		
 	// Assemble a define byte
 	function assemble_db(next)
 	{
+		//console.log("Assemble db : " + next);
+		
+		if (next == undefined)
+		{
+			main.log_console(`${MODULE} DB value expected\n`);
+			
+			return 1;
+		}
+		
 		if (is_literal(next))
 			add_byte(ascii(next[1]));
 		else
 			add_byte(parseInt(next, 16));
+		
+		
+		return 0;
 	}
 	
 	// Add instruction to memory
-	function add_inst(inst, p1)
+	function add_inst(inst, mode, p1)
 	{
-		//main.log("Add Inst    " + hex_word(cur_prog) + " " +cur_inst_table[inst].text + "  " + p1);
+		//main.log("Add Inst    " + hex_word(cur_prog) + " " +cur_cpu.inst_table[inst].text + "  " + p1);
 		
 		// Add instruction
 		add_byte(inst);
 		
-		if (cur_inst_table[inst].s == 1) add_byte(p1);
-		if (cur_inst_table[inst].s == 2) add_word(p1);
+		if (cur_cpu.inst_table[inst].s == 1) add_byte(p1);
+		if (cur_cpu.inst_table[inst].s == 2) add_word(p1);
 	}
 	
 	// Add instruction byte to program
@@ -242,6 +334,47 @@ function Assembler(memory)
 	{
 		return s[0] == '\'' && s[s.length-1] == '\'' && s.length == 3;
 	}	
+	
+	// True if immediate
+	function is_immediate(next)
+	{
+		return next[0] == '#';
+		
+	}
+
+	// True if char is hex
+	function is_hex_char(c)
+	{
+		if (!(c>=0 && c <=9) || !(c >= 'a' && c <= 'f') || !(c >= 'A' && c <= 'F'))
+			return 1;
+		
+		return 0;
+	}
+	
+	// True if char is hex
+	function is_hex_str(s)
+	{
+		for (var i = 0; i < s.length; i++)
+		{
+			if (!is_hex_char(s[i])) return 0;
+		}
+		return 1;
+	}
+			
+	function is_address(s)
+	{
+		if (s.length != 4) return 0;
+		if (!is_hex_str(s)) return 0;
+		
+		return 1;
+	}
+
+
+	function is_immediate(next)
+	{
+		return next[0] == '#';
+	}
+	
 	
 	// True if is label
 	function is_label(s)
@@ -279,27 +412,28 @@ function Assembler(memory)
 
 		out += `${MODULE}   ${hex_word(i)}    `; // Address
 
-		var inst = memory.get_byte(i);	// instruction
+		var inst_byte = memory.get_byte(i);	// instruction
 		
 		//main.log_console(hex_byte(inst));
-		if (cur_inst_table[inst] == undefined)
+		if (cur_cpu.inst_table[inst_byte] == undefined)
 		{
 			out += `Undefined inst: [${hex_word(i)}] ${inst}\n`;
 			return;
 		}
 		
+		var inst = cur_cpu.inst_table[inst_byte];
+		
 		// Inst name
-		out += cur_inst_table[inst].text.padEnd(6) + "   ";
+		out += inst.text.padEnd(6) + "   ";
 
-		if (cur_inst_table[inst].s == 0)	out += "    "; 
-		if (cur_inst_table[inst].s == 1)	out += hex_byte(memory.get_byte(i+1)).padEnd(4); 
-		if (cur_inst_table[inst].s == 2)	out += hex_word(memory.get_word(i+1));
-	
+		if (inst.s == 0)	out += "    "; 
+		if (inst.s == 1)	out += hex_byte(memory.get_byte(i+1)).padEnd(4); 
+		if (inst.s == 2)	out += hex_word(memory.get_word(i+1));
 	
 		//log(address_table);
 		//log_console("[" + find_addr_name(i) + "]");
 		
-		i += cur_inst_table[inst].s + 1;	
+		i += inst.s + 1;	
 	
 		out += "\n";
 		
