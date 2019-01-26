@@ -16,43 +16,43 @@ var fb_gametest =
 
 mainloop:	
 
-			JSR		check_keys:
+			JSR			check_keys:
 			
-			JSR		clear_screen:
+			JSR			clear_screen:
 
-			JSR		draw_player:			
+			JSR			draw_player:			
 			
 			SYNC
-			JMP		mainloop:
+			JMP			mainloop:
 
 			
 			
-check_keys:	LDA 	'a'
-			JSR 	checkkey:
-			CMP		#00
-			JE		keyloop1:
-			JSR 	p1_move_left:
+check_keys:	LDA 		'a'
+			JSR 		checkkey:
+			CMP			#00
+			JE			keyloop1:
+			JSR 		p1_move_left:
 
 // Check for 'd' pressed
-keyloop1:	LDA 	'd'
-			JSR		checkkey:				
-			CMP 	#00
-			JE		keyloop2:
-			JSR 	p1_move_right:
+keyloop1:	LDA 		'd'
+			JSR			checkkey:				
+			CMP 		#00
+			JE			keyloop2:
+			JSR 		p1_move_right:
 
 // Check for 'w' pressed
-keyloop2:	LDA 	'w'
-			JSR		checkkey:				
-			CMP 	#00
-			JE		keyloop3:
-			JSR 	p1_move_up:
+keyloop2:	LDA 		'w'
+			JSR			checkkey:				
+			CMP 		#00
+			JE			keyloop3:
+			JSR 		p1_move_up:
 
 // Check for 'd' pressed
-keyloop3:	LDA 	's'
-			JSR		checkkey:				
-			CMP 	#00
-			JE		keyloop4:
-			JSR 	p1_move_down:
+keyloop3:	LDA 		's'
+			JSR			checkkey:				
+			CMP 		#00
+			JE			keyloop4:
+			JSR 		p1_move_down:
 keyloop4:
 			ret			
 			
@@ -60,16 +60,16 @@ keyloop4:
 				
 // See if key is down
 checkkey:	
-			SP		C100		// Set pointer to keyboard base	
+			SP			C100		// Set pointer to keyboard base	
 			AP
 
 			GP
-			CMP 	#01			// See if pressed
+			CMP 		#01			// See if pressed
 		
-			LDA		#00			
-			JNE 	checkkey1:
+			LDA			#00			
+			JNE 		checkkey1:
 		
-			LDA		#01			// Set pressed
+			LDA			#01			// Set pressed
 		
 			// seek to key in A
 checkkey1:
@@ -86,65 +86,49 @@ checkkey1:
 			
 			
 p1_move_left:
-		LDA		p1_pos_x:
-		CMP		#0
-		JNE		p1_move_left1:
-		ret
+			LDA			p1_pos_x:
+			CMP			#0
+			JNE			p1_move_left1:
+			ret
 		
 p1_move_left1:
-		DEC
-		STA		p1_pos_x:
-		ret			
+			DEC
+			STA			p1_pos_x:
+			ret			
 			
 p1_move_right: // TODO need to subtract image size
-		LDA		p1_pos_x:
-		CMP		#38
-		JL		p1_move_right1:
-		ret
+			LDA			p1_pos_x:
+			CMP			#38
+			JL			p1_move_right1:
+			ret
 		
 p1_move_right1:
-		INC
-		STA		p1_pos_x:
-		ret			
+			INC
+			STA			p1_pos_x:
+			ret			
 				
 			
 p1_move_up:
-		LDA		p1_pos_y:
-		CMP		#0
-		JNE		p1_move_up1:
-		ret
+			LDA			p1_pos_y:
+			CMP			#0
+			JNE			p1_move_up1:
+			ret
 		
 p1_move_up1:
-		DEC
-		STA		p1_pos_y:
-		ret			
+			DEC
+			STA			p1_pos_y:
+			ret			
 			
 p1_move_down:			// TODO need to subtract image size
-		LDA		p1_pos_y:
-		CMP		#37
-		JL		p1_move_down1:
-		ret
+			LDA			p1_pos_y:
+			CMP			#37
+			JL			p1_move_down1:
+			ret
 p1_move_down1:
-		INC
-		STA		p1_pos_y:
-		ret			
+			INC
+			STA			p1_pos_y:
+			ret			
 				
-			
-			
-			
-				
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
 			
 			
 			
@@ -245,8 +229,8 @@ draw_image4:
 			ADDP	
 
 			DEY	
-			CPY		#0
-			JNE		draw_image3:	// Draw next line
+			CPY			#0
+			JNE			draw_image3:	// Draw next line
 			
 			
 			RET
@@ -291,52 +275,29 @@ clear_screen1:
 			
 			
 			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-
-			
-			
-			
-			
-p1_pos_x:	DB		#08
-p1_pos_y:	DB		#08
-p1_size_x:	DB		#05
-p1_size_y:	DB		#05
+p1_pos_x:	DB			#08
+p1_pos_y:	DB			#08
+p1_size_x:	DB			#05
+p1_size_y:	DB			#05
 
 // Define an image, SX  SY
-image:		DB		#08 #09
-			DB		#C0 #C0 #C0 #03 #03 #C0 #C0 #C0
-			DB		#C0 #C0 #C0 #03 #03 #C0 #C0 #C0
-			DB		#C0 #03 #03 #03 #03 #03 #03 #C0
-			DB		#03 #03 #03 #03 #03 #03 #03 #03
-			DB		#03 #03 #0C #0C #0C #0C #03 #03
-			DB		#03 #03 #0C #0C #0C #0C #03 #03
-			DB		#03 #03 #03 #0F #0F #03 #03 #03
-			DB		#03 #03 #03 #03 #03 #03 #03 #03
-			DB		#C0 #03 #03 #03 #03 #03 #03 #C0
+image:		DB			#08 #09
+			DB			#C0 #C0 #C0 #03 #03 #C0 #C0 #C0
+			DB			#C0 #C0 #C0 #03 #03 #C0 #C0 #C0
+			DB			#C0 #03 #03 #03 #03 #03 #03 #C0
+			DB			#03 #03 #03 #03 #03 #03 #03 #03
+			DB			#03 #03 #0C #0C #0C #0C #03 #03
+			DB			#03 #03 #0C #0C #0C #0C #03 #03
+			DB			#03 #03 #03 #0F #0F #03 #03 #03
+			DB			#03 #03 #03 #03 #03 #03 #03 #03
+			DB			#C0 #03 #03 #03 #03 #03 #03 #C0
 		
 		
-image_x:	DB	#00				// Scratch pad for image drawing
-image_y:	DB	#00
-image_sx:	DB	#00				// Scratch pad for image drawing
-image_sy:	DB	#00
-image_p:	DB	#00	#00			// Current pointer image image		
+image_x:	DB			#00				// Scratch pad for image drawing
+image_y:	DB			#00
+image_sx:	DB			#00				// Scratch pad for image drawing
+image_sy:	DB			#00
+image_p:	DB			#00	#00			// Current pointer image image		
 			
 `;
 /* End of Program */
