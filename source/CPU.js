@@ -9,8 +9,6 @@
 
 "use strict";
 
-// Testing clean OO arch
-
 // CPU
 // Pass in name, Memory, start address
 class CPU
@@ -29,9 +27,11 @@ class CPU
 		CPU.DUMP_STACK_SZ = 0x10;		// Number of stack elements to display
 
 		// Config	
-		CPU.NUM_INST = CPU.DEBUG ? 1 : 1000000;	// Instructions per update
+		CPU.NUM_INST =  1000000;		// Instructions per update
+		
+		if (CPU.DEBUG) CPU.NUM_INST = 1;// Less instructions for debug
+		
 		CPU.STACK_SIZE = 32768;			// Stack space size
-		//const UPDATE_RATE = 1;		// CPU Update
 		
 		// Errors
 		CPU.ERROR_UI = 0x01;			// Unknown instruction
@@ -53,96 +53,82 @@ class CPU
 		for (var i = 0; i < 256; i++) CPU.INST(i, "", 0, null);
 		
 		//       OP   Text    Inst mode  Func Ptr
-		CPU.INST(0x00,"NOP",  CPU.M_IMP, CPU.inst_nop); // No Operation	
-		CPU.INST(0x01,"JMP",  CPU.M_DIR, CPU.inst_jmp);
+		CPU.INST(0x00,"NOP",  CPU.M_IMP, (m, s)=>{} ); 														// No Operation	
+		CPU.INST(0x01,"JMP",  CPU.M_DIR, (m, s)=>{s.ip = m.get_word(s.ip) - 2;});							// Jump to location
+		CPU.INST(0x02,"JSR",  CPU.M_DIR, (m, s)=>{CPU.push_word(s, s.ip+2); s.ip = m.get_word(s.ip) - 2;});	// Jump subroutine
+		CPU.INST(0x03,"RET",  CPU.M_IMP, (m, s)=>{s.ip = CPU.pop_word(s); }); 								// Return
+		CPU.INST(0x04,"JL",   CPU.M_DIR, (m, s)=>{if (s.l) s.ip = m.get_word(s.ip) - 2;}); 					// Jump if less
+		CPU.INST(0x05,"JE",   CPU.M_DIR, (m, s)=>{if (s.e) s.ip = m.get_word(s.ip) - 2;}); 					// Jump Equal
+		CPU.INST(0x06,"JNE",  CPU.M_DIR, (m, s)=>{if (!s.e)s.ip = m.get_word(s.ip) - 2;}); 					// Jump Not Equal
+		CPU.INST(0x07,"JG",   CPU.M_DIR, (m, s)=>{if (s.g) s.ip = m.get_word(s.ip) - 2;}); 					// Jump greater
+		CPU.INST(0x10,"LDA",  CPU.M_IMM, (m, s)=>{s.a = m.get_byte(s.ip);}); 								// Load A with constant
+		CPU.INST(0x11,"LDA",  CPU.M_DIR, (m, s)=>{s.a = m.get_byte(m.get_word(s.ip));}); 					// Load A value from memory 
+		CPU.INST(0x12,"LDX",  CPU.M_IMM, (m, s)=>{s.x = m.get_byte(s.ip);}); 								// Load X with constant
+		CPU.INST(0x13,"LDY",  CPU.M_IMM, (m, s)=>{s.y = m.get_byte(s.ip);}); 								// Load Y with constant
+		CPU.INST(0x14,"LDP",  CPU.M_DIR, (m, s)=>{s.p = m.get_word(m.get_word(s.ip));}); 					// Load P with value at memory location		
+		CPU.INST(0x18,"STA",  CPU.M_DIR, (m, s)=>{m.set_byte(m.get_word(s.ip), s.a);}); 					// Store A at memory location
+		CPU.INST(0x19,"STX",  CPU.M_DIR, (m, s)=>{m.set_byte(m.get_word(s.ip), s.x);}); 					// Store X at memory location
+		CPU.INST(0x1A,"STY",  CPU.M_DIR, (m, s)=>{m.set_byte(m.get_word(s.ip), s.y);}); 					// Store Y at memory location
+		CPU.INST(0x1B,"STP",  CPU.M_DIR, (m, s)=>{m.set_word(m.get_word(s.ip), s.p);}); 					// Store P at memory location
+		CPU.INST(0x20,"TXA",  CPU.M_IMP, (m, s)=>{s.a = s.x;}); 											// Transfre X to A
+		CPU.INST(0x21,"TAX",  CPU.M_IMP, (m, s)=>{s.x = s.a;}); 											// Transfer A to X
+		CPU.INST(0x22,"TYA",  CPU.M_IMP, (m, s)=>{s.a = s.y;}); 											// Transfre Y to A
+		CPU.INST(0x23,"TAY",  CPU.M_IMP, (m, s)=>{s.y = s.a;}); 											// Transfer A to Y
+		CPU.INST(0x30,"SP",   CPU.M_DIR, (m, s)=>{s.p = m.get_word(s.ip)});						 			// Set pointer address
+		CPU.INST(0x31,"LP",   CPU.M_IMP, (m, s)=>{m.set_byte(s.p, s.a);});						 			// Load A into memory at pointer
+		CPU.INST(0x32,"GP",   CPU.M_IMP, (m, s)=>{s.a = m.get_byte(s.p);});						 			// Get value at pointer
+		CPU.INST(0x33,"AP",   CPU.M_IMP, (m, s)=>{s.p+=s.a;}); 												// Add a to pointer
+		CPU.INST(0x40,"PUSH", CPU.M_IMP, (m, s)=>{CPU.push_byte(s, s.a);}); 								// Push A into stack
+		CPU.INST(0x41,"POP",  CPU.M_IMP, (m, s)=>{s.a = CPU.pop_byte(s);});									// Pop from stack into A
+		CPU.INST(0x42,"PUSHP",CPU.M_IMP, (m, s)=>{CPU.push_word(s, s.p);});					 				// Push A into stack
+		CPU.INST(0x43,"POPP", CPU.M_IMP, (m, s)=>{s.p = CPU.pop_word(s);});					 				// Pop from stack into A		
+		CPU.INST(0x50,"CMP",  CPU.M_IMM, (m, s)=>{CPU.compare(s, s.a, m.get_byte(s.ip));}); 				// Compare with A
+		CPU.INST(0x51,"CPX",  CPU.M_IMM, (m, s)=>{CPU.compare(s, s.x, m.get_byte(s.ip));}); 				// Compare with X
+		CPU.INST(0x52,"CPY",  CPU.M_IMM, (m, s)=>{CPU.compare(s, s.y, m.get_byte(s.ip));}); 				// Compare with Y
+		CPU.INST(0x60,"INC",  CPU.M_IMP, (m, s)=>{s.a = (s.a + 1) & 0xff;}); 								// Increment A
+		CPU.INST(0x61,"DEC",  CPU.M_IMP, (m, s)=>{s.a = (s.a - 1) & 0xff;}); 								// Decrement A
+		CPU.INST(0x62,"INX",  CPU.M_IMP, (m, s)=>{s.x = (s.x + 1) & 0xff;}); 								// Increment X
+		CPU.INST(0x63,"DEX",  CPU.M_IMP, (m, s)=>{s.x = (s.x - 1) & 0xff;}); 								// Decrement X
+		CPU.INST(0x64,"INY",  CPU.M_IMP, (m, s)=>{s.y = (s.y + 1) & 0xff;}); 								// Increment Y
+		CPU.INST(0x65,"DEY",  CPU.M_IMP, (m, s)=>{s.y = (s.y - 1) & 0xff;}); 								// Decrement Y
+		CPU.INST(0x66,"INP",  CPU.M_IMP, (m, s)=>{s.p = (s.p+1) & 0xffff;}); 								// Increment pointer
+		CPU.INST(0x67,"DEP",  CPU.M_IMP, (m, s)=>{s.p = (s.p-1) & 0xffff;}); 								// Increment pointer		
+		CPU.INST(0x70,"TSA",  CPU.M_IMP, (m, s)=>{s.a = (s.e << 3) | (s.l << 2) | (s.g << 1) | s.c;} ); // Transfer Status to A
+		CPU.INST(0x71,"TAS",  CPU.M_IMP, (m, s)=>{s.e = s.a >> 3; s.l = (s.a >> 2) & 1; s.g = (s.a >> 1) & 1; s.c = s.a & 1; } ); // Transfer A to Status
+		CPU.INST(0x72,"CLC",  CPU.M_IMP, (m, s)=>{s.c = 0;} );									 			// Clear Carry
+		CPU.INST(0x73,"SET",  CPU.M_IMP, (m, s)=>{s.c = 1;} ); 												// Set Carry		
+		CPU.INST(0x80,"OUT",  CPU.M_IMP, (m, s)=>{main.log_output(get_char(s.a));}  );				 		// Output A to console
+		CPU.INST(0x90,"AND",  CPU.M_IMM, (m, s)=>{s.a = s.a & m.get_byte(s.ip);}  ); 						// Set A to A & immediate
+		CPU.INST(0x91,"OR",   CPU.M_IMM, (m, s)=>{s.a = s.a | m.get_byte(s.ip);}   ); 						// Set A to A | immediate
+		CPU.INST(0x92,"XOR",  CPU.M_IMM, (m, s)=>{s.a = s.a ^ m.get_byte(s.ip);}  ); 						// Set A to A ^ immediate
+		CPU.INST(0x93,"NOT",  CPU.M_IMM, (m, s)=>{s.a = ~s.a;}  ); 											// Set A to bitwise negation of A
+		CPU.INST(0x94,"SHL",  CPU.M_IMM, (m, s)=>{s.a = s.a << m.get_byte(s.ip);}  ); 						// Shift A left by immediate bits
+		CPU.INST(0x95,"SHR",  CPU.M_IMM, (m, s)=>{s.a = s.a >> m.get_byte(s.ip);}  ); 						// Shift A right by the immediate bits
+		CPU.INST(0x96,"ADD",  CPU.M_IMM, (m, s)=>{var sm = s.a + m.get_byte(s.ip); s.a = sm & 0xff; s.c = sm &0x0100} ); // Set A to A + operand Z_256
+		CPU.INST(0x97,"ADDP", CPU.M_IMP, (m, s)=>{s.p = (s.p + s.a) & 0xffff;}); 							// Set P to P + A
+		CPU.INST(0x98,"ADDX", CPU.M_IMP, (m, s)=>{s.x = (s.x + s.a) & 0xff;}); 								// Set A to A + X Z_256
+		CPU.INST(0x99,"SUB",  CPU.M_IMM, (m, s)=>{s.a = (s.a - m.get_byte(s.ip)) & 0xff;} ); 				// Set A to A + operand Z_256
+		CPU.INST(0x9A,"SUBP", CPU.M_IMP, (m, s)=>{s.p = (s.p - s.a) & 0xffff;}); 							// Set Set P to P - A
+		CPU.INST(0x9B,"MUL",  CPU.M_IMM, (m, s)=>{s.a = (s.a * m.get_byte(s.ip)) & 0xff;} ); 				// Set A to A * operand Z_256
+		CPU.INST(0x9C,"DIV",  CPU.M_IMM, (m, s)=>{s.a = (s.a / m.get_byte(s.ip)) & 0xff;} ); 				// Set A to A / operand Z_256
+		CPU.INST(0x9D,"NEG",  CPU.M_IMP, (m, s)=>{s.a = (65536 - s.a) & 0xff;} ); 							// Set A to the additive inverse of A in Z_256
+		CPU.INST(0xB0,"RND",  CPU.M_IMP, (m, s)=>{s.a = (Math.random() * 255) & 0xff;} ); 					// Random number
+		CPU.INST(0xC0,"SYNC", CPU.M_IMP, (m, s)=>{s.fb_update=1;} ); 										// Render framebuffer
+		CPU.INST(0xFF,"END",  CPU.M_IMP, (m, s)=>{s.ip = CPU.IP_END;}  );									// Halt
 		
-		CPU.INST(0x02,"JSR",  CPU.M_DIR, CPU.inst_jsr ); // Jump subroutine
-		CPU.INST(0x03,"RET",  CPU.M_IMP, CPU.inst_ret ); // Return
-		CPU.INST(0x04,"JL",   CPU.M_DIR, CPU.inst_jl  ); // Jump if less
-		CPU.INST(0x05,"JE",   CPU.M_DIR, CPU.inst_je  ); // Jump Equal
-		CPU.INST(0x06,"JNE",  CPU.M_DIR, CPU.inst_jne ); // Jump Not Equal
-		CPU.INST(0x07,"JG",   CPU.M_DIR, CPU.inst_jg  ); // Jump greater
-
-		CPU.INST(0x10,"LDA",  CPU.M_IMM, CPU.inst_lda ); // Load A with constant
-		CPU.INST(0x11,"LDA",  CPU.M_DIR, CPU.inst_ldad); // Load A value from memory 
-		CPU.INST(0x12,"LDX",  CPU.M_IMM, CPU.inst_ldx ); // Load X with constant
-		CPU.INST(0x13,"LDY",  CPU.M_IMM, CPU.inst_ldy ); // Load Y with constant
-		CPU.INST(0x14,"LDP",  CPU.M_DIR, CPU.inst_ldp ); // Load P with value at memory location
-		
-		CPU.INST(0x18,"STA",  CPU.M_DIR, CPU.inst_sta ); // Store A at memory location
-		CPU.INST(0x19,"STX",  CPU.M_DIR, CPU.inst_stx ); // Store X at memory location
-		CPU.INST(0x1A,"STY",  CPU.M_DIR, CPU.inst_sty ); // Store Y at memory location
-		CPU.INST(0x1B,"STP",  CPU.M_DIR, CPU.inst_stp ); // Store P at memory location
-
-		CPU.INST(0x20,"TXA",  CPU.M_IMP, CPU.inst_txa ); // Transfre X to A
-		CPU.INST(0x21,"TAX",  CPU.M_IMP, CPU.inst_tax ); // Transfer A to X
-		CPU.INST(0x22,"TYA",  CPU.M_IMP, CPU.inst_tya ); // Transfre Y to A
-		CPU.INST(0x23,"TAY",  CPU.M_IMP, CPU.inst_tay ); // Transfer A to Y
-		
-		CPU.INST(0x30,"SP",   CPU.M_DIR, CPU.inst_sp  ); // Set pointer address
-		CPU.INST(0x31,"LP",   CPU.M_IMP, CPU.inst_lp  ); // Load A into memory at pointer
-		CPU.INST(0x32,"GP",   CPU.M_IMP, CPU.inst_gp  ); // Get value at pointer
-		CPU.INST(0x33,"AP",   CPU.M_IMP, CPU.inst_ap  ); // Add a to pointer
-
-		CPU.INST(0x40,"PUSH", CPU.M_IMP, CPU.inst_push); // Push A into stack
-		CPU.INST(0x41,"POP",  CPU.M_IMP, CPU.inst_pop ); // Pop from stack into A
-
-		CPU.INST(0x42,"PUSHP",CPU.M_IMP, CPU.inst_pshp);// Push A into stack
-		CPU.INST(0x43,"POPP", CPU.M_IMP, CPU.inst_popp);// Pop from stack into A
-		
-		
-		CPU.INST(0x50,"CMP",  CPU.M_IMM, CPU.inst_cmp ); // Compare with A
-		CPU.INST(0x51,"CPX",  CPU.M_IMM, CPU.inst_cpx ); // Compare with X
-		CPU.INST(0x52,"CPY",  CPU.M_IMM, CPU.inst_cpy ); // Compare with Y
-
-		CPU.INST(0x60,"INC",  CPU.M_IMP, CPU.inst_inc ); // Increment A
-		CPU.INST(0x61,"DEC",  CPU.M_IMP, CPU.inst_dec ); // Decrement A
-		CPU.INST(0x62,"INX",  CPU.M_IMP, CPU.inst_inx ); // Increment X
-		CPU.INST(0x63,"DEX",  CPU.M_IMP, CPU.inst_dex ); // Decrement X
-		CPU.INST(0x64,"INY",  CPU.M_IMP, CPU.inst_iny ); // Increment Y
-		CPU.INST(0x65,"DEY",  CPU.M_IMP, CPU.inst_dey ); // Decrement Y
-		CPU.INST(0x66,"INP",  CPU.M_IMP, CPU.inst_inp ); // Increment pointer
-		CPU.INST(0x67,"DEP",  CPU.M_IMP, CPU.inst_dep ); // Increment pointer
-		
-		CPU.INST(0x70,"TSA",  CPU.M_IMP, CPU.inst_tsa ); // Transfer Status to A
-		CPU.INST(0x71,"TAS",  CPU.M_IMP, CPU.inst_tas ); // Transfer A to Status
-		CPU.INST(0x72,"CLC",  CPU.M_IMP, CPU.inst_clc ); // Clear Carry
-		CPU.INST(0x73,"SET",  CPU.M_IMP, CPU.inst_sec ); // Set Carry
-		
-		CPU.INST(0x80,"OUT",  CPU.M_IMP, CPU.inst_out ); // Output A to console
-
-		CPU.INST(0x90,"AND",  CPU.M_IMM, CPU.inst_and ); // Set A to A & immediate
-		CPU.INST(0x91,"OR",   CPU.M_IMM, CPU.inst_or  ); // Set A to A | immediate
-		CPU.INST(0x92,"XOR",  CPU.M_IMM, CPU.inst_xor ); // Set A to A ^ immediate
-		CPU.INST(0x93,"NOT",  CPU.M_IMM, CPU.inst_not ); // Set A to bitwise negation of A
-		CPU.INST(0x94,"SHL",  CPU.M_IMM, CPU.inst_shl ); // Shift A left by immediate bits
-		CPU.INST(0x95,"SHR",  CPU.M_IMM, CPU.inst_shr ); // Shift A right by the immediate bits
-		CPU.INST(0x96,"ADD",  CPU.M_IMM, CPU.inst_add ); // Set A to A + operand Z_256
-		CPU.INST(0x97,"ADDP", CPU.M_IMP, CPU.inst_addp); // Set P to P + A
-		CPU.INST(0x98,"ADDX", CPU.M_IMP, CPU.inst_addx); // Set A to A + X Z_256
-		CPU.INST(0x99,"SUB",  CPU.M_IMM, CPU.inst_sub ); // Set A to A + operand Z_256
-		CPU.INST(0x9A,"SUBP", CPU.M_IMP, CPU.inst_subp); // Set Set P to P - A
-		CPU.INST(0x9B,"MUL",  CPU.M_IMM, CPU.inst_mul ); // Set A to A * operand Z_256
-		CPU.INST(0x9C,"DIV",  CPU.M_IMM, CPU.inst_div ); // Set A to A / operand Z_256
-		CPU.INST(0x9D,"NEG",  CPU.M_IMP, CPU.inst_neg ); // Set A to the additive inverse of A in Z_256
-	 	
-		CPU.INST(0xB0,"RND",  CPU.M_IMP, CPU.inst_rnd ); // Random number
-		CPU.INST(0xC0,"SYNC", CPU.M_IMP, CPU.inst_sync); // Render framebuffer
-		CPU.INST(0xFF,"END",  CPU.M_IMP, CPU.inst_end ); // Halt
-		
-
 		// Compute sizes
 		for (var i in CPU.inst_table)
 		{
 			if (CPU.inst_table[i].m == CPU.M_IMP) CPU.inst_table[i].s = 0;
 			if (CPU.inst_table[i].m == CPU.M_IMM) CPU.inst_table[i].s = 1;
 			if (CPU.inst_table[i].m == CPU.M_DIR) CPU.inst_table[i].s = 2;
+			if (CPU.inst_table[i].m == CPU.M_IND) CPU.inst_table[i].s = 2;
 		}
 		
 	}	
 	
 	// load inst slot
-	static INST(a, text, mode, func){ CPU.inst_table[a] = {text:text, m:mode, f:func}; };
+	static INST(op, text, mode, func){ CPU.inst_table[op] = {text:text, m:mode, f:func}; };
 
 	
 	
@@ -232,10 +218,9 @@ class CPU
 	// Pad inst for display 
 	pad_inst(str) {var pad = "    ";return (str + pad).substring(0, pad.length);}
 	
-	
+	// Disassemble single instruction
 	disassemble_inst(i, flags)
 	{
-		
 		main.log_console(hex_word(i) + " "); // Address
 
 		var inst_byte = this.memory.get_byte(i);	// instruction
@@ -271,131 +256,26 @@ class CPU
 							`O ${(this.state.o?1:0)} `
 							);
 		}
-		
-		//i += inst.s + 1;	// Advance ip
 	
 		main.log_console("\n");
-		//return i;
 	}		
 		
-	// Clear all flags
-	reset_flags()
-	{
-		//main.log_console(`Reset Flags ${hex_word(this.start_addr)}\n`);
-		
-		this.state.ip=this.start_addr; 
-		this.state.sp=0; 
-		this.state.a=0;
-		this.state.x=0;
-		this.state.y=0;
-		this.state.e=0;
-		this.state.l=0;
-		this.state.g=0;
-		this.state.p=0;					
-	}
-
 	// Push byte to stack
-	static push_byte(s, v) { s.stack[s.sp++] = v; } 
+	static push_byte(s, v)	{ s.stack[s.sp++] = v; } 
 	
 	// Pop byte from stack
-	static pop_byte(s, v) { return s.stack[--s.sp]; } 
+	static pop_byte(s, v)	{ return s.stack[--s.sp]; } 
 		
 	// Push word to stack. Pushed as low byte, high byte
-	static push_word(s, v) { CPU.push_byte(s, v&0xff); CPU.push_byte(s, v>>8); } 
+	static push_word(s, v)	{ CPU.push_byte(s, v&0xff); CPU.push_byte(s, v>>8); } 
 	
 	// Pop word from stack. Poped as high byte, low byte
-	static pop_word(s, v) { var v = CPU.pop_byte(s,0)<<8; v |= CPU.pop_byte(s,0); return v; } 
+	static pop_word(s, v)	{ var v = CPU.pop_byte(s,0)<<8; v |= CPU.pop_byte(s,0); return v; } 
+	
+	// Instruction Helper
+	static compare(s, v1, v2) { s.e = v1 == v2;s.l = v1 < v2; s.g = v1 > v2; }
 
-	
-	// Instructions
-	
-	static compare(s, v1, v2) { s.e = v1 == v2;s. l = v1 < v2; s.g = v1 > v2; }
-	
-	static inst_nop (m, s) {};
-	
-   	static inst_jmp (m, s) {s.ip = m.get_word(s.ip) - 2;}
-	static inst_jsr (m, s) {CPU.push_word(s, s.ip+2); s.ip = m.get_word(s.ip) - 2;}
-	static inst_ret (m, s) {s.ip = CPU.pop_word(s); }
-	static inst_jl  (m, s) {if (s.l) s.ip = m.get_word(s.ip) - 2;} 
-	static inst_je  (m, s) {if (s.e) s.ip = m.get_word(s.ip) - 2;} 
-	static inst_jne (m, s) {if (!s.e)s.ip = m.get_word(s.ip) - 2;} 
-	static inst_jg  (m, s) {if (s.g) s.ip = m.get_word(s.ip) - 2;} 
-
-	static inst_sp  (m, s) {s.p = m.get_word(s.ip)} 
-	static inst_lp  (m, s) {m.set_byte(s.p, s.a);} 
-	static inst_gp  (m, s) {s.a = m.get_byte(s.p);} 
-	
-	static inst_ap  (m, s) {s.p+=s.a;}  
-
-	static inst_lda (m, s) {s.a = m.get_byte(s.ip);}
-	static inst_ldad (m, s) {s.a = m.get_byte(m.get_word(s.ip));} 
-	static inst_ldx (m, s) {s.x = m.get_byte(s.ip);}
-	static inst_ldy (m, s) {s.y = m.get_byte(s.ip);}
-	static inst_ldp (m, s) {s.p = m.get_word(m.get_word(s.ip));} 
-	//static inst_ldm (m, s) {s.a = m.get_byte(m.get_word(s.ip));} 
-
-
-	//static inst_ldam (m, s) {s.a = m.get_byte(m.get_word(s.ip));} 
-
-	static inst_sta (m, s) {m.set_byte(m.get_word(s.ip), s.a);}
-	static inst_stx (m, s) {m.set_byte(m.get_word(s.ip), s.x);}
-	static inst_sty (m, s) {m.set_byte(m.get_word(s.ip), s.y);}
-	static inst_stp (m, s) {m.set_word(m.get_word(s.ip), s.p);}
-	
-
-	static inst_tax (m, s) {s.x = s.a;}
-	static inst_txa (m, s) {s.a = s.x;}
-	static inst_tay (m, s) {s.y = s.a;}
-	static inst_tya (m, s) {s.a = s.y;}
-	
-	static inst_push(m, s) {CPU.push_byte(s, s.a);} 
-	static inst_pop (m, s) {s.a = CPU.pop_byte(s);} 
-	
-	static inst_pshp(m, s) {CPU.push_word(s, s.p);} 
-	static inst_popp(m, s) {s.p = CPU.pop_word(s);} 
-	
-	
-	static inst_cmp (m, s) {CPU.compare(s, s.a, m.get_byte(s.ip));} 
-	static inst_cpx (m, s) {CPU.compare(s, s.x, m.get_byte(s.ip));} 
-	static inst_cpy (m, s) {CPU.compare(s, s.y, m.get_byte(s.ip));} 
-		
-	static inst_inc (m, s) {s.a = (s.a + 1) & 0xff;}
-	static inst_dec (m, s) {s.a = (s.a - 1) & 0xff;}
-	static inst_inx (m, s) {s.x = (s.x + 1) & 0xff;}
-	static inst_dex (m, s) {s.x = (s.x - 1) & 0xff;}
-	static inst_iny (m, s) {s.y = (s.y + 1) & 0xff;}
-	static inst_dey (m, s) {s.y = (s.y - 1) & 0xff;}
-	static inst_inp (m, s) {s.p = (s.p+1) & 0xffff;} 
-	static inst_dep (m, s) {s.p = (s.p-1) & 0xffff;} 
-	
-	static inst_tsa (m, s) {s.a = (s.e << 3) | (s.l << 2) | (s.g << 1) | s.c;}
-    static inst_tas (m, s) {s.e = s.a >> 3; s.l = (s.a >> 2) & 1; s.g = (s.a >> 1) & 1; s.c = s.a & 1; }
-    static inst_clc (m, s) {s.c = 0;}
-    static inst_sec (m, s) {s.c = 1;}
-	
-	static inst_and (m, s) {s.a = s.a & m.get_byte(s.ip);} 
-	static inst_or  (m, s) {s.a = s.a | m.get_byte(s.ip);} 
-	static inst_xor (m, s) {s.a = s.a ^ m.get_byte(s.ip);} 
-	static inst_not (m, s) {s.a = ~s.a;} 
-	static inst_shl (m, s) {s.a = s.a << m.get_byte(s.ip);} 
-	static inst_shr (m, s) {s.a = s.a >> m.get_byte(s.ip);} 
-	
-	static inst_add (m, s) {var sum = s.a + m.get_byte(s.ip); s.a = sum & 0xff; s.c = sum &0x0100}
-	static inst_addp(m, s) {s.p = (s.p + s.a) & 0xffff;}
-	static inst_addx(m, s) {s.x = (s.x + s.a) & 0xff;}
-	static inst_sub (m, s) {s.a = (s.a - m.get_byte(s.ip)) & 0xff;}
-	static inst_subp(m, s) {s.p = (s.p - s.a) & 0xffff;}
-	static inst_mul (m, s) {s.a = (s.a * m.get_byte(s.ip)) & 0xff;}
-	static inst_div (m, s) {s.a = (s.a / m.get_byte(s.ip)) & 0xff;}
-	static inst_neg (m, s) {s.a = (65536 - s.a) & 0xff;}
-	
-	static inst_rnd (m, s) {s.a = (Math.random() * 255) & 0xff;} 
-	static inst_sync(m, s) {s.fb_update=1;} 
-	static inst_out (m, s) {main.log_output(get_char(s.a));} 
-	static inst_end (m, s) {s.ip = CPU.IP_END;} 
-	 
-
-	// Process count number of instructions
+	// Process num_exec number of instructions
 	// Return error code or 0
 	step(num_exec)
 	{
@@ -429,19 +309,8 @@ class CPU
 		
 		this.inst_updates += exec;
 		
-		
 		return 0;
 	}
 	
 	/* End of CPU */
-	
-	//return exports;
-	
 }
-
-
-
-
-
-
-	
