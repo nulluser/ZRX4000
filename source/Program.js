@@ -76,19 +76,9 @@ keyloop4:
 				
 // See if key is down
 checkkey:	
-			SP			C100		// Set pointer to keyboard base	
-			AP
-
-			GP
-			CMP 		#01			// See if pressed
-		
-			LDA			#00			
-			JNE 		checkkey1:
-		
-			LDA			#01			// Set pressed
-		
-			// seek to key in A
-checkkey1:
+			SP			C100			// Set pointer to keyboard base	
+			AP							// Advance into keyboard table
+			GP							// Get value in table
 			RET
 		
 
@@ -115,7 +105,7 @@ p1_move_left1:
 			STA			p1_pos_x:
 			ret			
 			
-p1_move_right: // TODO need to subtract image size
+p1_move_right: 			// TODO need to subtract image size
 			LDA			p1_pos_x:
 			CMP			#38
 			JL			p1_move_right1:
@@ -162,13 +152,12 @@ p1_move_down1:
 /* Draw Player */
 draw_player:
 
-			SP			image:
-			LDA			p1_pos_x:
+			SP			shipimage:		// Get image pointer
+			LDA			p1_pos_x:		// Get player pos
 			TAX
-
 			LDA			p1_pos_y:
 			TAY
-			jsr			draw_image:
+			jsr			draw_image:		// Draw the image
 
 			ret
 
@@ -178,23 +167,20 @@ draw_player:
 // P points to start of image data 
 //  X and Y define draw position
 // C0 is transparent
-draw_image:
-
-			STX			image_x:		// Store draw location
+draw_image:	STX			image_x:		// Store draw location
 			STY			image_y:
-
 			
 			GP
-			STA			image_sx:		// Store image size
+			STA			image_sx:		// Store image x size
 			INP
 
 			GP
-			STA			image_sy:
+			STA			image_sy:		// Store image y size
 			INP
 			
 			STP			image_p:		// Store image start location
 
-			SP			D000			//  pointer to frame buffer base
+			SP			D000			// Pointer to frame buffer base
 
 			LDA			image_y:		// Advance to y pos
 			CMP			#0
@@ -202,7 +188,7 @@ draw_image:
 			
 			TAX
 draw_image1:					
-			LDA			#40
+			LDA			#40				// Advance to y pos
 			ADDP
 			DEX
 			CPX			#0
@@ -221,21 +207,21 @@ draw_image2:
 			
 draw_image3:
 			
-			PUSHP					// Save fb location
-			LDP			image_p:	// Get current image pixel
+			PUSHP						// Save fb location
+			LDP			image_p:		// Get current image pixel
 			GP						
-			INP						// Advance
+			INP							// Advance
 			STP			image_p:
-			POPP					// Restore fb location
+			POPP						// Restore fb location
 
-			CMP			#C0			// Check for transparent
+			CMP			#C0				// Check for transparent
 			JE			draw_image4:
-			LP						// Draw pixel
+			LP							// Draw pixel
 			
 draw_image4:			
-			INP						// Next frame buffer location
-			
-			DEX						// x row counter
+			INP							// Next frame buffer location
+				
+			DEX							// x row counter
 			CPX			#0
 			
 			JNE			draw_image3:	// Not done with row
@@ -250,7 +236,6 @@ draw_image4:
 			CPY			#0
 			JNE			draw_image3:	// Draw next line
 			
-			
 			RET
 						
 			
@@ -258,26 +243,20 @@ draw_image4:
 /* Clear Screen */
 clear_screen:
 
-			LDX			#40					// Size to clear
+			LDX			#40				// Size to clear
 			LDY			#40
-			SP			D000				//  pointer to frame buffer base
-			
-			
+			SP			D000			//  pointer to frame buffer base
 			
 clear_screen1:					
 			
-			LDA			#01					// Clear color
+			LDA			#01				// Clear color
 			LP
-			INP								// Next FB location
-
-			DEX								// column counter
+			INP							// Next FB location
+			DEX							// column counter
 			CPX			#00
 			JNE			clear_screen1:
-
 			
-			
-			
-			LDX			#40					// Row counter
+			LDX			#40				// Row counter
 			DEY
 			CPY			#00
 			JNE			clear_screen1:	
@@ -301,7 +280,7 @@ p1_size_x:	DB			#05
 p1_size_y:	DB			#05
 
 // Define an image, SX  SY
-image:		DB			#08 #09
+shipimage:	DB			#08 #09
 			DB			#C0 #C0 #C0 #03 #03 #C0 #C0 #C0
 			DB			#C0 #C0 #C0 #03 #03 #C0 #C0 #C0
 			DB			#C0 #03 #03 #03 #03 #03 #03 #C0
