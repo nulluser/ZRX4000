@@ -45,93 +45,106 @@ class CPU
 		CPU.M_DIR  = 0x03;				// Direct mode, 16 bit address
 		CPU.M_IND  = 0x04;				// Indirect mode, 16 bit address	
 		
-
 		CPU.IP_END = -1;			
 		
 		CPU.inst_table = [];
 		
-		//                     Display text Inst mode    Size Func Ptr
-		CPU.inst_table[0x00] = {text:"NOP", m:CPU.M_IMP, s:0, f:CPU.inst_nop }; // No Operation	
-		CPU.inst_table[0x01] = {text:"JMP", m:CPU.M_DIR, s:2, f:CPU.inst_jmp }; // Jump to address
-		CPU.inst_table[0x02] = {text:"JSR", m:CPU.M_DIR, s:2, f:CPU.inst_jsr }; // Jump subroutine
-		CPU.inst_table[0x03] = {text:"RET", m:CPU.M_IMP, s:0, f:CPU.inst_ret }; // Return
-		CPU.inst_table[0x04] = {text:"JL",  m:CPU.M_DIR, s:2, f:CPU.inst_jl  }; // Jump if less
-		CPU.inst_table[0x05] = {text:"JE",  m:CPU.M_DIR, s:2, f:CPU.inst_je  }; // Jump Equal
-		CPU.inst_table[0x06] = {text:"JNE", m:CPU.M_DIR, s:2, f:CPU.inst_jne }; // Jump Not Equal
-		CPU.inst_table[0x07] = {text:"JG",  m:CPU.M_DIR, s:2, f:CPU.inst_jg  }; // Jump greater
+		//	 Fill instruction table so there are no gaps		
+		for (var i = 0; i < 256; i++) CPU.INST(i, "", 0, null);
+		
+		//       OP   Text    Inst mode  Func Ptr
+		CPU.INST(0x00,"NOP",  CPU.M_IMP, CPU.inst_nop); // No Operation	
+		CPU.INST(0x01,"JMP",  CPU.M_DIR, CPU.inst_jmp);
+		
+		CPU.INST(0x02,"JSR",  CPU.M_DIR, CPU.inst_jsr ); // Jump subroutine
+		CPU.INST(0x03,"RET",  CPU.M_IMP, CPU.inst_ret ); // Return
+		CPU.INST(0x04,"JL",   CPU.M_DIR, CPU.inst_jl  ); // Jump if less
+		CPU.INST(0x05,"JE",   CPU.M_DIR, CPU.inst_je  ); // Jump Equal
+		CPU.INST(0x06,"JNE",  CPU.M_DIR, CPU.inst_jne ); // Jump Not Equal
+		CPU.INST(0x07,"JG",   CPU.M_DIR, CPU.inst_jg  ); // Jump greater
 
-		CPU.inst_table[0x10] = {text:"LDA", m:CPU.M_IMM, s:1, f:CPU.inst_lda }; // Load A with constant
-		CPU.inst_table[0x11] = {text:"LDA", m:CPU.M_DIR, s:2, f:CPU.inst_ldad}; // Load A value from memory 
-		CPU.inst_table[0x12] = {text:"LDX", m:CPU.M_IMM, s:1, f:CPU.inst_ldx }; // Load X with constant
-		CPU.inst_table[0x13] = {text:"LDY", m:CPU.M_IMM, s:1, f:CPU.inst_ldy }; // Load Y with constant
-		CPU.inst_table[0x14] = {text:"LDP", m:CPU.M_DIR, s:2, f:CPU.inst_ldp }; // Load P with value at memory location
+		CPU.INST(0x10,"LDA",  CPU.M_IMM, CPU.inst_lda ); // Load A with constant
+		CPU.INST(0x11,"LDA",  CPU.M_DIR, CPU.inst_ldad); // Load A value from memory 
+		CPU.INST(0x12,"LDX",  CPU.M_IMM, CPU.inst_ldx ); // Load X with constant
+		CPU.INST(0x13,"LDY",  CPU.M_IMM, CPU.inst_ldy ); // Load Y with constant
+		CPU.INST(0x14,"LDP",  CPU.M_DIR, CPU.inst_ldp ); // Load P with value at memory location
 		
-		//CPU.inst_table[0x14] = {text:"LDM", m:CPU.M_DIR, s:2, f:CPU.inst_ldm }; // Load A value from memory 
-		
-		
-		CPU.inst_table[0x18] = {text:"STA", m:CPU.M_DIR, s:2, f:CPU.inst_sta }; // Store A at memory location
-		CPU.inst_table[0x19] = {text:"STX", m:CPU.M_DIR, s:2, f:CPU.inst_stx }; // Store X at memory location
-		CPU.inst_table[0x1A] = {text:"STY", m:CPU.M_DIR, s:2, f:CPU.inst_sty }; // Store Y at memory location
-		CPU.inst_table[0x1B] = {text:"STP", m:CPU.M_DIR, s:2, f:CPU.inst_stp }; // Store P at memory location
+		CPU.INST(0x18,"STA",  CPU.M_DIR, CPU.inst_sta ); // Store A at memory location
+		CPU.INST(0x19,"STX",  CPU.M_DIR, CPU.inst_stx ); // Store X at memory location
+		CPU.INST(0x1A,"STY",  CPU.M_DIR, CPU.inst_sty ); // Store Y at memory location
+		CPU.INST(0x1B,"STP",  CPU.M_DIR, CPU.inst_stp ); // Store P at memory location
 
+		CPU.INST(0x20,"TXA",  CPU.M_IMP, CPU.inst_txa ); // Transfre X to A
+		CPU.INST(0x21,"TAX",  CPU.M_IMP, CPU.inst_tax ); // Transfer A to X
+		CPU.INST(0x22,"TYA",  CPU.M_IMP, CPU.inst_tya ); // Transfre Y to A
+		CPU.INST(0x23,"TAY",  CPU.M_IMP, CPU.inst_tay ); // Transfer A to Y
+		
+		CPU.INST(0x30,"SP",   CPU.M_DIR, CPU.inst_sp  ); // Set pointer address
+		CPU.INST(0x31,"LP",   CPU.M_IMP, CPU.inst_lp  ); // Load A into memory at pointer
+		CPU.INST(0x32,"GP",   CPU.M_IMP, CPU.inst_gp  ); // Get value at pointer
+		CPU.INST(0x33,"AP",   CPU.M_IMP, CPU.inst_ap  ); // Add a to pointer
 
-		CPU.inst_table[0x20] = {text:"TXA", m:CPU.M_IMP, s:0, f:CPU.inst_txa }; // Transfre X to A
-		CPU.inst_table[0x21] = {text:"TAX", m:CPU.M_IMP, s:0, f:CPU.inst_tax }; // Transfer A to X
-		CPU.inst_table[0x22] = {text:"TYA", m:CPU.M_IMP, s:0, f:CPU.inst_tya }; // Transfre Y to A
-		CPU.inst_table[0x23] = {text:"TAY", m:CPU.M_IMP, s:0, f:CPU.inst_tay }; // Transfer A to Y
-		
-		CPU.inst_table[0x30] = {text:"SP",  m:CPU.M_DIR, s:2, f:CPU.inst_sp  }; // Set pointer address
-		CPU.inst_table[0x31] = {text:"LP",  m:CPU.M_IMP, s:0, f:CPU.inst_lp  }; // Load A into memory at pointer
-		CPU.inst_table[0x32] = {text:"GP",  m:CPU.M_IMP, s:0, f:CPU.inst_gp  }; // Get value at pointer
-		CPU.inst_table[0x33] = {text:"AP",  m:CPU.M_IMP, s:0, f:CPU.inst_ap  }; // Add a to pointer
+		CPU.INST(0x40,"PUSH", CPU.M_IMP, CPU.inst_push); // Push A into stack
+		CPU.INST(0x41,"POP",  CPU.M_IMP, CPU.inst_pop ); // Pop from stack into A
 
-		CPU.inst_table[0x40] = {text:"PUSH",m:CPU.M_IMP, s:0, f:CPU.inst_push}; // Push A into stack
-		CPU.inst_table[0x41] = {text:"POP", m:CPU.M_IMP, s:0, f:CPU.inst_pop }; // Pop from stack into A
+		CPU.INST(0x42,"PUSHP",CPU.M_IMP, CPU.inst_pshp);// Push A into stack
+		CPU.INST(0x43,"POPP", CPU.M_IMP, CPU.inst_popp);// Pop from stack into A
+		
+		
+		CPU.INST(0x50,"CMP",  CPU.M_IMM, CPU.inst_cmp ); // Compare with A
+		CPU.INST(0x51,"CPX",  CPU.M_IMM, CPU.inst_cpx ); // Compare with X
+		CPU.INST(0x52,"CPY",  CPU.M_IMM, CPU.inst_cpy ); // Compare with Y
 
-		CPU.inst_table[0x42] = {text:"PUSHP",m:CPU.M_IMP, s:0, f:CPU.inst_pshp};// Push A into stack
-		CPU.inst_table[0x43] = {text:"POPP", m:CPU.M_IMP, s:0, f:CPU.inst_popp};// Pop from stack into A
+		CPU.INST(0x60,"INC",  CPU.M_IMP, CPU.inst_inc ); // Increment A
+		CPU.INST(0x61,"DEC",  CPU.M_IMP, CPU.inst_dec ); // Decrement A
+		CPU.INST(0x62,"INX",  CPU.M_IMP, CPU.inst_inx ); // Increment X
+		CPU.INST(0x63,"DEX",  CPU.M_IMP, CPU.inst_dex ); // Decrement X
+		CPU.INST(0x64,"INY",  CPU.M_IMP, CPU.inst_iny ); // Increment Y
+		CPU.INST(0x65,"DEY",  CPU.M_IMP, CPU.inst_dey ); // Decrement Y
+		CPU.INST(0x66,"INP",  CPU.M_IMP, CPU.inst_inp ); // Increment pointer
+		CPU.INST(0x67,"DEP",  CPU.M_IMP, CPU.inst_dep ); // Increment pointer
 		
+		CPU.INST(0x70,"TSA",  CPU.M_IMP, CPU.inst_tsa ); // Transfer Status to A
+		CPU.INST(0x71,"TAS",  CPU.M_IMP, CPU.inst_tas ); // Transfer A to Status
+		CPU.INST(0x72,"CLC",  CPU.M_IMP, CPU.inst_clc ); // Clear Carry
+		CPU.INST(0x73,"SET",  CPU.M_IMP, CPU.inst_sec ); // Set Carry
 		
-		CPU.inst_table[0x50] = {text:"CMP", m:CPU.M_IMM, s:1, f:CPU.inst_cmp }; // Compare with A
-		CPU.inst_table[0x51] = {text:"CPX", m:CPU.M_IMM, s:1, f:CPU.inst_cpx }; // Compare with X
-		CPU.inst_table[0x52] = {text:"CPY", m:CPU.M_IMM, s:1, f:CPU.inst_cpy }; // Compare with Y
+		CPU.INST(0x80,"OUT",  CPU.M_IMP, CPU.inst_out ); // Output A to console
 
-		CPU.inst_table[0x60] = {text:"INC", m:CPU.M_IMP, s:0, f:CPU.inst_inc }; // Increment A
-		CPU.inst_table[0x61] = {text:"DEC", m:CPU.M_IMP, s:0, f:CPU.inst_dec }; // Decrement A
-		CPU.inst_table[0x62] = {text:"INX", m:CPU.M_IMP, s:0, f:CPU.inst_inx }; // Increment X
-		CPU.inst_table[0x63] = {text:"DEX", m:CPU.M_IMP, s:0, f:CPU.inst_dex }; // Decrement X
-		CPU.inst_table[0x64] = {text:"INY", m:CPU.M_IMP, s:0, f:CPU.inst_iny }; // Increment Y
-		CPU.inst_table[0x65] = {text:"DEY", m:CPU.M_IMP, s:0, f:CPU.inst_dey }; // Decrement Y
-		CPU.inst_table[0x66] = {text:"INP", m:CPU.M_IMP, s:0, f:CPU.inst_inp }; // Increment pointer
-		CPU.inst_table[0x67] = {text:"DEP", m:CPU.M_IMP, s:0, f:CPU.inst_dep }; // Increment pointer
+		CPU.INST(0x90,"AND",  CPU.M_IMM, CPU.inst_and ); // Set A to A & immediate
+		CPU.INST(0x91,"OR",   CPU.M_IMM, CPU.inst_or  ); // Set A to A | immediate
+		CPU.INST(0x92,"XOR",  CPU.M_IMM, CPU.inst_xor ); // Set A to A ^ immediate
+		CPU.INST(0x93,"NOT",  CPU.M_IMM, CPU.inst_not ); // Set A to bitwise negation of A
+		CPU.INST(0x94,"SHL",  CPU.M_IMM, CPU.inst_shl ); // Shift A left by immediate bits
+		CPU.INST(0x95,"SHR",  CPU.M_IMM, CPU.inst_shr ); // Shift A right by the immediate bits
+		CPU.INST(0x96,"ADD",  CPU.M_IMM, CPU.inst_add ); // Set A to A + operand Z_256
+		CPU.INST(0x97,"ADDP", CPU.M_IMP, CPU.inst_addp); // Set P to P + A
+		CPU.INST(0x98,"ADDX", CPU.M_IMP, CPU.inst_addx); // Set A to A + X Z_256
+		CPU.INST(0x99,"SUB",  CPU.M_IMM, CPU.inst_sub ); // Set A to A + operand Z_256
+		CPU.INST(0x9A,"SUBP", CPU.M_IMP, CPU.inst_subp); // Set Set P to P - A
+		CPU.INST(0x9B,"MUL",  CPU.M_IMM, CPU.inst_mul ); // Set A to A * operand Z_256
+		CPU.INST(0x9C,"DIV",  CPU.M_IMM, CPU.inst_div ); // Set A to A / operand Z_256
+		CPU.INST(0x9D,"NEG",  CPU.M_IMP, CPU.inst_neg ); // Set A to the additive inverse of A in Z_256
+	 	
+		CPU.INST(0xB0,"RND",  CPU.M_IMP, CPU.inst_rnd ); // Random number
+		CPU.INST(0xC0,"SYNC", CPU.M_IMP, CPU.inst_sync); // Render framebuffer
+		CPU.INST(0xFF,"END",  CPU.M_IMP, CPU.inst_end ); // Halt
 		
-		
-		CPU.inst_table[0x70] = {text:"TSA", m:CPU.M_IMP, s:0, f:CPU.inst_tsa }; // Transfer Status to A
-		CPU.inst_table[0x71] = {text:"TAS", m:CPU.M_IMP, s:0, f:CPU.inst_tas }; // Transfer A to Status
-		CPU.inst_table[0x72] = {text:"CLC", m:CPU.M_IMP, s:0, f:CPU.inst_clc }; // Clear Carry
-		CPU.inst_table[0x73] = {text:"SET", m:CPU.M_IMP, s:0, f:CPU.inst_sec }; // Set Carry
-		
-		CPU.inst_table[0x80] = {text:"OUT", m:CPU.M_IMP, s:0, f:CPU.inst_out }; // Output A to console
 
-		CPU.inst_table[0x90] = {text:"AND", m:CPU.M_IMM, s:1, f:CPU.inst_and }; // Set A to A & immediate
-		CPU.inst_table[0x91] = {text:"OR",  m:CPU.M_IMM, s:1, f:CPU.inst_or  }; // Set A to A | immediate
-		CPU.inst_table[0x92] = {text:"XOR", m:CPU.M_IMM, s:1, f:CPU.inst_xor }; // Set A to A ^ immediate
-		CPU.inst_table[0x93] = {text:"NOT", m:CPU.M_IMM, s:1, f:CPU.inst_not }; // Set A to bitwise negation of A
-		CPU.inst_table[0x94] = {text:"SHL", m:CPU.M_IMM, s:1, f:CPU.inst_shl }; // Shift A left by immediate bits
-		CPU.inst_table[0x95] = {text:"SHR", m:CPU.M_IMM, s:1, f:CPU.inst_shr }; // Shift A right by the immediate bits
-		CPU.inst_table[0x96] = {text:"ADD", m:CPU.M_IMM, s:1, f:CPU.inst_add }; // Set A to A + operand Z_256
-		CPU.inst_table[0x97] = {text:"ADDP",m:CPU.M_IMP, s:0, f:CPU.inst_addp}; // Set P to P + A
-		CPU.inst_table[0x98] = {text:"ADDX",m:CPU.M_IMP, s:0, f:CPU.inst_addx}; // Set A to A + X Z_256
-		CPU.inst_table[0x99] = {text:"SUB", m:CPU.M_IMM, s:1, f:CPU.inst_sub }; // Set A to A + operand Z_256
-		CPU.inst_table[0x9A] = {text:"SUBP",m:CPU.M_IMP, s:0, f:CPU.inst_subp}; // Set Set P to P - A
-		CPU.inst_table[0x9B] = {text:"MUL", m:CPU.M_IMM, s:1, f:CPU.inst_mul }; // Set A to A * operand Z_256
-		CPU.inst_table[0x9C] = {text:"DIV", m:CPU.M_IMM, s:1, f:CPU.inst_div }; // Set A to A / operand Z_256
-		CPU.inst_table[0x9D] = {text:"NEG", m:CPU.M_IMP, s:0, f:CPU.inst_neg }; // Set A to the additive inverse of A in Z_256
+		// Compute sizes
+		for (var i in CPU.inst_table)
+		{
+			if (CPU.inst_table[i].m == CPU.M_IMP) CPU.inst_table[i].s = 0;
+			if (CPU.inst_table[i].m == CPU.M_IMM) CPU.inst_table[i].s = 1;
+			if (CPU.inst_table[i].m == CPU.M_DIR) CPU.inst_table[i].s = 2;
+		}
 		
-		CPU.inst_table[0xB0] = {text:"RND", m:CPU.M_IMP, s:0, f:CPU.inst_rnd }; // Random number
-		CPU.inst_table[0xC0] = {text:"SYNC",m:CPU.M_IMP, s:0, f:CPU.inst_sync}; // Render framebuffer
-		CPU.inst_table[0xFF] = {text:"END", m:CPU.M_IMP, s:0, f:CPU.inst_end }; // Halt
 	}	
+	
+	// load inst slot
+	static INST(a, text, mode, func){ CPU.inst_table[a] = {text:text, m:mode, f:func}; };
+
+	
 	
 	// Instance Constructor
 	constructor (name, memory, start_addr)

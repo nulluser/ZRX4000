@@ -30,6 +30,8 @@ mainloop:	JSR			check_keys:		// Deal with key presses
 			JSR			draw_player:	// Draw
 			
 			SYNC						// Sync framebuffer
+			
+			NOP
 			JMP			mainloop:
 
 /********************/			
