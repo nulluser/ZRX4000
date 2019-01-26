@@ -14,6 +14,17 @@
 var fb_gametest = 
  `
 
+/*****************************/			
+/**                         **/
+/** Simple Game Engine Test **/
+/**                         **/
+/*****************************/
+			
+
+/*************/			
+/* Main Loop */
+/*************/
+
 mainloop:	JSR			check_keys:		// Deal with key presses
 			JSR			clear_screen:	// Clear the screen
 			JSR			draw_player:	// Draw
@@ -21,10 +32,16 @@ mainloop:	JSR			check_keys:		// Deal with key presses
 			SYNC						// Sync framebuffer
 			JMP			mainloop:
 
+/********************/			
+/* End of Main Loop */
+/********************/
 
+			
 
-
+/************/			
 /* Keyboard */
+/************/
+			
 			
 check_keys:	LDA 		'a'
 			JSR 		checkkey:
@@ -74,13 +91,17 @@ checkkey:
 checkkey1:
 			RET
 		
+
+/*******************/			
 /* End of Keyboard */
+/*******************/
+
 	
 			
 			
-			
-			
-/* Movement */		
+/************/			
+/* Movement */
+/************/
 			
 			
 p1_move_left:
@@ -127,12 +148,18 @@ p1_move_down1:
 			STA			p1_pos_y:
 			ret			
 				
-/* End of Movement */					
+/*******************/			
+/* End of Movement */
+/*******************/
 			
 			
-			
-/* Graphics */
 
+/************/			
+/* Graphics */
+/************/
+			
+
+/* Draw Player */
 draw_player:
 
 			SP			image:
@@ -147,21 +174,14 @@ draw_player:
 
 			
 			
-			
-			
-		
-			
-			
 /* Draw Image */
 // P points to start of image data 
 //  X and Y define draw position
 // C0 is transparent
 draw_image:
 
-
 			STX			image_x:		// Store draw location
 			STY			image_y:
-
 
 			
 			GP
@@ -235,12 +255,6 @@ draw_image4:
 						
 			
 			
-
-			
-			
-			
-			
-			
 /* Clear Screen */
 clear_screen:
 
@@ -269,15 +283,18 @@ clear_screen1:
 			JNE			clear_screen1:	
 			RET
 			
-			
+/*******************/		
 /* End of Graphics */
+/*******************/				
+		
 
 
 
-
+			
+/*************/		
 /* Game Data */
-			
-			
+/*************/				
+
 p1_pos_x:	DB			#08
 p1_pos_y:	DB			#08
 p1_size_x:	DB			#05
@@ -295,15 +312,28 @@ image:		DB			#08 #09
 			DB			#03 #03 #03 #03 #03 #03 #03 #03
 			DB			#C0 #03 #03 #03 #03 #03 #03 #C0
 		
+/********************/		
+/* End of Game Data */
+/********************/				
 		
 		
+		
+		
+/****************/		
 /* Library Data */
-		
+/****************/				
+
 image_x:	DB			#00				// Scratch pad for image drawing
 image_y:	DB			#00
 image_sx:	DB			#00				// Scratch pad for image drawing
 image_sy:	DB			#00
 image_p:	DB			#00	#00			// Current pointer image image		
+
+/***********************/		
+/* End of Library Data */
+/***********************/				
+
+
 			
 `;
 /* End of Program */
