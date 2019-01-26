@@ -19,6 +19,9 @@ function Assembler(memory)
 	
 	const DEBUG = 0;			// True for assembly debug
 	
+	const NEWLINE = "NEWLINE";	// Newline token, internal use
+	
+	
 	var address_table = [];  	// Stores known addresses
 	var resolve_table = [];  	// Stores address that need resolved
 	var cur_token = 0;			// Index of current token
@@ -52,42 +55,21 @@ function Assembler(memory)
 		address_table = [];
 		resolve_table = [];
 
-		var lines = str.split(/[\n]+/);
-		
-		var tokens = [];//str.split(/[ ,\t\n]+/);
-		
-		//console.log(lines);
-		
-		// Break lines apart into tokens
-		for (var i = 0; i < lines.length; i++)
-		{
-			if (lines[i] == "") continue; // blank lines
-			
-			// Remove comments
-			var p = lines[i].indexOf("//");
-			if (p != -1) lines[i] = lines[i].substr(0, p);
 
-			// Add to token list
-			var t = lines[i].split(/[ \t]+/);
-			for (var j = 0; j < t.length; j++)
-			{	
-				if (t[j].length > 0)
-					tokens.push(t[j]);
-			}
-		}
+		str = remove_block_comments(str);
 		
 		
-		// Remove block comments
-		for (var i = 0; i < tokens.length; i++)
-		{
-			if (tokens[i] == "/*")
-			{
-				while(tokens[i] != "*/" && i < tokens.length) 
-					tokens.splice(i, 1);
+		
+		var tokens = parse_tokens(str);
 
-				tokens.splice(i, 1);			// Remove */
-			}
-		}
+		
+		
+		console.log(tokens);
+		
+		//console.log(tokens);
+		
+		
+
 		
 		//console.log(tokens);
 				
@@ -128,12 +110,71 @@ function Assembler(memory)
 			main.log_console(`${MODULE}   ${resolve_table[i].label.padEnd(16)} ${hex_word(resolve_table[i].addr)} \n`);*/
 				
 		
-		///disassemble(main.log, prog_addr, prog_addr + 0x40);
+		disassemble(main.log, prog_addr, prog_addr + 0x100);
 		disassemble(main.log_console, prog_addr, prog_addr + 0x40);
 		
 		return 0;
 		
 	}
+	
+	function remove_block_comments(str)
+	{
+		while (true)
+		{
+			var p1 = str.indexOf("/*");
+			
+			if (p1 == -1) break;			// No comment found
+			
+			var p2 = str.indexOf("*/");
+			
+			str = str.slice(0, p1) + str.slice(p2+2);			
+		}
+				
+		return str;
+	}
+	
+	
+	
+	
+	// Get tokens from input string
+	function parse_tokens(str)
+	{
+		var lines = str.split(/[\n]+/);
+		var tokens = [];
+			
+		// Break lines apart into tokens
+		for (var i = 0; i < lines.length; i++)
+		{
+			if (lines[i] == "") continue; // blank lines
+			
+			var count = 0; // number of tokens for line
+			
+			// Remove comments
+			var p = lines[i].indexOf("//");
+			if (p != -1) lines[i] = lines[i].substr(0, p);
+
+			// Add to token list
+			var t = lines[i].split(/[ \t]+/);
+			for (var j = 0; j < t.length; j++)
+			{	
+				if (t[j].length > 0 && t[j] != "\t" )
+				{
+					//main.log("TKA: (" + t[j] + ")\n");
+					
+					tokens.push(t[j]);
+					count++;
+				}
+			}
+			
+			if (count > 0)
+				tokens.push(NEWLINE);	
+
+		}
+		return tokens;
+	}
+	
+
+	
 	
 	/* 
 		Private
@@ -149,16 +190,22 @@ function Assembler(memory)
 		
 		while(cur_token < tokens.length)
 		{
-			if (assemble_token(tokens[cur_token], tokens[cur_token+1]))
+			//main.log_console("T:" + tokens[cur_token] + "\n");
+			
+			if (assemble_token(tokens, tokens[cur_token], tokens[cur_token+1]))
 				return 1;
 			cur_token++;
+			
+			// Consume newline
+			if (tokens[cur_token] == NEWLINE)
+				cur_token++;
 		}
 		
 		return 0;
 	}
 	
 	// Assemble token
-	function assemble_token(token, next)
+	function assemble_token(tokens, token, next)
 	{
 		if (DEBUG)
 			main.log("Token[" + cur_token + "]: " + token + "\n");
@@ -186,7 +233,7 @@ function Assembler(memory)
 		// See if token is a define byte
 		if (token == "DB")
 		{
-			return (assemble_db(next));
+			return (assemble_db(tokens, next));
 		}
 			
 			
@@ -296,7 +343,7 @@ function Assembler(memory)
 	
 		
 	// Assemble a define byte
-	function assemble_db(next)
+	function assemble_db(tokens, next)
 	{
 		//console.log("Assemble db : " + next);
 		
@@ -307,17 +354,22 @@ function Assembler(memory)
 			return 1;
 		}
 		
-		if (is_literal(next))
+		while(next != NEWLINE)
 		{
-			add_byte(ascii(next[1]));
-			
-		} else
-		if (is_immediate(next))
-		{
-			add_byte(parseInt(next.substr(1, next.length-1), 16)); 
-		}
 		
-		cur_token += 1;
+			if (is_literal(next))
+			{
+				add_byte(ascii(next[1]));
+				
+			} else
+			if (is_immediate(next))
+			{
+				add_byte(parseInt(next.substr(1, next.length-1), 16)); 
+			}
+		
+			cur_token++;	// Consume byte
+			next = tokens[cur_token+1];	// compute next
+		}
 		
 		return 0;
 	}

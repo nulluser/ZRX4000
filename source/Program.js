@@ -13,15 +13,14 @@
 // This one generally works
 var fb_gametest = 
  `
- 
 
 mainloop:	
 
 			JSR		check_keys:
 			
-			lda		#03
+			JSR		clear_screen:
+
 			JSR		draw_player:			
-			//END
 			
 			SYNC
 			JMP		mainloop:
@@ -81,79 +80,12 @@ checkkey1:
 			
 			
 			
+		
 			
 			
-			
-			
-			
-			
-			
-/* Draw player */
-draw_player:
-			push				// Push color
-
-
-			SP		D000			//  pointer to frame buffer base
-
-			LDA		p1_pos_y:		// Advance to y pos
-			CMP		#0
-			JE		draw_player2:
-			
-			TAX
-draw_player1:					
-			LDA		#40
-			ADDP
-			DEX
-			CPX		#0
-			JNE		draw_player1:
-				
-				
-draw_player2:				
-				
-			LDA		p1_pos_x:		// Advance to x pos
-			ADDP
-
-			
-			LDA		p1_size_x:		// Get sizes
-			TAX
-			LDA		p1_size_y:	
-			TAY
-					
-			
-			//LDA		#5
-			//TAX
-			
-draw_player3:
-			pop			// Get color from stack
-			push
-
-			LP			// Draw pixel
-			INP			// Next pixel
-			
-			DEX			// x row counter
-			CPX			#0
-			
-			JNE			draw_player3:
-			
-			LDA			p1_size_x:		// Get size
-			TAX
-			SUBP					// Pull out what was just drawn
-			LDA			#40				// Advance to next line
-			ADDP	
-
-			DEY	
-			CPY		#0
-			JNE		draw_player3:	// Draw next line
-			
-			pop						// restore stack
-			
-			RET
 			
 			
 p1_move_left:
-		// Erase old
-		LDA		#0
-		jsr		draw_player:
 		LDA		p1_pos_x:
 		CMP		#0
 		JNE		p1_move_left1:
@@ -162,31 +94,21 @@ p1_move_left:
 p1_move_left1:
 		DEC
 		STA		p1_pos_x:
-		LDA		#3
-		jsr		draw_player:
 		ret			
 			
 p1_move_right:
-		// Erase old
-		LDA		#0
-		jsr		draw_player:
 		LDA		p1_pos_x:
-		CMP		#3B
+		CMP		#38
 		JL		p1_move_right1:
 		ret
 		
 p1_move_right1:
 		INC
 		STA		p1_pos_x:
-		LDA		#3
-		jsr		draw_player:
 		ret			
 				
 			
 p1_move_up:
-		// Erase old
-		LDA		#0
-		jsr		draw_player:
 		LDA		p1_pos_y:
 		CMP		#0
 		JNE		p1_move_up1:
@@ -195,25 +117,175 @@ p1_move_up:
 p1_move_up1:
 		DEC
 		STA		p1_pos_y:
-		LDA		#3
-		jsr		draw_player:
 		ret			
 			
 p1_move_down:
-		// Erase old
-		LDA		#0
-		jsr		draw_player:
 		LDA		p1_pos_y:
-		CMP		#3B
+		CMP		#38
 		JL		p1_move_down1:
 		ret
 p1_move_down1:
 		INC
 		STA		p1_pos_y:
-		LDA		#3
-		jsr		draw_player:
 		ret			
 				
+			
+			
+			
+				
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+
+draw_player:
+
+			SP			image:
+			LDA			p1_pos_x:
+			TAX
+
+			LDA			p1_pos_y:
+			TAY
+			jsr			draw_image:
+
+			ret
+
+			
+			
+			
+			
+		
+			
+			
+/* Draw Image */
+// P points to start of image data 
+//  X and Y define draw position
+// C0 is transparent
+draw_image:
+
+
+			STX			image_x:			// Store draw location
+			STY			image_y:
+
+
+			
+			GP
+			STA			image_sx:			// Store image size
+			INP
+
+			GP
+			STA			image_sy:
+			INP
+			
+			STP			image_p:			// Store image start location
+
+			SP			D000				//  pointer to frame buffer base
+
+			LDA			image_y:			// Advance to y pos
+			CMP			#0
+			JE			draw_image2:		// Do offset y if we are at zero already
+			
+			TAX
+draw_image1:					
+			LDA			#40
+			ADDP
+			DEX
+			CPX			#0
+			JNE			draw_image1:
+								
+draw_image2:				
+				
+			LDA			image_x:		// Advance to x pos
+			ADDP
+
+			
+			LDA			image_sx:		// Get sizes
+			TAX
+			LDA			image_sy:	
+			TAY
+			
+draw_image3:
+			
+			PUSHP					// Save fb location
+			LDP			image_p:	// Get current image pixel
+			GP						
+			INP						// Advance
+			STP			image_p:
+			POPP					// Restore fb location
+
+			CMP			#C0			// Check for transparent
+			JE			draw_image4:
+			LP						// Draw pixel
+			
+draw_image4:			
+			INP						// Next frame buffer location
+			
+			DEX						// x row counter
+			CPX			#0
+			
+			JNE			draw_image3:	// Not done with row
+			
+			LDA			image_sx:		// Get size
+			TAX
+			SUBP						// Pull out what was just drawn
+			LDA			#40				// Advance to next line
+			ADDP	
+
+			DEY	
+			CPY		#0
+			JNE		draw_image3:	// Draw next line
+			
+			
+			RET
+						
+			
+			
+
+			
+			
+			
+			
+			
+/* Clear Screen */
+clear_screen:
+
+			LDX			#40					// Size to clear
+			LDY			#40
+			SP			D000				//  pointer to frame buffer base
+			
+			
+			
+clear_screen1:					
+			
+			LDA			#01					// Clear color
+			LP
+			INP								// Next FB location
+
+			DEX								// column counter
+			CPX			#00
+			JNE			clear_screen1:
+
+			
+			
+			
+			LDX			#40					// Row counter
+			DEY
+			CPY			#00
+			JNE			clear_screen1:	
+			RET
 			
 			
 			
@@ -239,33 +311,32 @@ p1_move_down1:
 			
 
 			
-graphfill1:		
-			RND						// Random fill
-			LP
-			INP
-			
-			INX 
-			CPX 	#00				// Rolled over?
-			JNE 	graphfill1:
-			
-			INY
-			CPY 	#10
-			JL 		graphfill1:		// Not done?
-	
-			SYNC					// Sync framebuffer
-			RET
-						
-	
-			
 			
 			
 			
 p1_pos_x:	DB		#08
-p1_pos_y:	DB		#05
+p1_pos_y:	DB		#08
 p1_size_x:	DB		#05
 p1_size_y:	DB		#05
-			
-			
+
+// Define an image, SX  SY
+image:		DB		#08 #09
+			DB		#C0 #C0 #C0 #03 #03 #C0 #C0 #C0
+			DB		#C0 #C0 #C0 #03 #03 #C0 #C0 #C0
+			DB		#C0 #03 #03 #03 #03 #03 #03 #C0
+			DB		#03 #03 #03 #03 #03 #03 #03 #03
+			DB		#03 #03 #0C #0C #0C #0C #03 #03
+			DB		#03 #03 #0C #0C #0C #0C #03 #03
+			DB		#03 #03 #03 #0F #0F #03 #03 #03
+			DB		#03 #03 #03 #03 #03 #03 #03 #03
+			DB		#C0 #03 #03 #03 #03 #03 #03 #C0
+		
+		
+image_x:	DB	#00				// Scratch pad for image drawing
+image_y:	DB	#00
+image_sx:	DB	#00				// Scratch pad for image drawing
+image_sy:	DB	#00
+image_p:	DB	#00	#00			// Current pointer image image		
 			
 `;
 /* End of Program */
