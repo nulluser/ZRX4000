@@ -317,11 +317,9 @@ image_p:	DB			#00	#00			// Current pointer image image
 
 
 
-
-
-
-
-
+/******************************************************************************/
+/******** FROM HERE DOWN OLD INSTRUCTIONS. NOT UPDATED. LEGACY ****************/
+/******************************************************************************/
 
 
 
@@ -391,13 +389,6 @@ graphinc1:
 
 
 
-
-
-
-
-
-
-/******** FROM HERE DOWN OLD INSTRUCTIONS NOT UPDATED ****************/
 
 
 
