@@ -50,7 +50,7 @@ class CPU
 		
 		CPU.inst_table = [];
 		
-		//                  Diss text   Inst mide Size Func Ptr
+		//                     Display text Inst mode    Size Func Ptr
 		CPU.inst_table[0x00] = {text:"NOP", m:CPU.M_IMP, s:0, f:CPU.inst_nop }; // No Operation	
 		CPU.inst_table[0x01] = {text:"JMP", m:CPU.M_DIR, s:2, f:CPU.inst_jmp }; // Jump to address
 		CPU.inst_table[0x02] = {text:"JSR", m:CPU.M_DIR, s:2, f:CPU.inst_jsr }; // Jump subroutine
