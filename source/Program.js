@@ -276,8 +276,8 @@ clear_screen1:
 
 p1_pos_x:	DB			#08
 p1_pos_y:	DB			#08
-p1_size_x:	DB			#05
-p1_size_y:	DB			#05
+p1_size_x:	DB			#08
+p1_size_y:	DB			#09
 
 // Define an image, SX  SY
 shipimage:	DB			#08 #09

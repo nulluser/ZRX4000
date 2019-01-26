@@ -56,20 +56,9 @@ function Assembler(memory)
 		resolve_table = [];
 
 
-		str = remove_block_comments(str);
+		str = remove_block_comments(str);		// Eat block comments in plain text
 		
-		
-		
-		var tokens = parse_tokens(str);
-
-		
-		
-		console.log(tokens);
-		
-		//console.log(tokens);
-		
-		
-
+		var tokens = parse_tokens(str);			// Convert program string into token list
 		
 		//console.log(tokens);
 				
@@ -117,6 +106,7 @@ function Assembler(memory)
 		
 	}
 	
+	// Remove block comments from string
 	function remove_block_comments(str)
 	{
 		while (true)
@@ -134,8 +124,6 @@ function Assembler(memory)
 	}
 	
 	
-	
-	
 	// Get tokens from input string
 	function parse_tokens(str)
 	{
@@ -149,7 +137,7 @@ function Assembler(memory)
 			
 			var count = 0; // number of tokens for line
 			
-			// Remove comments
+			// Remove line comments
 			var p = lines[i].indexOf("//");
 			if (p != -1) lines[i] = lines[i].substr(0, p);
 
@@ -168,12 +156,10 @@ function Assembler(memory)
 			
 			if (count > 0)
 				tokens.push(NEWLINE);	
-
 		}
 		return tokens;
 	}
 	
-
 	
 	
 	/* 
