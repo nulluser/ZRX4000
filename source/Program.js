@@ -96,7 +96,7 @@ p1_move_left1:
 		STA		p1_pos_x:
 		ret			
 			
-p1_move_right:
+p1_move_right: // TODO need to subtract image size
 		LDA		p1_pos_x:
 		CMP		#38
 		JL		p1_move_right1:
@@ -119,9 +119,9 @@ p1_move_up1:
 		STA		p1_pos_y:
 		ret			
 			
-p1_move_down:
+p1_move_down:			// TODO need to subtract image size
 		LDA		p1_pos_y:
-		CMP		#38
+		CMP		#37
 		JL		p1_move_down1:
 		ret
 p1_move_down1:
