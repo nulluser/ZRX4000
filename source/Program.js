@@ -14,18 +14,17 @@
 var fb_gametest = 
  `
 
-mainloop:	
-
-			JSR			check_keys:
+mainloop:	JSR			check_keys:		// Deal with key presses
+			JSR			clear_screen:	// Clear the screen
+			JSR			draw_player:	// Draw
 			
-			JSR			clear_screen:
-
-			JSR			draw_player:			
-			
-			SYNC
+			SYNC						// Sync framebuffer
 			JMP			mainloop:
 
-			
+
+
+
+/* Keyboard */
 			
 check_keys:	LDA 		'a'
 			JSR 		checkkey:
@@ -75,14 +74,13 @@ checkkey:
 checkkey1:
 			RET
 		
+/* End of Keyboard */
+	
 			
 			
 			
 			
-			
-		
-			
-			
+/* Movement */		
 			
 			
 p1_move_left:
@@ -129,11 +127,11 @@ p1_move_down1:
 			STA			p1_pos_y:
 			ret			
 				
+/* End of Movement */					
 			
 			
 			
-			
-			
+/* Graphics */
 
 draw_player:
 
@@ -161,26 +159,26 @@ draw_player:
 draw_image:
 
 
-			STX			image_x:			// Store draw location
+			STX			image_x:		// Store draw location
 			STY			image_y:
 
 
 			
 			GP
-			STA			image_sx:			// Store image size
+			STA			image_sx:		// Store image size
 			INP
 
 			GP
 			STA			image_sy:
 			INP
 			
-			STP			image_p:			// Store image start location
+			STP			image_p:		// Store image start location
 
-			SP			D000				//  pointer to frame buffer base
+			SP			D000			//  pointer to frame buffer base
 
-			LDA			image_y:			// Advance to y pos
+			LDA			image_y:		// Advance to y pos
 			CMP			#0
-			JE			draw_image2:		// Do offset y if we are at zero already
+			JE			draw_image2:	// Do offset y if we are at zero already
 			
 			TAX
 draw_image1:					
@@ -272,7 +270,12 @@ clear_screen1:
 			RET
 			
 			
-			
+/* End of Graphics */
+
+
+
+
+/* Game Data */
 			
 			
 p1_pos_x:	DB			#08
@@ -292,6 +295,9 @@ image:		DB			#08 #09
 			DB			#03 #03 #03 #03 #03 #03 #03 #03
 			DB			#C0 #03 #03 #03 #03 #03 #03 #C0
 		
+		
+		
+/* Library Data */
 		
 image_x:	DB			#00				// Scratch pad for image drawing
 image_y:	DB			#00
