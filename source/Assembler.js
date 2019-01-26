@@ -92,20 +92,29 @@ function Assembler(memory)
 		//console.log(tokens);
 				
 		// Assemble entire program
-		assemble_tokens(tokens);
+		
+		if (assemble_tokens(tokens))
+			return 1;
 		
 		// Resolve addresses
 		for (var i = 0; i < resolve_table.length; i++)
 		{
-			for (var j = 0; j < address_table.length; j++)
+			var found = 0;
+			for (var j = 0; j < address_table.length && found == 0; j++)
 			{
 				if (resolve_table[i].label == address_table[j].label)
 				{
 					memory.set_word(resolve_table[i].addr, address_table[j].addr);
-									
-					break;
+					found = 1;
 				}
 			}
+			
+			if (found == 0)
+			{
+				main.log_console(`${MODULE} Unresolved symbol ${resolve_table[i].label} \n`);
+				return 1;
+			}
+			
 		}
 		
 		// Show address table
@@ -121,6 +130,8 @@ function Assembler(memory)
 		
 		///disassemble(main.log, prog_addr, prog_addr + 0x40);
 		disassemble(main.log_console, prog_addr, prog_addr + 0x40);
+		
+		return 0;
 		
 	}
 	
@@ -138,9 +149,12 @@ function Assembler(memory)
 		
 		while(cur_token < tokens.length)
 		{
-			assemble_token(tokens[cur_token], tokens[cur_token+1]);		
+			if (assemble_token(tokens[cur_token], tokens[cur_token+1]))
+				return 1;
 			cur_token++;
 		}
+		
+		return 0;
 	}
 	
 	// Assemble token
@@ -165,15 +179,14 @@ function Assembler(memory)
 		// Found instruction, add it to program listing
 		if (inst != -1)
 		{
-			assemble_inst(inst, next);
-			return 0;
+			return (assemble_inst(inst, next));
+			
 		}
 		
 		// See if token is a define byte
 		if (token == "DB")
 		{
-			assemble_db(next);
-			return 0;
+			return (assemble_db(next));
 		}
 			
 			
@@ -182,27 +195,7 @@ function Assembler(memory)
 		return 1;
 	}
 	
-	
-	// Look for inst in table
-	function find_inst(token, mode)
-	{
-		var found_inst = -1;
-		for (var inst in cur_cpu.inst_table) 
-		{
-			if (token.toUpperCase() == cur_cpu.inst_table[inst].text)
-			{
-				// Just match the text
-				if (mode == CPU.M_ANY) return inst;
-					
-				// Also match mode
-				if (cur_cpu.inst_table[inst].m == mode)
-					return inst;
-			}
-		}
-		
-		return -1;
-	}
-	
+
 	
 	// Assemble a label
 	function assemble_label(token)
@@ -225,9 +218,10 @@ function Assembler(memory)
 			
 		// Implied mode
 		if (inst.s == 0)
+		//if (is_inst(next))
 		{
 			add_inst(found_inst, CPU.M_IMP, 0);	// Add to memory
-			return;
+			return 0;
 		}
 
 
@@ -296,6 +290,8 @@ function Assembler(memory)
 		cur_token += inst.s > 0 ? 1 : 0;		// Consume operands
 		
 		add_inst(found_inst, mode, operand);	// Add to memory
+		
+		return 0;
 	}
 	
 		
@@ -343,6 +339,52 @@ function Assembler(memory)
 	
 	// Add instruction word to program
 	function add_word(v) { add_byte(v >> 8); add_byte(v & 0xff); }	
+	
+	
+	
+	
+	
+	
+		
+	// Look for inst in table
+	function find_inst(token, mode)
+	{
+		var found_inst = -1;
+		for (var inst in cur_cpu.inst_table) 
+		{
+			if (token.toUpperCase() == cur_cpu.inst_table[inst].text)
+			{
+				// Just match the text
+				if (mode == CPU.M_ANY) return inst;
+					
+				// Also match mode
+				if (cur_cpu.inst_table[inst].m == mode)
+					return inst;
+			}
+		}
+		
+		return -1;
+	}
+	
+	
+	
+			
+	// Look for inst in table
+	function is_inst(token)
+	{
+		for (var inst in cur_cpu.inst_table) 
+		{
+			if (token.toUpperCase() == cur_cpu.inst_table[inst].text) return 1;
+		}
+		
+		return 0;
+	}
+	
+	
+	
+	
+	
+	
 	
 	// True if is label
 	function is_literal(s)

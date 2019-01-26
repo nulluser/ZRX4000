@@ -96,6 +96,15 @@ function FrameBuffer(base_addr)
 		memory.add_hook(base_addr, FB_SIZE, read_hook, write_hook);
 		
 		create_color_table(); // For creating color table
+		
+		clear();
+	}
+	
+	function clear()
+	{
+		
+		for (var a = 0; a < FB_SIZE; a++)
+			write_hook(a, 0);
 	}
 	
 	function read_hook(a)

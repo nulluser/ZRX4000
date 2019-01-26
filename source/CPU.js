@@ -112,10 +112,10 @@ class CPU
 		CPU.inst_table[0x94] = {text:"SHL", m:CPU.M_IMM, s:1, f:CPU.inst_shl }; // Shift A left by immediate bits
 		CPU.inst_table[0x95] = {text:"SHR", m:CPU.M_IMM, s:1, f:CPU.inst_shr }; // Shift A right by the immediate bits
 		CPU.inst_table[0x96] = {text:"ADD", m:CPU.M_IMM, s:1, f:CPU.inst_add }; // Set A to A + operand Z_256
-		CPU.inst_table[0x97] = {text:"ADDP",m:CPU.M_IMM, s:1, f:CPU.inst_addp }; // Set P to P + immediate
+		CPU.inst_table[0x97] = {text:"ADDP",m:CPU.M_IMP, s:0, f:CPU.inst_addp }; // Set P to P + A
 		CPU.inst_table[0x98] = {text:"ADDX",m:CPU.M_IMP, s:0, f:CPU.inst_addx }; // Set A to A + X Z_256
 		CPU.inst_table[0x99] = {text:"SUB", m:CPU.M_IMM, s:1, f:CPU.inst_sub }; // Set A to A + operand Z_256
-		CPU.inst_table[0x9A] = {text:"SUBP",m:CPU.M_IMM, s:1, f:CPU.inst_subp }; // Set Set P to P - immediate
+		CPU.inst_table[0x9A] = {text:"SUBP",m:CPU.M_IMP, s:0, f:CPU.inst_subp }; // Set Set P to P - A
 		CPU.inst_table[0x9B] = {text:"MUL", m:CPU.M_IMM, s:1, f:CPU.inst_mul }; // Set A to A * operand Z_256
 		CPU.inst_table[0x9C] = {text:"DIV", m:CPU.M_IMM, s:1, f:CPU.inst_div }; // Set A to A / operand Z_256
 		CPU.inst_table[0x9D] = {text:"NEG", m:CPU.M_IMP, s:0, f:CPU.inst_neg }; // Set A to the additive inverse of A in Z_256
@@ -239,13 +239,16 @@ class CPU
 		if (flags)
 		{
 			main.log_console(`  IP: ${hex_word(this.state.ip)} `+
+							`A: ${hex_byte(this.state.a)} ` + 
 							`X: ${hex_byte(this.state.x)} ` + 
 							`Y: ${hex_byte(this.state.y)} ` + 
-							`S: ${hex_word(this.state.a)} ` + 
 							`P: ${hex_word(this.state.p)} ` +
+							`SP: ${hex_word(this.state.sp)} ` + 							
 							`E: ${(this.state.e?1:0)} ` + 
 							`G: ${(this.state.g?1:0)} ` + 
-							`L ${(this.state.l?1:0)} ` );
+							`L ${(this.state.l?1:0)} ` +
+							`O ${(this.state.o?1:0)} `
+							);
 		}
 		
 		//i += inst.s + 1;	// Advance ip
@@ -320,8 +323,8 @@ class CPU
 
 	static inst_tax (m, s) {s.x = s.a;}
 	static inst_txa (m, s) {s.a = s.x;}
-	static inst_tay (m, s) {s.x = s.a;}
-	static inst_tya (m, s) {s.a = s.x;}
+	static inst_tay (m, s) {s.y = s.a;}
+	static inst_tya (m, s) {s.a = s.y;}
 	
 	static inst_push(m, s) {CPU.push_byte(s, s.a);} 
 	static inst_pop (m, s) {s.a = CPU.pop_byte(s);} 
@@ -349,10 +352,10 @@ class CPU
 	static inst_shr (m, s) {s.a = s.a >> m.get_byte(s.ip);} 
 	
 	static inst_add(m, s) {var sum = s.a + m.get_byte(s.ip); s.a = sum & 0xff; s.c = sum &0x0100}
-	static inst_addp(m, s) {s.p = (s.p + m.get_byte(s.ip)) & 0xffff;}
+	static inst_addp(m, s) {s.p = (s.p + s.a) & 0xffff;}
 	static inst_addx(m, s) {s.x = (s.x + s.a) & 0xff;}
 	static inst_sub (m, s) {s.a = (s.a - m.get_byte(s.ip)) & 0xff;}
-	static inst_subp(m, s) {s.p = (s.p - m.get_byte(s.ip)) & 0xffff;}
+	static inst_subp(m, s) {s.p = (s.p - s.a) & 0xffff;}
 	static inst_mul (m, s) {s.a = (s.a * m.get_byte(s.ip)) & 0xff;}
 	static inst_div (m, s) {s.a = (s.a / m.get_byte(s.ip)) & 0xff;}
 	static inst_neg (m, s) {s.a = (65536 - s.a) & 0xff;}
@@ -374,8 +377,8 @@ class CPU
 		var end =  Date.now() + 10;
 		
 		// Loop until done, or SYNC or HALT
-		//while(exec < num_exec && !this.state.fb_update && this.state.ip != CPU.IP_END && Date.now() < end)
-		while(this.state.ip != CPU.IP_END && Date.now() < end)
+		while(exec < num_exec && !this.state.fb_update && this.state.ip != CPU.IP_END && Date.now() < end)
+		//while(this.state.ip != CPU.IP_END && Date.now() < end)
 		{
 			if (CPU.DEBUG) 
 			{

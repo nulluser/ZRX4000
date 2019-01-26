@@ -32,7 +32,7 @@ function System()
 {
 	const MODULE = "[System]    ";
 
-	//const UPDATE_RATE = 10;		// CPU Update (ms)
+	//const UPDATE_RATE = 2000;		// CPU Update (ms)
 	const UPDATE_RATE = 0;			// CPU Update (ms)
 	const SECOND_RATE = 1000;		// Status update
 
@@ -101,7 +101,9 @@ function System()
 		
 		// Assemble some code into memory
 		
-		assembler.assemble(CPU, fb_test,		0x1000);
+		if (assembler.assemble(CPU, fb_gametest,		0x1000))  return;
+		//assembler.assemble(CPU, fb_filltest,		0x1000);
+		
 		//assembler.assemble(CPU, fire,		0x1000);
 		
 		//assembler.assemble(CPU, inst_test,		0x1000);
@@ -109,6 +111,10 @@ function System()
 		//assembler.assemble(CPU.inst_table, fb_test1,	0x2000);
 		//assembler.assemble(CPU.inst_table, fb_test2,	0x3000);
 		//assembler.assemble(CPU.inst_table, game,		0x4000);		
+		
+		memory.dump(0x1000, 0x100);
+		
+		
 		
 		// Create some cores
 		cpu_cores.push( new CPU("CPU1", memory, 0x1000) );

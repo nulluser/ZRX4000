@@ -8,9 +8,290 @@
 "use strict";
 
 
+
 // Generic FB test
 // This one generally works
-var fb_test = 
+var fb_gametest = 
+ `
+ 
+
+mainloop:	
+
+			JSR		check_keys:
+			
+			lda		#03
+			JSR		draw_player:			
+			//END
+			
+			SYNC
+			JMP		mainloop:
+
+			
+			
+check_keys:	LDA 	'a'
+			JSR 	checkkey:
+			CMP		#00
+			JE		keyloop1:
+			JSR 	p1_move_left:
+
+// Check for 'd' pressed
+keyloop1:	LDA 	'd'
+			JSR		checkkey:				
+			CMP 	#00
+			JE		keyloop2:
+			JSR 	p1_move_right:
+
+// Check for 'w' pressed
+keyloop2:	LDA 	'w'
+			JSR		checkkey:				
+			CMP 	#00
+			JE		keyloop3:
+			JSR 	p1_move_up:
+
+// Check for 'd' pressed
+keyloop3:	LDA 	's'
+			JSR		checkkey:				
+			CMP 	#00
+			JE		keyloop4:
+			JSR 	p1_move_down:
+keyloop4:
+			ret			
+			
+			
+				
+// See if key is down
+checkkey:	
+			SP		C100		// Set pointer to keyboard base	
+			AP
+
+			GP
+			CMP 	#01			// See if pressed
+		
+			LDA		#00			
+			JNE 	checkkey1:
+		
+			LDA		#01			// Set pressed
+		
+			// seek to key in A
+checkkey1:
+			RET
+		
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+/* Draw player */
+draw_player:
+			push				// Push color
+
+
+			SP		D000			//  pointer to frame buffer base
+
+			LDA		p1_pos_y:		// Advance to y pos
+			CMP		#0
+			JE		draw_player2:
+			
+			TAX
+draw_player1:					
+			LDA		#40
+			ADDP
+			DEX
+			CPX		#0
+			JNE		draw_player1:
+				
+				
+draw_player2:				
+				
+			LDA		p1_pos_x:		// Advance to x pos
+			ADDP
+
+			
+			LDA		p1_size_x:		// Get sizes
+			TAX
+			LDA		p1_size_y:	
+			TAY
+					
+			
+			//LDA		#5
+			//TAX
+			
+draw_player3:
+			pop			// Get color from stack
+			push
+
+			LP			// Draw pixel
+			INP			// Next pixel
+			
+			DEX			// x row counter
+			CPX			#0
+			
+			JNE			draw_player3:
+			
+			LDA			p1_size_x:		// Get size
+			TAX
+			SUBP					// Pull out what was just drawn
+			LDA			#40				// Advance to next line
+			ADDP	
+
+			DEY	
+			CPY		#0
+			JNE		draw_player3:	// Draw next line
+			
+			pop						// restore stack
+			
+			RET
+			
+			
+p1_move_left:
+		// Erase old
+		LDA		#0
+		jsr		draw_player:
+		LDA		p1_pos_x:
+		CMP		#0
+		JNE		p1_move_left1:
+		ret
+		
+p1_move_left1:
+		DEC
+		STA		p1_pos_x:
+		LDA		#3
+		jsr		draw_player:
+		ret			
+			
+p1_move_right:
+		// Erase old
+		LDA		#0
+		jsr		draw_player:
+		LDA		p1_pos_x:
+		CMP		#3B
+		JL		p1_move_right1:
+		ret
+		
+p1_move_right1:
+		INC
+		STA		p1_pos_x:
+		LDA		#3
+		jsr		draw_player:
+		ret			
+				
+			
+p1_move_up:
+		// Erase old
+		LDA		#0
+		jsr		draw_player:
+		LDA		p1_pos_y:
+		CMP		#0
+		JNE		p1_move_up1:
+		ret
+		
+p1_move_up1:
+		DEC
+		STA		p1_pos_y:
+		LDA		#3
+		jsr		draw_player:
+		ret			
+			
+p1_move_down:
+		// Erase old
+		LDA		#0
+		jsr		draw_player:
+		LDA		p1_pos_y:
+		CMP		#3B
+		JL		p1_move_down1:
+		ret
+p1_move_down1:
+		INC
+		STA		p1_pos_y:
+		LDA		#3
+		jsr		draw_player:
+		ret			
+				
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+
+			
+graphfill1:		
+			RND						// Random fill
+			LP
+			INP
+			
+			INX 
+			CPX 	#00				// Rolled over?
+			JNE 	graphfill1:
+			
+			INY
+			CPY 	#10
+			JL 		graphfill1:		// Not done?
+	
+			SYNC					// Sync framebuffer
+			RET
+						
+	
+			
+			
+			
+			
+p1_pos_x:	DB		#08
+p1_pos_y:	DB		#05
+p1_size_x:	DB		#05
+p1_size_y:	DB		#05
+			
+			
+			
+`;
+/* End of Program */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Generic FB test
+// This one generally works
+var fb_filltest = 
  `
  
 main:		JSR		graphfill:			// Fill screen with random
