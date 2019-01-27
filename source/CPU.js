@@ -35,7 +35,6 @@ class CPU
 		
 		// Errors
 		CPU.ERROR_UI = 0x01;			// Unknown instruction
-		CPU.ERROR_UIF = 0x02;			// Unknown instruction function
 
 		// Instruction modes
 		CPU.M_ANY  = 0xFF;				// Any mode mask for assembler
@@ -127,9 +126,6 @@ class CPU
 		
 	}	
 	
-	// Load inst slot
-	static INST(op, text, mode, func){ CPU.inst_table[op] = {text:text, m:mode, f:func}; };
-	
 	
 	// Instance Constructor
 	constructor (name, memory, start_addr)
@@ -170,39 +166,7 @@ class CPU
 	
 	/* 
 		Private
-	*/			
-			
-	// Core Update
-	update()
-	{
-		if (!this.prog_loaded) return;
-		
-		this.inst_updates = 0;
-		
-		var r = this.step(CPU.NUM_INST); // Process a chunk
-		
-		if (r > 0)				// Deal with CPU errors
-		{
-			if (r == CPU.ERROR_UI)
-			{
-				var a = this.state.ip-1;
-				main.log_console(`${CPU.MODULE} ${this.name} Undefined inst at [${hex_word(a)}] = (${hex_byte(this.memory.get_byte(a))}) \n`);
-				this.disassemble_inst(a, 1);
-				this.program_loaded = 0;
-				this.ip = CPU.IP_END;
-			} else
-			if (r == CPU.ERROR_UIF)
-			{
-				var a = this.state.ip-1;
-				main.log_console(`${CPU.MODULE} ${this.name} Undefined inst function at [${hex_word(a)}] = (${hex_byte(this.memory.get_byte(a))}) \n`);
-				this.ip = CPU.IP_END;
-			}			
-		}
-		
-		this.state.fb_update = 0;
-		
-		return this.inst_updates;
-	}
+	*/						
 		
 	
 	// Display current stack
@@ -270,7 +234,39 @@ class CPU
 	
 	// Instruction Helper
 	static compare(s, v1, v2) { s.e = v1 == v2;s.l = v1 < v2; s.g = v1 > v2; }
-
+	
+	// Load inst slot
+	static INST(op, text, mode, func){ CPU.inst_table[op] = {text:text, m:mode, f:func}; };
+	
+	
+	// Core Update
+	update()
+	{
+		if (!this.prog_loaded) return;
+		
+		this.inst_updates = 0;
+		
+		var r = this.step(CPU.NUM_INST); // Process a chunk
+		
+		// Deal with CPU errors
+		if (r > 0)						
+		{
+			if (r == CPU.ERROR_UI)
+			{
+				var a = this.state.ip-1;
+				main.log_console(`${CPU.MODULE} ${this.name} Undefined inst at [${hex_word(a)}] = (${hex_byte(this.memory.get_byte(a))}) \n`);
+				this.disassemble_inst(a, 1);
+				this.program_loaded = 0;
+				this.ip = CPU.IP_END;
+			}			
+		}
+		
+		this.state.fb_update = 0;
+		
+		return this.inst_updates;
+	}
+	
+	
 	// Process num_exec number of instructions
 	// Return error code or 0
 	step(num_exec)
@@ -292,8 +288,7 @@ class CPU
 			
 			var inst = CPU.inst_table[this.memory.get_byte(this.state.ip++)];	// Get next inst
 			
-			if (inst === undefined) return(CPU.ERROR_UI);			// Catch undefined inst
-			if (inst.f === undefined) return(CPU.ERROR_UIF);		// Catch undefined inst function
+			if (inst.text == "") return(CPU.ERROR_UI);				// Catch undefined inst
 			
 			inst.f(this.memory, this.state);						// Execute
 
