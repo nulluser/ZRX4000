@@ -275,26 +275,23 @@ class CPU
 		
 		if (this.state.ip == CPU.END_IP) return;
 		
-		var end =  Date.now() + 10;
+		//var end =  Date.now() + 10;
 		
 		// Loop until done, or SYNC or HALT
-		while(exec < num_exec && !this.state.fb_update && this.state.ip != CPU.IP_END && Date.now() < end)
+		while(exec < num_exec && !this.state.fb_update && this.state.ip != CPU.IP_END)
 		//while(this.state.ip != CPU.IP_END && Date.now() < end)
 		{
-			if (CPU.DEBUG) 
-			{
-				this.disassemble_inst(this.state.ip, 1);				// Dissassemble
-			}
+			if (CPU.DEBUG) this.disassemble_inst(this.state.ip, 1);				// Dissassemble
 			
 			var inst = CPU.inst_table[this.memory.get_byte(this.state.ip++)];	// Get next inst
 			
-			if (inst.text == "") return(CPU.ERROR_UI);				// Catch undefined inst
+			if (inst.text == "") return(CPU.ERROR_UI);							// Catch undefined inst
 			
-			inst.f(this.memory, this.state);						// Execute
+			inst.f(this.memory, this.state);									// Execute
 
-			if (CPU.DUMP_STACK) this.dump_stack();					// Display stack dump
+			if (CPU.DUMP_STACK) this.dump_stack();								// Display stack dump
 
-			this.state.ip += inst.s;								// Consume operands, next ip
+			this.state.ip += inst.s;											// Consume operands, next ip
 			exec++;
 		}
 		
