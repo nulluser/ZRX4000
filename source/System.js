@@ -37,8 +37,8 @@ function System()
 	const SECOND_RATE = 1000;		// Status update
 
 	const TARGET_FPS = 60;			// Target fps
-	const NUM_INST = 50000;		// Total number of instructions in update cycle
-	const AUTO_SCALE  = 1;
+	const NUM_INST = 50000;			// Total number of instructions in update cycle
+	const AUTO_SCALE  = 1;			// Auto scale cpu steps for frame rate
 	const MIN_INST = 10000;			//
 	
 	// Memory
