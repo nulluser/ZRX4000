@@ -36,6 +36,11 @@ function System()
 	const UPDATE_RATE = 0;			// CPU Update (ms)
 	const SECOND_RATE = 1000;		// Status update
 
+	const TARGET_FPS = 45;			// Target fps
+	const NUM_INST = 500000;		// Total number of instructions in update cycle
+	const AUTO_SCALE  = 1;
+	const MIN_INST = 10000;			//
+	
 	// Memory
 	const FB_ADDR = 0xD000; 		// Frame buffer address
 	const KEY_ADDR = 0xC100;		// Keyboard map
@@ -44,7 +49,7 @@ function System()
 	const PROG3_ADDRESS = 0x3000;	// Program address for cpu1
 	
 	// Cores
-	const TEST_CORES = 2;			// Number of cores
+	const TEST_CORES = 10;			// Number of cores
 	
 	// Devices
 	var memory = null;				// Shared memory
@@ -59,7 +64,12 @@ function System()
 	var fb_updates = 0;				// Number of FB updates since last second
 	var update_enable = 0;			// Allow cores to run if true
 	var last_update = Date.now();
+	var total_exec = NUM_INST;		//	Inital
 	
+	
+	var inst_rate = 100000.0;			// Filter for auto inst loading
+	var fps_filter = 0.8;			// Filter for fps calc
+	var average_fps = 0;			// Current average FPS
 	
 	/* 
 		Public 
@@ -126,6 +136,11 @@ function System()
 		//cpu_cores.push( new CPU("CPU2", memory, 0x2000) );
 		//cpu_cores.push( new CPU("CPU3", memory, 0x3000) );
 		
+		// Set realtime option for game core
+		CPU.set_option(cpu_cores[0], CPU.OPTION_REALTIME, 1);
+		
+		
+		
 		// Create more cores
 		// They will all run the code at 0x2000, frame buffer test
 		for (var i = 0; i < TEST_CORES; i++)
@@ -168,10 +183,30 @@ function System()
 	// Second Update
 	function second()
 	{
-		main.log_console(`${MODULE} Frame Rate: ${fb_updates} Inst Rate: ${total_inst}\n` );
+		// Seed
+		if (average_fps < 1) average_fps = fb_updates;
 		
+		average_fps = fps_filter * average_fps + (1-fps_filter) * fb_updates;
+
+		if (AUTO_SCALE)
+		{
+			var error = (average_fps - TARGET_FPS) / TARGET_FPS
+		
+			total_exec += inst_rate * (error);
+			
+			if (total_exec < MIN_INST) total_exec= MIN_INST;
+			
+			
+			console.log(` Error: ${(error*100).toFixed(2)}% ${total_exec.toFixed(0)} \n`);
+		}
+
+		
+		main.log_console(`${MODULE} Frame Rate: ${average_fps.toFixed(2)} Inst Rate: ${total_inst}\n` );
+		
+
 		total_inst = 0;
 		fb_updates = 0;
+
 	}	
 	
 	// Core Update
@@ -179,21 +214,18 @@ function System()
 	{
 		var cur = Date.now();
 		var dt = cur - last_update;
-		
 		last_update = cur;
 		
-		//console.log(dt);
+
 		
 		if (!update_enable) return;
 
 		//console.log("Update");
-		
-		var time_slice = 100;
-		
-		//console.log(time_slice);
-		
+				
+		var cpu_exec = Math.floor(total_exec / cpu_cores.length);
+				
 		for (var i = 0; i < cpu_cores.length; i++)
-			total_inst += cpu_cores[i].update(time_slice );
+			total_inst += cpu_cores[i].update(cpu_exec);
 	
 		frame_buffer.update();
 		

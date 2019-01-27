@@ -27,11 +27,14 @@ class CPU
 		CPU.DUMP_STACK_SZ = 0x10;		// Number of stack elements to display
 
 		// Config	
-		CPU.NUM_INST =  1000000;		// Instructions per update
+		CPU.NUM_INST =  100000;		// Instructions per update
 		
 		if (CPU.DEBUG) CPU.NUM_INST = 1;// Less instructions for debug
 		
 		CPU.STACK_SIZE = 32768;			// Stack space size
+		
+		
+		CPU.OPTION_REALTIME = 1;		// Realtime
 		
 		// Errors
 		CPU.ERROR_UI = 0x01;			// Unknown instruction
@@ -134,7 +137,8 @@ class CPU
 		this.name = name;
 		this.memory = memory;
 		this.start_addr = start_addr;
-
+		this.realtime = false;
+		
 		// CPU State
 		this.state = 
 		{
@@ -161,6 +165,13 @@ class CPU
 		this.prog_loaded = true;
 
 		main.log_console(`${CPU.MODULE} Loaded CPU ${name} at ${hex_word(start_addr)}\n`);
+	}
+	
+	static set_option(cpu, option, state)
+	{
+		if (option == CPU.OPTION_REALTIME)
+			cpu.realtime = state;
+		
 	}
 	
 	
@@ -239,13 +250,13 @@ class CPU
 	
 	
 	// Core Update
-	update(time_slice)
+	update(num_exec)
 	{
 		if (!this.prog_loaded) return;
 		
 		this.inst_updates = 0;
 		
-		var r = this.step(CPU.NUM_INST, time_slice); // Process a chunk
+		var r = this.step(num_exec); // Process a chunk
 		
 		// Deal with CPU errors
 		if (r > 0)						
@@ -268,16 +279,16 @@ class CPU
 	
 	// Process num_exec number of instructions
 	// Return error code or 0
-	step(num_exec, time_slice)
+	step(num_exec)
 	{
 		var exec = 0; // Keep track of remaining
 		
 		if (this.state.ip == CPU.END_IP) return;
 		
-		var end =  Date.now() + time_slice;
+		//var end =  Date.now() + time_slice;
 		
 		// Loop until done, or SYNC or HALT
-		while(exec < num_exec && 
+		while(((exec < num_exec) || this.realtime) && 
 			  !this.state.fb_update && 
 			  this.state.ip != CPU.IP_END //&&
 		//	  Date.now() < end
