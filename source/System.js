@@ -44,7 +44,7 @@ function System()
 	const PROG3_ADDRESS = 0x3000;	// Program address for cpu1
 	
 	// Cores
-	const TEST_CORES = 1;			// Number of cores
+	const TEST_CORES = 2;			// Number of cores
 	
 	// Devices
 	var memory = null;				// Shared memory
@@ -58,7 +58,9 @@ function System()
 	var total_inst = 0;				// Instructions in since last second
 	var fb_updates = 0;				// Number of FB updates since last second
 	var update_enable = 0;			// Allow cores to run if true
-
+	var last_update = Date.now();
+	
+	
 	/* 
 		Public 
 	*/
@@ -70,8 +72,11 @@ function System()
 
 		connect_devices();
 		
+		
+		window.requestAnimationFrame(update);
 		setInterval(second, SECOND_RATE);
-		setInterval(update, UPDATE_RATE);
+		//setInterval(update, UPDATE_RATE);
+		//update();
 	}
 		 	
 	
@@ -131,6 +136,9 @@ function System()
 		// Init cores
 		//for (var i = 0; i < cpu_cores.length; i++)
 //			cpu_cores[i].init();
+
+
+
 	}	
 			
 	// Setup IO Devices
@@ -169,16 +177,31 @@ function System()
 	// Core Update
 	function update()
 	{
+		var cur = Date.now();
+		var dt = cur - last_update;
+		
+		last_update = cur;
+		
+		//console.log(dt);
+		
 		if (!update_enable) return;
 
 		//console.log("Update");
 		
+		var time_slice = 100;
+		
+		//console.log(time_slice);
+		
 		for (var i = 0; i < cpu_cores.length; i++)
-			total_inst += cpu_cores[i].update();
+			total_inst += cpu_cores[i].update(time_slice );
 	
 		frame_buffer.update();
 		
 		fb_updates++;
+		
+		window.requestAnimationFrame(update);
+		
+		//setTimeout(update, 0);
 	}
 	
 	/* Private */

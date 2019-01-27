@@ -168,7 +168,6 @@ class CPU
 		Private
 	*/						
 		
-	
 	// Display current stack
 	dump_stack()
 	{
@@ -240,13 +239,13 @@ class CPU
 	
 	
 	// Core Update
-	update()
+	update(time_slice)
 	{
 		if (!this.prog_loaded) return;
 		
 		this.inst_updates = 0;
 		
-		var r = this.step(CPU.NUM_INST); // Process a chunk
+		var r = this.step(CPU.NUM_INST, time_slice); // Process a chunk
 		
 		// Deal with CPU errors
 		if (r > 0)						
@@ -269,16 +268,21 @@ class CPU
 	
 	// Process num_exec number of instructions
 	// Return error code or 0
-	step(num_exec)
+	step(num_exec, time_slice)
 	{
 		var exec = 0; // Keep track of remaining
 		
 		if (this.state.ip == CPU.END_IP) return;
 		
-		//var end =  Date.now() + 10;
+		var end =  Date.now() + time_slice;
 		
 		// Loop until done, or SYNC or HALT
-		while(exec < num_exec && !this.state.fb_update && this.state.ip != CPU.IP_END)
+		while(exec < num_exec && 
+			  !this.state.fb_update && 
+			  this.state.ip != CPU.IP_END //&&
+		//	  Date.now() < end
+			  )
+			  
 		//while(this.state.ip != CPU.IP_END && Date.now() < end)
 		{
 			if (CPU.DEBUG) this.disassemble_inst(this.state.ip, 1);				// Dissassemble

@@ -19,8 +19,7 @@ var main = (function ()
 	// Private 
 	const MAX_LEN = 300; 			// Need weird size because of spaces, TODO fix
 	const MAX_LINES = 500;			// Log lines
-	const RENDER_TIME = 250;		// DOM logging is slow, throttle
-	
+
 	var debug_window;				// Popup debug window
 	var system = null;
 
@@ -58,14 +57,12 @@ var main = (function ()
 		<style> body {padding:0px; margin:0px; overflow:scroll-y;} </style>
 		</head>
 		<body>
-		<strong>
-		<code>
+		<strong><code>
 		<div id="main-wrap" style="width:100%;">
 		<div id="console" style='width:50%; height:100%; float:left'></div>
 		<div id="output" style='width:50%; height:100%; float:right'></div>
 		</div>
-		</code>
-		</strong>
+		</code></strong>
 		</body>
 		</html>
 		`;
@@ -80,7 +77,7 @@ var main = (function ()
 		return str.replace(new RegExp(find, 'g'), replace);
 	}
 
-	// Fisx weird chars
+	// Fix weird chars
 	function format_output(d)
 	{
 		d = replace_all(d, "\n", "");
@@ -95,28 +92,23 @@ var main = (function ()
 		var scrollingElement = (debug_window.document.scrollingElement || debug_window.document.body);
 		scrollingElement.scrollTop = scrollingElement.scrollHeight;
 	}
-	
 
 	// True if newline in string
 	function is_newline(c)
 	{
-		if (ascii(c) == 0x0d || ascii(c) == 0x0a) return 1;
-		return 0;
+		return ascii(c) == 0x0d || ascii(c) == 0x0a;
 	}
 		
-	
 	// Add line to log
 	function shift_log(l)
 	{
 		// Shift down
-		var div = document.createElement('div');
-		l.appendChild(div);
+		l.appendChild(document.createElement('div'));
 
 		// Limit
 		while(l.children.length > MAX_LINES-1) 
 			 l.removeChild(l.children[0]);
 	}
-	
 	
 	// Add item to log list
 	function add_log(log_area, item)
@@ -125,12 +117,9 @@ var main = (function ()
 
 		// Make sure we have at least one element
 		if (l.children.length == 0)
-		{
-			var div = document.createElement('div');
-			l.appendChild(div);
-		}
+			l.appendChild(document.createElement('div'));
 		
-		item += ""; // Force string
+		item += ""; 		// Force into string
 		
 		var i = 0;
 		var st = "";		// Current string
@@ -142,10 +131,9 @@ var main = (function ()
 			var ch = item[i];
 		
 			// Shift if newline
-			if (is_newline(ch))
+			if (is_newline(ch) || st.length >= MAX_LEN)
 			{
-				div = l.children[l.children.length-1];
-				div.innerHTML += format_output(st);		
+				l.children[l.children.length-1].innerHTML += format_output(st);		
 				st = "";
 				shift_log(l);
 			}
@@ -158,11 +146,11 @@ var main = (function ()
 		}
 
 		// Append to last
-		div = l.children[l.children.length-1];
-		div.innerHTML += format_output(st);
+		l.children[l.children.length-1].innerHTML += format_output(st);
 	}
 
 
+	// Log to javascript console
 	function log(item)
 	{
 		item = replace_all(item, "\n", "");
@@ -173,9 +161,10 @@ var main = (function ()
 	function log_output(item)
 	{
 		add_log("output", item);
+		//log(item);
 	}
 
-	// Log console messages
+	// Log Console messages
 	function log_console(item)
 	{
 		add_log("console", item);
