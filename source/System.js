@@ -49,7 +49,7 @@ function System()
 	const PROG3_ADDRESS = 0x3000;	// Program address for cpu1
 	
 	// Cores
-	const TEST_CORES = 10;			// Number of cores
+	const TEST_CORES = 1;			// Number of cores
 	
 	// Devices
 	var memory = null;				// Shared memory
@@ -117,9 +117,9 @@ function System()
 		// Assemble some code into memory
 		
 		if (assembler.assemble(CPU, fb_gametest,		0x1000))  return;
-		//assembler.assemble(CPU, fb_filltest,		0x1000);
+		if (assembler.assemble(CPU, fb_filltest,		0x2000)) return;
 		
-		if (assembler.assemble(CPU, mc_test,		0x2000)) return;
+		//if (assembler.assemble(CPU, mc_test,		0x2000)) return;
 		
 		//assembler.assemble(CPU, inst_test,		0x1000);
 		

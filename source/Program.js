@@ -26,7 +26,7 @@ var fb_gametest =
 /*************/
 
 mainloop:	JSR			check_keys:		// Deal with key presses
-			JSR			clear_screen:	// Clear the screen
+			//JSR			clear_screen:	// Clear the screen
 			JSR			draw_player:	// Draw
 			
 			SYNC						// Sync framebuffer
