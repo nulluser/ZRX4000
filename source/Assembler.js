@@ -99,8 +99,8 @@ function Assembler(memory)
 			main.log_console(`${MODULE}   ${resolve_table[i].label.padEnd(16)} ${hex_word(resolve_table[i].addr)} \n`);*/
 				
 		
-		disassemble(main.log, prog_addr, prog_addr + 0x100);
-		disassemble(main.log_console, prog_addr, prog_addr + 0x40);
+		//disassemble(main.log, prog_addr, prog_addr + 0x100);
+		disassemble(main.log_console, prog_addr, prog_addr + 0x20);
 		
 		return 0;
 		

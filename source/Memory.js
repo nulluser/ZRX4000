@@ -134,8 +134,7 @@ function Memory()
 	// Show Disassembly
 	function dump(start, length)
 	{
-		main.log_console(`${MODULE} [Memory Dump]\n`);
-				
+		main.log_console(`${MODULE} [Memory Dump] \n`);
 		var i = start;
 		
 		while(i <= start + length)
@@ -148,7 +147,7 @@ function Memory()
 			for (var j = i; j < i+16; j++)
 			{
 				var v = get_byte(j);
-				if (v >= 0x20)
+				if (v >= 0x20 && v <= 0x80)
 					main.log_console(get_char(v)); 
 				else
 					main.log_console(" ");

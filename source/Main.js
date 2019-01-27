@@ -18,17 +18,14 @@ var main = (function ()
 	
 	// Private 
 	const MAX_LEN = 300; 			// Need weird size because of spaces, TODO fix
-	const MAX_LINES = 100;			// Log lines
+	const MAX_LINES = 500;			// Log lines
 	const RENDER_TIME = 250;		// DOM logging is slow, throttle
 	
 	var debug_window;				// Popup debug window
-	var output_log = [];			// Program output log
-	var output_log_change = false;	// True if render needed
-	var console_log = [];			// Console log
-	var console_log_change = false;	// True if render needed
-	
 	var system = null;
-	
+
+	//var t = 0;
+
 	function init()
 	{
 		debug_init();
@@ -37,35 +34,21 @@ var main = (function ()
 		log_console("[Status]\n");
 		log_output("[Program Output]\n");
 		log_console(MODULE + "Init\n");
-		
-		render_logs();
-		
+				
 		system = System();
 		system.init();
 		
-		//setInterval(function(){log_console("tesss222ssst " + t + "\n");t++; }, 100);
+		//setInterval(function(){log_console("tesss222ssst " + t + "\n");t++; }, 10);
 		//setInterval(function(){log_output("tewwst " + t + "\n");t++; }, 100);
-		
-		setInterval(render_logs, RENDER_TIME);
 	}
-	
-	
-	/* 
-		TODO This logging mess needs to go 
-		This is needde so the console does not get flooded and lock the browser up
-	*/
-	
-	
 	
 	/* Logging */
 	// This has to be done to get around cross site scripting 
 	function debug_init()
 	{
-		// Create frame buffer window
+		// Create log window
 		//debug_window = window.open("", "debug_window", "width=512,height=512,directories=0,titlebar=0,toolbar=0,location=0,status=0,menubar=0,scrollbars=yes,resizable=no");
-
 		debug_window = window.open("", "debug_window", "width=512,height=512");
-
 		
 		var html = 
 		`
@@ -100,129 +83,107 @@ var main = (function ()
 	// Fisx weird chars
 	function format_output(d)
 	{
-		d += ""; // Force string
 		d = replace_all(d, "\n", "");
 		d = replace_all(d, " ", "&nbsp;");
 		
 		return d;
 	}
 	
-	
+	// Scroll to bottom
 	function scroll_down()
 	{
 		var scrollingElement = (debug_window.document.scrollingElement || debug_window.document.body);
 		scrollingElement.scrollTop = scrollingElement.scrollHeight;
 	}
 	
-	
-	
-	function render_log(lines, divn)
-	{
-		var out = debug_window.document.getElementById(divn);
-		
-		out.innerHTML = "";
-		
-		for  (var i = 0; i < lines.length; i++)
-			out.innerHTML += lines[i] + "<br>";
-
-		//scroll_down();
-	}	
-	
-	
-	
-	// Display current log
-	function render_logs()
-	{
-		if (output_log_change)
-		{
-			render_log(output_log, "output")
-			output_log_change = false;
-		}
-
-		if (console_log_change)
-		{
-			render_log(console_log, "console")
-			console_log_change = false;
-		}
-	}
 
 	// True if newline in string
-	function has_newline(item)
+	function is_newline(c)
 	{
-		for (var i = 0; i < item.length; i++)
-			if (ascii(item[i]) == 0x0d || ascii(item[i]) == 0x0a) return 1;
-
+		if (ascii(c) == 0x0d || ascii(c) == 0x0a) return 1;
 		return 0;
 	}
-
-	// Add item to log list
-	function add_log(lines, item)
+		
+	
+	// Add line to log
+	function shift_log(l)
 	{
-		var shift = has_newline(item);	// See if we need to shift later
+		// Shift down
+		var div = document.createElement('div');
+		l.appendChild(div);
 
-		item = format_output(item);		// Fix Spaces
-		
-		if (lines.length == 0) lines.push("");// Make sure we at least one line
+		// Limit
+		while(l.children.length > MAX_LINES-1) 
+			 l.removeChild(l.children[0]);
+	}
+	
+	
+	// Add item to log list
+	function add_log(log_area, item)
+	{
+		var l = debug_window.document.getElementById(log_area)
 
-		lines[lines.length-1] += item;		// Append to current
-		
-		// Check length
-		if (lines[lines.length-1].length >= MAX_LEN) 
+		// Make sure we have at least one element
+		if (l.children.length == 0)
 		{
-			lines[lines.length-1] = lines[lines.length-1].substr(0, MAX_LEN);
-			shift = 1;
+			var div = document.createElement('div');
+			l.appendChild(div);
 		}
 		
-		// Shift lines up
-		if (shift)
+		item += ""; // Force string
+		
+		var i = 0;
+		var st = "";		// Current string
+		
+		// Need to process all items to deal with shifting
+		while (i < item.length)
 		{
-			// Add a line 
-			if (lines.length < MAX_LINES)
-				lines.push("");
+			// next char
+			var ch = item[i];
+		
+			// Shift if newline
+			if (is_newline(ch))
+			{
+				div = l.children[l.children.length-1];
+				div.innerHTML += format_output(st);		
+				st = "";
+				shift_log(l);
+			}
 			else
 			{
-				// Shift lines
-				for (var i = 1; i < lines.length; i++)
-					lines[i-1] = lines[i];
-
-				lines[lines.length-1] = "";		// Clear last
+				st += ch;		// Add to current
 			}
+			
+			i++;
 		}
-		
-		//render_log();
+
+		// Append to last
+		div = l.children[l.children.length-1];
+		div.innerHTML += format_output(st);
 	}
 
 
 	function log(item)
 	{
-		debug_window.console.log(item);		
-		
 		item = replace_all(item, "\n", "");
-		
 		console.log(item);		
 	}
 	
 	// Log CPU Output
 	function log_output(item)
 	{
-		//return;
-		add_log(output_log, item + "");
-		output_log_change = true;
+		add_log("output", item);
 	}
 
 	// Log console messages
 	function log_console(item)
 	{
-		//return;
-		add_log(console_log, item + "");
-		console_log_change = true;
-		
-		//console.log(item);
+		add_log("console", item);
+		//log(item);
 	}
 
 	// Public Interface
 	return 	{init : init,
-			render_log : render_log,
 			log_console : log_console,
 			log_output : log_output,
 			log : log};
