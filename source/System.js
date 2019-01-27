@@ -36,8 +36,8 @@ function System()
 	const UPDATE_RATE = 0;			// CPU Update (ms)
 	const SECOND_RATE = 1000;		// Status update
 
-	const TARGET_FPS = 45;			// Target fps
-	const NUM_INST = 500000;		// Total number of instructions in update cycle
+	const TARGET_FPS = 60;			// Target fps
+	const NUM_INST = 50000;		// Total number of instructions in update cycle
 	const AUTO_SCALE  = 1;
 	const MIN_INST = 10000;			//
 	
@@ -67,7 +67,7 @@ function System()
 	var total_exec = NUM_INST;		//	Inital
 	
 	
-	var inst_rate = 100000.0;			// Filter for auto inst loading
+	var inst_rate = 100000.0;		// Filter for auto inst loading
 	var fps_filter = 0.8;			// Filter for fps calc
 	var average_fps = 0;			// Current average FPS
 	
