@@ -44,7 +44,7 @@ function System()
 	const PROG3_ADDRESS = 0x3000;	// Program address for cpu1
 	
 	// Cores
-	const TEST_CORES = 0;			// Number of cores
+	const TEST_CORES = 1;			// Number of cores
 	
 	// Devices
 	var memory = null;				// Shared memory
@@ -104,7 +104,7 @@ function System()
 		if (assembler.assemble(CPU, fb_gametest,		0x1000))  return;
 		//assembler.assemble(CPU, fb_filltest,		0x1000);
 		
-		//assembler.assemble(CPU, fire,		0x1000);
+		if (assembler.assemble(CPU, mc_test,		0x2000)) return;
 		
 		//assembler.assemble(CPU, inst_test,		0x1000);
 		
@@ -124,7 +124,7 @@ function System()
 		// Create more cores
 		// They will all run the code at 0x2000, frame buffer test
 		for (var i = 0; i < TEST_CORES; i++)
-			cpu_cores.push( new CPU("CPUX" + i, memory, 0x1000) );		
+			cpu_cores.push( new CPU("CPUX" + i, memory, 0x2000) );		
 		
 		update_enable = true;
 		

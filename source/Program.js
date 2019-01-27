@@ -323,9 +323,34 @@ image_p:	DB			#00	#00			// Current pointer image image
 
 
 
+/* Multo core test */
+var mc_test = 
+ `
+ // Test 
+ 
+lp:		
+			ldx			#f0
+			ldy			#f0
+			txa
+			push
 
+lp1:		dex
+			cpx			#0
+			jne 		lp1:
+ 
+			pop						// Get x count
+			tax
+			push
+		
+			dey
+			cpy			#0
+			jne 		lp1:
+		
+			pop						// get stack straight
+			SYNC
+			JMP 		lp:
 
-
+`
 
 
 /******************************************************************************/
@@ -986,36 +1011,34 @@ var vert_scroll =
 			
 
 /* Test code */
-fire:		LDA		00
+fire:		LDA		#00
 			STA		counter1:	// Low byte
 			STA		counter2:	// High byte
 			
-
-
 		
 		SP		D000		// Set pointer to frame buffer base
 		
 		
 loop:		
-			addp	40
+			addp	#40
 			gp
-			subp	40
+			subp	#40
 			
 			LP
 			INP
 			
 			
 			LDM 	counter1:		// Increment counter low byte
-			ADD 	1
+			ADD 	#01
 			STA 	counter1:
 		
-			CMP 	00				// Rolled over?
+			CMP 	#00				// Rolled over?
 			JNE 	loop:
 		
 			LDM 	counter2: 		// High byte counter
-			ADD 	1
+			ADD 	#1
 			STA 	counter2:
-			CMP 	10
+			CMP 	#10
 			JL 		loop:
 	
 	
@@ -1027,7 +1050,7 @@ loop:
 			// Seed lower line
 
 			SP		DFC0		// Set pointer to frame buffer base
-			lda 	40
+			lda 	#40
 fire1:	
 
 
@@ -1038,7 +1061,7 @@ fire1:
 			POP
 			
 			DEC
-			CMP		0
+			CMP		#0
 
 
 			JNE 	fire1:
@@ -1094,7 +1117,7 @@ var fire =
 			
 
 /* Test code */
-fire:		LDA		00
+fire:		LDA		#00
 			STA		counter1:	// Low byte
 			STA		counter2:	// High byte
 			
@@ -1105,19 +1128,21 @@ fire:		LDA		00
 		
 		
 loop:		
-			lda 	0
+			lda 	#0
 			tax
 			
-			addp	40				
+			lda #40
+			addp				
 			gp						// Get pixel one row down
 			
-			shr 1
+			shr #01
 			addx
-			subp	40
+			lda		#40
+			subp
 
 		
 			gp						// Get pixel at current
-			shr 1
+			shr #01
 			addx
 			
 			
@@ -1127,7 +1152,7 @@ loop:
 
 			txa
 			
-			cmp 0
+			cmp #0
 			JE	loop1:
 			
 			dec
@@ -1139,17 +1164,17 @@ loop1:
 			INP
 			
 			
-			LDM 	counter1:		// Increment counter low byte
-			ADD 	1
+			LDA 	counter1:		// Increment counter low byte
+			ADD 	#1
 			STA 	counter1:
 		
-			CMP 	00				// Rolled over?
+			CMP 	#00				// Rolled over?
 			JNE 	loop:
 		
-			LDM 	counter2: 		// High byte counter
-			ADD 	1
+			LDA 	counter2: 		// High byte counter
+			ADD 	#1
 			STA 	counter2:
-			CMP 	10
+			CMP 	#10
 			JL 		loop:
 	
 	
@@ -1161,7 +1186,7 @@ loop1:
 			// Seed lower line
 
 			SP		DFC0		// Set pointer to frame buffer base
-			lda 	40
+			lda 	#40
 fire1:	
 
 
@@ -1172,7 +1197,7 @@ fire1:
 			POP
 			
 			DEC
-			CMP		0
+			CMP		#0
 
 
 			JNE 	fire1:
