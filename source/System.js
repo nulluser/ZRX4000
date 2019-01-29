@@ -148,7 +148,7 @@ function System()
 		//cpu_cores.push( new CPU("CPU3", memory, 0x3000) );
 		
 		// Set realtime option for game core
-		//CPU.set_option(cpu_cores[0], CPU.OPTION_REALTIME, 1);
+		CPU.set_option(cpu_cores[0], CPU.OPTION_REALTIME, 1);
 		
 		
 		
