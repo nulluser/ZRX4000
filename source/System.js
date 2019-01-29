@@ -34,11 +34,14 @@ function System()
 
 	//const UPDATE_RATE = 2000;		// CPU Update (ms)
 	const UPDATE_RATE = 0;			// CPU Update (ms)
+	const DEBUG_TIME = 0;
+	
+	
 	const SECOND_RATE = 1000;		// Status update
 
 	const TARGET_FPS = 60;			// Target fps
 	const NUM_INST = 50000;			// Total number of instructions in update cycle
-	const AUTO_SCALE  = 1;			// Auto scale cpu steps for frame rate
+	const AUTO_SCALE  = 0;			// Auto scale cpu steps for frame rate
 	const MIN_INST = 10000;			//
 	
 	// Memory
@@ -48,8 +51,12 @@ function System()
 	const PROG2_ADDRESS = 0x2000;	// Program address for cpu1
 	const PROG3_ADDRESS = 0x3000;	// Program address for cpu1
 	
+	
+	// Interrupt numbers
+	const INT_KEYBOARD =	0x01    // Keyboard interrupt
+	
 	// Cores
-	const TEST_CORES = 1;			// Number of cores
+	const TEST_CORES = 0;			// Number of cores
 	
 	// Devices
 	var memory = null;				// Shared memory
@@ -83,9 +90,9 @@ function System()
 		connect_devices();
 		
 		
-		window.requestAnimationFrame(update);
+		//window.requestAnimationFrame(update);
 		setInterval(second, SECOND_RATE);
-		//setInterval(update, UPDATE_RATE);
+		setInterval(update, UPDATE_RATE);
 		//update();
 	}
 		 	
@@ -108,16 +115,20 @@ function System()
 		frame_buffer = FrameBuffer(FB_ADDR);
 		frame_buffer.init(memory);
 
-		// Setup IO. Need to make module
-		io_init();
+	
 		
 		// Create an assembler
 		assembler = Assembler(memory);
 		
 		// Assemble some code into memory
 		
-		if (assembler.assemble(CPU, fb_gametest,		0x1000))  return;
-		if (assembler.assemble(CPU, fb_filltest,		0x2000)) return;
+		if(assembler.assemble(CPU, vert_scroll,	0x1000)) return;
+		
+		
+		
+		
+		//if (assembler.assemble(CPU, fb_gametest,		0x1000)) return;
+		//if (assembler.assemble(CPU, fb_filltest,		0x2000)) return;
 		
 		//if (assembler.assemble(CPU, mc_test,		0x2000)) return;
 		
@@ -137,7 +148,7 @@ function System()
 		//cpu_cores.push( new CPU("CPU3", memory, 0x3000) );
 		
 		// Set realtime option for game core
-		CPU.set_option(cpu_cores[0], CPU.OPTION_REALTIME, 1);
+		//CPU.set_option(cpu_cores[0], CPU.OPTION_REALTIME, 1);
 		
 		
 		
@@ -145,6 +156,16 @@ function System()
 		// They will all run the code at 0x2000, frame buffer test
 		for (var i = 0; i < TEST_CORES; i++)
 			cpu_cores.push( new CPU("CPUX" + i, memory, 0x2000) );		
+		
+		
+		
+		
+		// Setup IO. Need to make module
+			
+		// Addach IO to CPU 0
+		io_init(cpu_cores[0]);
+		
+		
 		
 		update_enable = true;
 		
@@ -157,26 +178,37 @@ function System()
 	}	
 			
 	// Setup IO Devices
-	function io_init()
+	function io_init(cpu)
 	{
+		
+		
+		
+		
+		
+		
 		// Connect keys
-		window.addEventListener("keydown", keydown, false);	
-		window.addEventListener("keyup", keyup, false);	
+		window.addEventListener("keydown", (evt)=>{keydown(evt, cpu)}, false);	
+		window.addEventListener("keyup", (evt)=>{keyup(evt, cpu)}, false);	
 	}
 	
 	// Handle key events
-	function keydown(evt)
+	function keydown(evt, cpu)
 	{
 		var key = ascii(evt.key) & 0xff;
 		//log("Key down: " + hex_byte(key));
+
 		memory.set_byte(KEY_ADDR + key, 1);
+		cpu.interrupt(INT_KEYBOARD);
+		
+		
 	}
 	
-	function keyup(evt)
+	function keyup(evt, cpu)
 	{
 		var key = ascii(evt.key) & 0xff;
 		//log("Key up: " +  hex_byte(key));
 		memory.set_byte(KEY_ADDR + key, 0);
+		cpu.interrupt(INT_KEYBOARD);
 	}			
 			
 			
@@ -214,9 +246,28 @@ function System()
 	{
 		var cur = Date.now();
 		var dt = cur - last_update;
-		last_update = cur;
+		
+		if (dt > DEBUG_TIME) 
+		{
+			update_system(dt);
+			last_update = cur;
+		}
+		
+		
+		//window.requestAnimationFrame(update);
+		
+		//setTimeout(update, 0);
+	}
+	
+	
+	function update_system()
+	{
+				
+
 		
 
+		
+		
 		
 		if (!update_enable) return;
 
@@ -230,11 +281,9 @@ function System()
 		frame_buffer.update();
 		
 		fb_updates++;
-		
-		window.requestAnimationFrame(update);
-		
-		//setTimeout(update, 0);
+
 	}
+	
 	
 	/* Private */
 	

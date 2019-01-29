@@ -25,7 +25,17 @@ var fb_gametest =
 /* Main Loop */
 /*************/
 
-mainloop:	JSR			check_keys:		// Deal with key presses
+
+start:
+			JSR			keyboard_init:
+
+
+
+
+
+
+mainloop:	
+			JSR			check_keys:		// Deal with key presses
 			//JSR			clear_screen:	// Clear the screen
 			JSR			draw_player:	// Draw
 			
@@ -43,6 +53,39 @@ mainloop:	JSR			check_keys:		// Deal with key presses
 /************/			
 /* Keyboard */
 /************/
+
+
+/* Install keyboard interrupt handler */
+keyboard_init:
+
+			
+			SP			keyboard_isr:	// Get address of keyboard isr
+			PUSHP						// Pushed as low byte  high byte	
+			SP			ffe2			// Address of interrupt vector 1
+			pop							// Get High byte of address
+			lp							// Store in vector table
+			inp
+			pop							// Get Low byte of address
+			lp							// Storein vector table
+			
+			ret
+
+
+
+/* Deal with keyboard interrupt */		
+keyboard_isr:		
+			LDA			#01
+			STA			key_change:
+
+			JSR			check_keys:
+
+
+//			END
+			
+
+			iret
+
+
 			
 			
 check_keys:	LDA 		'a'
@@ -72,6 +115,12 @@ keyloop3:	LDA 		's'
 			JE			keyloop4:
 			JSR 		p1_move_down:
 keyloop4:
+
+
+			LDA			#00
+
+			STA			key_change:
+
 			ret			
 			
 			
@@ -276,6 +325,8 @@ clear_screen1:
 /* Game Data */
 /*************/				
 
+key_change: DB			#0				// True if key was changed
+
 p1_pos_x:	DB			#08
 p1_pos_y:	DB			#08
 p1_size_x:	DB			#08
@@ -351,6 +402,122 @@ lp1:		dex
 			JMP 		lp:
 
 `
+
+
+
+
+
+
+
+// scroll vert
+var vert_scroll = 
+ `
+
+ lp:		JSR			fire:
+			JMP 		lp:
+			
+fire:		LDA			#00
+			STA			counter1:	// Low byte
+			STA			counter2:	// High byte
+		
+			SP			D000		// Set pointer to frame buffer base
+		
+loop:		lda			#40			// Get next row
+			addp	
+			gp
+			
+			push
+			lda			#40
+			subp
+			pop
+			LP						// Store in current
+		
+			INP
+			
+			LDA 		counter1:		// Increment counter low byte
+			ADD 		#01
+			STA 		counter1:
+		
+			CMP 		#40				// Rolled over?
+			JL 			loop:
+		
+
+			LDA			#0
+			STA			counter1:
+			
+			LDA 		counter2: 		// High byte counter
+			ADD 		#01
+			STA 		counter2:
+			
+			CMP 		#3F
+			JL 			loop:
+	
+			// Seed lower line
+			SP		DFC0		// Set pointer to frame buffer base
+			lda 	#40
+fire1:	
+			PUSH
+			RND
+			LP
+			INP
+			POP
+			
+			DEC
+			CMP		#00
+
+			JNE 	fire1:
+
+			SYNC					// Sync framebuffer
+			RET
+			
+
+// Program data
+					
+counter1:	DB		#00				// Counters for graphics test
+counter2:	DB		#00
+
+
+
+`;
+/* End of Program */
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /******************************************************************************/
@@ -961,8 +1128,8 @@ loop:
 
 // Program data
 					
-counter1:	DB		0				// Counters for graphics test
-counter2:	DB		0
+counter1:	DB		#00				// Counters for graphics test
+counter2:	DB		#00
 
 `;
 /* End of Program */
@@ -997,96 +1164,6 @@ var inst_test =
 
 
 `
-
-
-
-
-// scroll vert
-var vert_scroll = 
- `
- 
- // Test frame buffer. Remove for game
- lp:		JSR	fire:
-			JMP lp:
-			
-
-/* Test code */
-fire:		LDA		#00
-			STA		counter1:	// Low byte
-			STA		counter2:	// High byte
-			
-		
-		SP		D000		// Set pointer to frame buffer base
-		
-		
-loop:		
-			addp	#40
-			gp
-			subp	#40
-			
-			LP
-			INP
-			
-			
-			LDM 	counter1:		// Increment counter low byte
-			ADD 	#01
-			STA 	counter1:
-		
-			CMP 	#00				// Rolled over?
-			JNE 	loop:
-		
-			LDM 	counter2: 		// High byte counter
-			ADD 	#1
-			STA 	counter2:
-			CMP 	#10
-			JL 		loop:
-	
-	
-	
-	
-	
-	
-
-			// Seed lower line
-
-			SP		DFC0		// Set pointer to frame buffer base
-			lda 	#40
-fire1:	
-
-
-			PUSH
-			RND
-			LP
-			INP
-			POP
-			
-			DEC
-			CMP		#0
-
-
-			JNE 	fire1:
-			
-	
-	
-	
-	
-	
-	
-	
-	
-			SYNC					// Sync framebuffer
-			RET
-			
-
-// Program data
-					
-counter1:	DB		0				// Counters for graphics test
-counter2:	DB		0
-
-`;
-/* End of Program */
-	
-
 
 
 

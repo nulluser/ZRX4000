@@ -1,24 +1,25 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
     <title>CPU</title>
-    <script type="text/javascript" src="Program.js">    </script>	
-	<script type="text/javascript" src="Utility.js">     </script>
-	<script type="text/javascript" src="Memory.js">     </script>
-    <script type="text/javascript" src="FrameBuffer.js"></script>
-    <script type="text/javascript" src="CPU.js">        </script>	
-    <script type="text/javascript" src="System.js">     </script>	
-    <script type="text/javascript" src="Assembler.js">     </script>	
-    <script type="text/javascript" src="Main.js">       </script>
+    <script type='text/javascript' src='Program.js'>	</script>	
+	<script type='text/javascript' src='Utility.js'>	</script>
+	<script type='text/javascript' src='Memory.js'>		</script>
+    <script type='text/javascript' src='FrameBuffer.js'></script>
+    <script type='text/javascript' src='CPU.js'>		</script>	
+    <script type='text/javascript' src='System.js'>		</script>	
+    <script type='text/javascript' src='Assembler.js'>	</script>	
+    <script type='text/javascript' src='Main.js'>		</script>
   </head>
   <body onload='main.init();' style='padding:0px; margin:0px'>
-  <canvas id='fbuffer' width=512 height=384>
+  <canvas id='fbuffer' width=640 height=480  style='width:640px;height:480px'>
+  
     <strong>
       <code>
-        <div id="main-wrap" style="width:100%;">
-          <div id="console" style='width:50%; height:100%; float:left'></div>
-          <div id="output"  style='width:50%; height:100%; float:right'></div>
+        <div id='main-wrap' style="width:100%;">
+          <div id='console' style='width:50%; height:100%; float:left'></div>
+          <div id='output'  style='width:50%; height:100%; float:right'></div>
         </div>
       </code>
     </strong>

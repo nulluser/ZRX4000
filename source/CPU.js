@@ -26,12 +26,18 @@ class CPU
 		CPU.DUMP_STACK = 0;				// Displat stack during execution
 		CPU.DUMP_STACK_SZ = 0x10;		// Number of stack elements to display
 
-		// Config	
-		CPU.NUM_INST =  100000;		// Instructions per update
 		
-		if (CPU.DEBUG) CPU.NUM_INST = 1;// Less instructions for debug
+		CPU.ENABLE_INTERRUPT = 1;		// Enable interrupt
+		
+		// Config	
+		//CPU.NUM_INST =  100000;		// Instructions per update
+		
+		//if (CPU.DEBUG) CPU.NUM_INST = 1;// Less instructions for debug
 		
 		CPU.STACK_SIZE = 32768;			// Stack space size
+		
+		CPU.VECBASE		= 0xffe0;		// Base for interrupt vector table. 16 vectors, 32 bytes.  
+										// CPU will get the address stored here, push ip, and jmp there
 		
 		
 		CPU.OPTION_REALTIME = 1;		// Realtime
@@ -59,19 +65,23 @@ class CPU
 		CPU.INST(0x01,"JMP",  CPU.M_DIR, (m, s)=>{s.ip = m.get_word(s.ip) - 2;});							// Jump to location
 		CPU.INST(0x02,"JSR",  CPU.M_DIR, (m, s)=>{CPU.push_word(s, s.ip+2); s.ip = m.get_word(s.ip) - 2;});	// Jump subroutine
 		CPU.INST(0x03,"RET",  CPU.M_IMP, (m, s)=>{s.ip = CPU.pop_word(s); }); 								// Return
-		CPU.INST(0x04,"JL",   CPU.M_DIR, (m, s)=>{if (s.l) s.ip = m.get_word(s.ip) - 2;}); 					// Jump if less
-		CPU.INST(0x05,"JE",   CPU.M_DIR, (m, s)=>{if (s.e) s.ip = m.get_word(s.ip) - 2;}); 					// Jump Equal
-		CPU.INST(0x06,"JNE",  CPU.M_DIR, (m, s)=>{if (!s.e)s.ip = m.get_word(s.ip) - 2;}); 					// Jump Not Equal
-		CPU.INST(0x07,"JG",   CPU.M_DIR, (m, s)=>{if (s.g) s.ip = m.get_word(s.ip) - 2;}); 					// Jump greater
+		CPU.INST(0x04,"IRET", CPU.M_IMP, (m, s)=>{s.ip = CPU.pop_word(s); }); 								// Return from interrupt
+		CPU.INST(0x05,"JL",   CPU.M_DIR, (m, s)=>{if (s.l) s.ip = m.get_word(s.ip) - 2;}); 					// Jump if less
+		CPU.INST(0x06,"JE",   CPU.M_DIR, (m, s)=>{if (s.e) s.ip = m.get_word(s.ip) - 2;}); 					// Jump Equal
+		CPU.INST(0x07,"JNE",  CPU.M_DIR, (m, s)=>{if (!s.e)s.ip = m.get_word(s.ip) - 2;}); 					// Jump Not Equal
+		CPU.INST(0x08,"JG",   CPU.M_DIR, (m, s)=>{if (s.g) s.ip = m.get_word(s.ip) - 2;}); 					// Jump greater
+		
 		CPU.INST(0x10,"LDA",  CPU.M_IMM, (m, s)=>{s.a = m.get_byte(s.ip);}); 								// Load A with constant
 		CPU.INST(0x11,"LDA",  CPU.M_DIR, (m, s)=>{s.a = m.get_byte(m.get_word(s.ip));}); 					// Load A value from memory 
 		CPU.INST(0x12,"LDX",  CPU.M_IMM, (m, s)=>{s.x = m.get_byte(s.ip);}); 								// Load X with constant
 		CPU.INST(0x13,"LDY",  CPU.M_IMM, (m, s)=>{s.y = m.get_byte(s.ip);}); 								// Load Y with constant
 		CPU.INST(0x14,"LDP",  CPU.M_DIR, (m, s)=>{s.p = m.get_word(m.get_word(s.ip));}); 					// Load P with value at memory location		
+		
 		CPU.INST(0x18,"STA",  CPU.M_DIR, (m, s)=>{m.set_byte(m.get_word(s.ip), s.a);}); 					// Store A at memory location
 		CPU.INST(0x19,"STX",  CPU.M_DIR, (m, s)=>{m.set_byte(m.get_word(s.ip), s.x);}); 					// Store X at memory location
 		CPU.INST(0x1A,"STY",  CPU.M_DIR, (m, s)=>{m.set_byte(m.get_word(s.ip), s.y);}); 					// Store Y at memory location
 		CPU.INST(0x1B,"STP",  CPU.M_DIR, (m, s)=>{m.set_word(m.get_word(s.ip), s.p);}); 					// Store P at memory location
+		
 		CPU.INST(0x20,"TXA",  CPU.M_IMP, (m, s)=>{s.a = s.x;}); 											// Transfre X to A
 		CPU.INST(0x21,"TAX",  CPU.M_IMP, (m, s)=>{s.x = s.a;}); 											// Transfer A to X
 		CPU.INST(0x22,"TYA",  CPU.M_IMP, (m, s)=>{s.a = s.y;}); 											// Transfre Y to A
@@ -156,6 +166,10 @@ class CPU
 			fb_udpate:0				// Frame buffer update 
 		};
 	
+	
+		this.interrupt_queue = [];	// List of pending interrupt sources
+	
+	
 		// Monitoring
 		this.inst_updates = 0;		// Instruction updates
 		this.prog_loaded = false;	// True if loaded
@@ -174,6 +188,41 @@ class CPU
 		
 	}
 	
+	// External Interrupt
+	interrupt(source)
+	{
+		
+		main.log_console(`${CPU.MODULE} ${this.name} Interrupt ${hex_byte(source)}\n`);
+		
+		this.interrupt_queue.push(source);
+	}
+	
+	// Process next pending
+	next_interrupt()
+	{
+		if (this.interrupt_queue.length == 0) return;
+		
+		// Get next and remove from list
+		var source = this.interrupt_queue[0];	// Get next
+		this.interrupt_queue.splice(0, 1);		//  Remove from list
+		
+	
+		// Just return if not enabled
+		if (!CPU.ENABLE_INTERRUPT) return;
+		
+		main.log_console(`${CPU.MODULE} ${this.name} Process Interrupt ${hex_byte(source)}\n`);
+	
+		CPU.push_word(this.state, this.state.ip);
+
+		var addr = this.memory.get_word(CPU.VECBASE + 2 * source);
+		
+		this.state.ip = this.memory.get_word(CPU.VECBASE + 2 * source);
+		
+		main.log_console(`${CPU.MODULE} ${this.name} Jumping to ${hex_word(this.state.ip)}\n`);
+		
+		this.memory.dump(CPU.VECBASE, 32);
+		
+	}
 	
 	/* 
 		Private
@@ -182,7 +231,7 @@ class CPU
 	// Display current stack
 	dump_stack()
 	{
-		main.log_console(`Stack:\n`);
+		main.log_console(`${CPU.MODULE} Stack:\n`);
 		for (var i = 0; i < CPU.DUMP_STACK_SZ; i++)
 			main.log_console(` [${i}] ${hex_byte(stack[i])}\n`);
 		this.ip = this.IP_END;
@@ -191,7 +240,7 @@ class CPU
 	// Disassemble single instruction
 	disassemble_inst(i, flags)
 	{
-		main.log_console(hex_word(i) + " "); // Address
+		main.log_console(`${CPU.MODULE} ${hex_word(i)} `); // Address
 
 		var inst_byte = this.memory.get_byte(i);	// instruction
 		
@@ -243,7 +292,7 @@ class CPU
 	static pop_word(s, v)	{ var v = CPU.pop_byte(s,0)<<8; v |= CPU.pop_byte(s,0); return v; } 
 	
 	// Instruction Helper
-	static compare(s, v1, v2) { s.e = v1 == v2;s.l = v1 < v2; s.g = v1 > v2; }
+	static compare(s, v1, v2) { s.e = v1 == v2; s.l = v1 < v2; s.g = v1 > v2; }
 	
 	// Load inst slot
 	static INST(op, text, mode, func){ CPU.inst_table[op] = {text:text, m:mode, f:func}; };
@@ -252,9 +301,17 @@ class CPU
 	// Core Update
 	update(num_exec)
 	{
+		
+		//main.log_console(`sp : ${hex_word(this.state.sp)} \n`);
+		
+		
+		if (CPU.DEBUG) num_exec = 1;
+		
 		if (!this.prog_loaded) return;
 		
 		this.inst_updates = 0;
+
+		this.next_interrupt();
 		
 		var r = this.step(num_exec); // Process a chunk
 		

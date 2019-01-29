@@ -86,11 +86,13 @@ function Memory()
 	// Get byte from memory
 	function get_byte(a) 
 	{ 
-		if (!(a >= 0 && a <= 65536))
+		a &= 0xffff;
+	
+		/*if (!(a >= 0 && a <= 65536))
 		{
 			main.log_console("Mem access error " + a);
 			return 0; 
-		}
+		}*/
 		
 	
 	
@@ -139,14 +141,14 @@ function Memory()
 		
 		while(i <= start + length)
 		{
-			main.log_console(hex_word(i) + "   ");
+			main.log_console(`${MODULE} ${hex_word(i&0xffff)}    `);
 			
 			for (var j = i; j < i+16; j++)
-				main.log_console(hex_byte(get_byte(j)) + " ");
+				main.log_console(hex_byte(get_byte(j&0xffff)) + " ");
 			
 			for (var j = i; j < i+16; j++)
 			{
-				var v = get_byte(j);
+				var v = get_byte(j&0xffff);
 				if (v >= 0x20 && v <= 0x80)
 					main.log_console(get_char(v)); 
 				else

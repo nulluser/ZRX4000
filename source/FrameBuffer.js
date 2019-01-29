@@ -81,6 +81,9 @@ function FrameBuffer(base_addr)
 		os_canvas.height = canvas_height;
 		os_ctx = os_canvas.getContext('2d');
 		
+		os_ctx.imageSmoothingEnabled = false; // Disable smooth scaling
+
+		
 		// Off screen image data
 		os_imagedata = os_ctx.getImageData(0, 0, BUFFER_X, BUFFER_Y);
 		
