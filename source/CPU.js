@@ -40,7 +40,7 @@ class CPU
 										// CPU will get the address stored here, push ip, and jmp there
 		
 		
-		CPU.OPTION_REALTIME = 1;		// Realtime
+		CPU.OPTION_REALTIME = 1;		// Realtime. Process until SYNC instruction
 		
 		// Errors
 		CPU.ERROR_UI = 0x01;			// Unknown instruction
