@@ -20,7 +20,6 @@ class CPU
 		CPU.MODULE = "[CPU]       ";
 		
 		// Debugging
-		CPU.DEBUG = 0;					// Slow down for debugging
 		CPU.DUMP_MEM = 0;				// Dump memory on load
 		CPU.DUMP_MEM_SIZE = 0x100;		// Dump Size
 		CPU.DUMP_STACK = 0;				// Displat stack during execution
@@ -40,7 +39,8 @@ class CPU
 										// CPU will get the address stored here, push ip, and jmp there
 		
 		
-		CPU.OPTION_REALTIME = 1;		// Realtime. Process until SYNC instruction
+		CPU.OPTION_DEBUG = 1;		// Realtime. Process until SYNC instruction
+		CPU.OPTION_REALTIME = 2;		// Realtime. Process until SYNC instruction
 		
 		// Errors
 		CPU.ERROR_UI = 0x01;			// Unknown instruction
@@ -148,6 +148,7 @@ class CPU
 		this.memory = memory;
 		this.start_addr = start_addr;
 		this.realtime = false;
+		this.debug = false;
 		
 		// CPU State
 		this.state = 
@@ -185,6 +186,9 @@ class CPU
 	{
 		if (option == CPU.OPTION_REALTIME)
 			cpu.realtime = state;
+		
+		if (option == CPU.OPTION_DEBUG)
+			cpu.debug = state;
 		
 	}
 	
@@ -301,11 +305,9 @@ class CPU
 	// Core Update
 	update(num_exec)
 	{
-		
 		//main.log_console(`sp : ${hex_word(this.state.sp)} \n`);
 		
-		
-		if (CPU.DEBUG) num_exec = 1;
+		if (this.debug) num_exec = 1;
 		
 		if (!this.prog_loaded) return;
 		
@@ -345,7 +347,7 @@ class CPU
 		//var end =  Date.now() + time_slice;
 		
 		// Loop until done, or SYNC or HALT
-		while(((exec < num_exec) || this.realtime) && 
+		while(((exec < num_exec) || (this.realtime && !this.debug)) && 
 			  !this.state.fb_update && 
 			  this.state.ip != CPU.IP_END //&&
 		//	  Date.now() < end
@@ -353,7 +355,7 @@ class CPU
 			  
 		//while(this.state.ip != CPU.IP_END && Date.now() < end)
 		{
-			if (CPU.DEBUG) this.disassemble_inst(this.state.ip, 1);				// Dissassemble
+			if (this.debug) this.disassemble_inst(this.state.ip, 1);				// Dissassemble
 			
 			var inst = CPU.inst_table[this.memory.get_byte(this.state.ip++)];	// Get next inst
 			

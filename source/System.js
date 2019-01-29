@@ -32,9 +32,10 @@ function System()
 {
 	const MODULE = "[System]    ";
 
-	//const UPDATE_RATE = 2000;		// CPU Update (ms)
+	const DEBUG = 0;				// Master debug
+	
 	const UPDATE_RATE = 0;			// CPU Update (ms)
-	const DEBUG_TIME = 0;
+	const DEBUG_TIME = 500;			// Time to wait between updates in debug
 	
 	
 	const SECOND_RATE = 1000;		// Status update
@@ -150,6 +151,8 @@ function System()
 		// Set realtime option for game core
 		CPU.set_option(cpu_cores[0], CPU.OPTION_REALTIME, 1);
 		
+		if (DEBUG)
+			CPU.set_option(cpu_cores[0], CPU.OPTION_DEBUG, 1);
 		
 		
 		// Create more cores
@@ -247,7 +250,7 @@ function System()
 		var cur = Date.now();
 		var dt = cur - last_update;
 		
-		if (dt > DEBUG_TIME) 
+		if (((dt > DEBUG_TIME) && DEBUG) || !DEBUG) 
 		{
 			update_system(dt);
 			last_update = cur;
