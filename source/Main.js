@@ -35,7 +35,6 @@ var main = (function ()
 		log_console(MODULE + "Init\n");
 				
 		system = System();
-		system.init();
 		
 		//setInterval(function(){log_console("tesss222ssst " + t + "\n");t++; }, 10);
 		//setInterval(function(){log_output("tewwst " + t + "\n");t++; }, 100);

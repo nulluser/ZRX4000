@@ -16,9 +16,8 @@
 
 "use strict";
 
-
-// Memory
-function FrameBuffer(base_addr)
+// Frame Buffer
+function FrameBuffer(memory, base_addr)
 {
 	const MODULE = "[FrameBuff] ";
 	const DEVICE_TYPE = "FB";				// Device identifier
@@ -44,9 +43,8 @@ function FrameBuffer(base_addr)
 	var fb_data8;
 	var fb_data32;
 	
-	//var fb_updates = 0;		// Framebuffer updates
-	//var fb_update = 0; 		// True to udpate frame buffer
-
+	init(memory);				// Init
+	
 	// Returns device type
 	function get_type()
 	{
@@ -103,6 +101,7 @@ function FrameBuffer(base_addr)
 		clear();
 	}
 	
+	// Clear frame buffer
 	function clear()
 	{
 		
@@ -110,11 +109,13 @@ function FrameBuffer(base_addr)
 			write_hook(a, 0);
 	}
 	
+	// Intercept memory read
 	function read_hook(a)
 	{
 		return buffer[a];
 	}
 	
+	// Intercept memory write
 	function write_hook(a, v)
 	{
 		// Save for reading
@@ -123,7 +124,6 @@ function FrameBuffer(base_addr)
 		// Write 32 bit value into buffer directly
 		fb_data32[a] = color_table[v];
 	}
-	
 	
 	// Get color from value, return in hex
 	function get_color(v)

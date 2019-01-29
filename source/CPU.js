@@ -166,10 +166,8 @@ class CPU
 			p:0, 					// Pointer
 			fb_udpate:0				// Frame buffer update 
 		};
-	
-	
+		
 		this.interrupt_queue = [];	// List of pending interrupt sources
-	
 	
 		// Monitoring
 		this.inst_updates = 0;		// Instruction updates

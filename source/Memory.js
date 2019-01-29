@@ -30,7 +30,6 @@
 
 "use strict";
 
-
 // Memory
 function Memory()
 {
@@ -41,6 +40,7 @@ function Memory()
 	var data = null;				// Memory	
 	var addr_hooks = [];			// Memory range hooks
 	
+	init();
 	
 	// Init
 	function init()
@@ -93,8 +93,6 @@ function Memory()
 			main.log_console("Mem access error " + a);
 			return 0; 
 		}*/
-		
-	
 	
 		var h = find_hook(a);
 		

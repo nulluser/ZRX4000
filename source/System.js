@@ -36,8 +36,6 @@ function System()
 	
 	const UPDATE_RATE = 0;			// CPU Update (ms)
 	const DEBUG_TIME = 500;			// Time to wait between updates in debug
-	
-	
 	const SECOND_RATE = 1000;		// Status update
 
 	const TARGET_FPS = 60;			// Target fps
@@ -75,10 +73,11 @@ function System()
 	var last_update = Date.now();
 	var total_exec = NUM_INST;		//	Inital
 	
-	
 	var inst_rate = 100000.0;		// Filter for auto inst loading
 	var fps_filter = 0.8;			// Filter for fps calc
 	var average_fps = 0;			// Current average FPS
+	
+	init();
 	
 	/* 
 		Public 
@@ -107,37 +106,24 @@ function System()
 				
 		// Setup main memory
 		memory = Memory();
-		memory.init();
 
 		// Setup frame buffer
-		frame_buffer = FrameBuffer(FB_ADDR);
-		frame_buffer.init(memory);
-	
+		frame_buffer = FrameBuffer(memory, FB_ADDR);
 		
 		// Create an assembler
 		assembler = Assembler(memory);
 		
 		// Assemble some code into memory
-		
 		if(assembler.assemble(CPU, vert_scroll,	0x1000)) return;
-		
-		
 		
 		
 		//if (assembler.assemble(CPU, fb_gametest,		0x1000)) return;
 		//if (assembler.assemble(CPU, fb_filltest,		0x2000)) return;
-		
 		//if (assembler.assemble(CPU, mc_test,		0x2000)) return;
-		
 		//assembler.assemble(CPU, inst_test,		0x1000);
-		
 		//assembler.assemble(CPU.inst_table, fb_test1,	0x2000);
 		//assembler.assemble(CPU.inst_table, fb_test2,	0x3000);
 		//assembler.assemble(CPU.inst_table, game,		0x4000);		
-		
-		memory.dump(0x1000, 0x100);
-		
-		
 		
 		// Create some cores
 		cpu_cores.push( new CPU("CPU1", memory, 0x1000) );
@@ -147,9 +133,10 @@ function System()
 		// Set realtime option for game core
 		CPU.set_option(cpu_cores[0], CPU.OPTION_REALTIME, 1);
 		
+		// Set debug if needed
+		// Can debug by core
 		if (DEBUG)
-			CPU.set_option(cpu_cores[0], CPU.OPTION_DEBUG, 1);
-		
+			CPU.set_option(cpu_cores[0], CPU.OPTION_DEBUG, 1);		
 		
 		// Create more cores
 		// They will all run the code at 0x2000, frame buffer test
@@ -157,10 +144,11 @@ function System()
 			cpu_cores.push( new CPU("CPUX" + i, memory, 0x2000) );		
 			
 		// Addach IO to CPU 0
-		io = IO(KEY_ADDR, INT_KEYBOARD);
+		io = IO(cpu_cores[0], memory, KEY_ADDR, INT_KEYBOARD);
 		
-		io.init(cpu_cores[0], memory);
-		
+		// Dump memory
+		memory.dump(0x1000, 0x100);
+
 		update_enable = true;
 	}	
 			
@@ -191,7 +179,7 @@ function System()
 		fb_updates = 0;
 	}	
 	
-	// Core Update
+	// Timer Update
 	function update()
 	{
 		var cur = Date.now();
@@ -222,11 +210,7 @@ function System()
 		frame_buffer.update();
 		
 		fb_updates++;
-
 	}
-	
-	
-	/* Private */
 	
 	return {init:init};
 }

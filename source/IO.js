@@ -7,13 +7,14 @@
 
 "use strict";
 
-
-// Memory
-function IO(key_addr, key_int)
+// IO
+function IO(cpu, memory, k_addr, key_int)
 {
 	const MODULE = "[IO]        ";
 	
-	var key_addr = key_addr;
+	var key_addr = k_addr;
+
+	init(cpu, memory);
 	
 	// Init
 	function init(cpu, memory)
@@ -45,8 +46,4 @@ function IO(key_addr, key_int)
 		
 	// Public Interface
 	return {init : init};
-
-	
 }
-
-
