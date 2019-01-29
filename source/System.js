@@ -60,6 +60,7 @@ function System()
 	const TEST_CORES = 0;			// Number of cores
 	
 	// Devices
+	var io = null;					// IO
 	var memory = null;				// Shared memory
 	var cpu_cores = [];				// CPU Cores
 	var frame_buffer = null;		// Frame buffer
@@ -90,11 +91,9 @@ function System()
 
 		connect_devices();
 		
-		
 		//window.requestAnimationFrame(update);
 		setInterval(second, SECOND_RATE);
 		setInterval(update, UPDATE_RATE);
-		//update();
 	}
 		 	
 	
@@ -103,10 +102,8 @@ function System()
 	{
 		main.log_console(`${MODULE} Connecting Devices\n`);
 				
-
 		// Setup CPU
 		CPU.configure(); 		// Load instructions				
-				
 				
 		// Setup main memory
 		memory = Memory();
@@ -115,7 +112,6 @@ function System()
 		// Setup frame buffer
 		frame_buffer = FrameBuffer(FB_ADDR);
 		frame_buffer.init(memory);
-
 	
 		
 		// Create an assembler
@@ -159,60 +155,14 @@ function System()
 		// They will all run the code at 0x2000, frame buffer test
 		for (var i = 0; i < TEST_CORES; i++)
 			cpu_cores.push( new CPU("CPUX" + i, memory, 0x2000) );		
-		
-		
-		
-		
-		// Setup IO. Need to make module
 			
 		// Addach IO to CPU 0
-		io_init(cpu_cores[0]);
+		io = IO(KEY_ADDR, INT_KEYBOARD);
 		
-		
+		io.init(cpu_cores[0], memory);
 		
 		update_enable = true;
-		
-		// Init cores
-		//for (var i = 0; i < cpu_cores.length; i++)
-//			cpu_cores[i].init();
-
-
-
 	}	
-			
-	// Setup IO Devices
-	function io_init(cpu)
-	{
-		
-		
-		
-		
-		
-		
-		// Connect keys
-		window.addEventListener("keydown", (evt)=>{keydown(evt, cpu)}, false);	
-		window.addEventListener("keyup", (evt)=>{keyup(evt, cpu)}, false);	
-	}
-	
-	// Handle key events
-	function keydown(evt, cpu)
-	{
-		var key = ascii(evt.key) & 0xff;
-		//log("Key down: " + hex_byte(key));
-
-		memory.set_byte(KEY_ADDR + key, 1);
-		cpu.interrupt(INT_KEYBOARD);
-		
-		
-	}
-	
-	function keyup(evt, cpu)
-	{
-		var key = ascii(evt.key) & 0xff;
-		//log("Key up: " +  hex_byte(key));
-		memory.set_byte(KEY_ADDR + key, 0);
-		cpu.interrupt(INT_KEYBOARD);
-	}			
 			
 			
 	// Second Update
@@ -234,14 +184,11 @@ function System()
 			
 			console.log(` Error: ${(error*100).toFixed(2)}% ${total_exec.toFixed(0)} \n`);
 		}
-
 		
 		main.log_console(`${MODULE} Frame Rate: ${average_fps.toFixed(2)} Inst Rate: ${total_inst}\n` );
-		
 
 		total_inst = 0;
 		fb_updates = 0;
-
 	}	
 	
 	// Core Update
@@ -256,22 +203,13 @@ function System()
 			last_update = cur;
 		}
 		
-		
 		//window.requestAnimationFrame(update);
-		
 		//setTimeout(update, 0);
 	}
 	
-	
+	// Master update
 	function update_system()
 	{
-				
-
-		
-
-		
-		
-		
 		if (!update_enable) return;
 
 		//console.log("Update");
