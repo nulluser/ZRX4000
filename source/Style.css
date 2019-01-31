@@ -1,0 +1,112 @@
+#container
+{
+	width:640px;
+
+}
+
+#fbuffer
+{
+	width:640px;
+	height:480px;
+}
+
+#system
+{
+}
+
+#console
+{
+  font-family: monospace;
+  height:100%;
+}
+
+#terminal
+{
+  font-family: monospace;
+}
+
+#assembler
+{
+  font-family: monospace;
+  padding:0px 0px;
+}
+
+#assemble_text
+{
+	height: auto; 
+	width:640px;
+}
+
+textarea, pre {
+    -moz-tab-size : 4;
+      -o-tab-size : 4;
+         tab-size : 4;
+}
+
+/* Menu */
+
+ul 
+{
+  background-color: #333;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: monospace;
+}
+
+li 
+{
+  float: left;
+}
+
+li a, .dropbtn 
+{
+  display: inline-block;
+  color:  #ffffff;
+  text-align: center;
+  padding: 2px 10px;
+  text-decoration: none;
+}
+
+li a:hover, .dropdown:hover .dropbtn 
+{
+  color: #ffffff;
+  /*background-color: #292929;*/
+}
+
+li.dropdown 
+{
+  display: inline-block;
+}
+
+.dropdown-content 
+{
+  display: none;
+  position: absolute;
+/*  color: #ffffff;*/
+  background-color: #292929;
+  min-width: 100px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+.dropdown-content a 
+{
+  padding: 2px 10px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+.dropdown-content a:hover 
+{
+	color: #ffffff;
+}
+
+.dropdown:hover .dropdown-content 
+{
+  display: block;
+}
+
+

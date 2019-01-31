@@ -19,6 +19,8 @@ class CPU
 		/* Static Members */
 		CPU.MODULE = "[CPU]       ";
 		
+		CPU.MAX_EXEC = 1000000;
+		
 		// Debugging
 		CPU.DUMP_MEM = 0;				// Dump memory on load
 		CPU.DUMP_MEM_SIZE = 0x100;		// Dump Size
@@ -180,6 +182,8 @@ class CPU
 		main.log_console(`${CPU.MODULE} Loaded CPU ${name} at ${hex_word(start_addr)}\n`);
 	}
 	
+	
+	
 	static set_option(cpu, option, state)
 	{
 		if (option == CPU.OPTION_REALTIME)
@@ -226,9 +230,32 @@ class CPU
 		
 	}
 	
+	
+	reset(cpu)
+	{
+		this.reset_flags();
+	}
+	
+	
 	/* 
 		Private
 	*/						
+	
+	reset_flags()
+	{
+		this.state.ip=this.start_addr;
+		this.state.sp=0;
+		this.state.a=0;
+		this.state.x=0;
+		this.state.y=0;
+		this.state.e=0;
+		this.state.l=0;
+		this.state.g=0;
+		this.state.c=0;
+		this.state.p=0;
+		this.state.fb_udpate=0;
+	}
+	
 		
 	// Display current stack
 	dump_stack()
@@ -342,13 +369,15 @@ class CPU
 		
 		if (this.state.ip == CPU.END_IP) return;
 		
-		//var end =  Date.now() + time_slice;
+		
+		//var end =  Date.now() + CPU.MAX_TIME;
 		
 		// Loop until done, or SYNC or HALT
 		while(((exec < num_exec) || (this.realtime && !this.debug)) && 
 			  !this.state.fb_update && 
 			  this.state.ip != CPU.IP_END //&&
-		//	  Date.now() < end
+			  //Date.now() < end
+			  && exec < CPU.MAX_EXEC
 			  )
 			  
 		//while(this.state.ip != CPU.IP_END && Date.now() < end)

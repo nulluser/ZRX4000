@@ -374,7 +374,7 @@ image_p:	DB			#00	#00			// Current pointer image image
 
 
 
-/* Multo core test */
+/* Multi core test */
 var mc_test = 
  `
  // Test 
@@ -405,14 +405,16 @@ lp1:		dex
 
 
 
-
-
-
-
 // scroll vert
 var vert_scroll = 
  `
-
+ /*  Vertical Scroll Test */
+ 
+ 
+start:		SP		startstring:
+			JSR		printstr:
+ 
+ 
  lp:		JSR			fire:
 			JMP 		lp:
 			
@@ -470,13 +472,38 @@ fire1:
 			SYNC					// Sync framebuffer
 			RET
 			
+// Prints string that P points to		
+printstr:	GP
+			CMP		#00
+			JE		printdone:
+		
+			OUT
+			INP
+			JMP		printstr:
+		
+printdone:		
+			RET
+			
 
 // Program data
 					
 counter1:	DB		#00				// Counters for graphics test
 counter2:	DB		#00
 
-
+startstring:						// Startup String
+			DB		'V'
+			DB		'e'
+			DB		'r'
+			DB		't'
+			DB		#20
+			DB		'S'
+			DB		'c'
+			DB		'r'
+			DB		'o'
+			DB		'l'
+			DB		'l'
+			DB		#0a
+			DB		#0
 
 `;
 /* End of Program */

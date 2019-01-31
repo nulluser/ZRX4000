@@ -18,9 +18,7 @@ function Assembler(memory)
 	// Assembler
 	
 	const DEBUG = 0;			// True for assembly debug
-	
 	const NEWLINE = "NEWLINE";	// Newline token, internal use
-	
 	
 	var address_table = [];  	// Stores known addresses
 	var resolve_table = [];  	// Stores address that need resolved
@@ -42,10 +40,14 @@ function Assembler(memory)
 	
 	/* Assembler */
 			
+			
+	
+			
+			
 	// Assemble a string
 	function assemble(cpu, str, prog_addr)
 	{
-		main.log_console(`${MODULE} [Assemble]\n`);
+		main.log_assemble(`${MODULE} [Assemble]\n`);
 		//main.log(str);
 
 		cur_cpu = CPU;
@@ -55,7 +57,12 @@ function Assembler(memory)
 		address_table = [];
 		resolve_table = [];
 
-
+		if (str == "")
+		{
+			main.log_assemble(`No Program ${str}\n`);
+			return;
+		}
+		
 		str = remove_block_comments(str);		// Eat block comments in plain text
 		
 		var tokens = parse_tokens(str);			// Convert program string into token list
@@ -82,25 +89,25 @@ function Assembler(memory)
 			
 			if (found == 0)
 			{
-				main.log_console(`${MODULE} Unresolved symbol ${resolve_table[i].label} \n`);
+				main.log_assemble(`${MODULE} Unresolved symbol ${resolve_table[i].label} \n`);
 				return 1;
 			}
 			
 		}
 		
 		// Show address table
-		main.log_console(`${MODULE} [Address Table]\n`);
+		main.log_assemble(`${MODULE} [Address Table]\n`);
 		for (var i = 0; i < address_table.length; i++)
-			main.log_console(`${MODULE}   ${address_table[i].label.padEnd(16)} ${hex_word(address_table[i].addr)}\n`);
+			main.log_assemble(`${MODULE}   ${address_table[i].label.padEnd(16)} ${hex_word(address_table[i].addr)}\n`);
 
 		/* For Debugging 
-		main.log_console(`${MODULE} Resolve Table\n`);
+		main.log_assemble(`${MODULE} Resolve Table\n`);
 		for (var i = 0; i < resolve_table.length; i++)
-			main.log_console(`${MODULE}   ${resolve_table[i].label.padEnd(16)} ${hex_word(resolve_table[i].addr)} \n`);*/
+			main.log_assemble(`${MODULE}   ${resolve_table[i].label.padEnd(16)} ${hex_word(resolve_table[i].addr)} \n`);*/
 				
 		
 		//disassemble(main.log, prog_addr, prog_addr + 0x100);
-		disassemble(main.log_console, prog_addr, prog_addr + 0x20);
+		disassemble(main.log_assemble, prog_addr, cur_prog);
 		
 		return 0;
 		
@@ -176,7 +183,7 @@ function Assembler(memory)
 		
 		while(cur_token < tokens.length)
 		{
-			//main.log_console("T:" + tokens[cur_token] + "\n");
+			//main.log_assemble("T:" + tokens[cur_token] + "\n");
 			
 			if (assemble_token(tokens, tokens[cur_token], tokens[cur_token+1]))
 				return 1;
@@ -223,7 +230,7 @@ function Assembler(memory)
 		}
 			
 			
-		main.log_console(`Invalid Token: (${token})\n`);
+		main.log_assemble(`Invalid Token: (${token})\n`);
 		
 		return 1;
 	}
@@ -264,7 +271,7 @@ function Assembler(memory)
 
 		if (next == undefined)
 		{
-			main.log_console("Operand expected");
+			main.log_assemble("Operand expected");
 			return 1;
 		}
 		
@@ -301,7 +308,7 @@ function Assembler(memory)
 		} else
 		// Assume hex
 		{
-			main.log_console(`Invalid operand ${next}\n`);
+			main.log_assemble(`Invalid operand ${next}\n`);
 			
 			// Get value of operand
 			//operand = parseInt(next, 16); 
@@ -314,7 +321,7 @@ function Assembler(memory)
 		
 		if (found_inst == -1)
 		{
-			main.log_console(`${MODULE} Address mode not found for ${inst.text} \n`);
+			main.log_assemble(`${MODULE} Address mode not found for ${inst.text} \n`);
 			
 			return 1;
 		}
@@ -335,7 +342,7 @@ function Assembler(memory)
 		
 		if (next == undefined)
 		{
-			main.log_console(`${MODULE} DB value expected\n`);
+			main.log_assemble(`${MODULE} DB value expected\n`);
 			
 			return 1;
 		}
@@ -491,7 +498,7 @@ function Assembler(memory)
 	// Show Disassembly
 	function disassemble(target, start, end)
 	{
-		main.log_console(`${MODULE} [Disassembly]\n`);
+		main.log_assemble(`${MODULE} [Disassembly]\n`);
 				
 		var i = start;
 		
@@ -509,7 +516,7 @@ function Assembler(memory)
 
 		var inst_byte = memory.get_byte(i);	// instruction
 		
-		//main.log_console(hex_byte(inst));
+		//main.log_assemble(hex_byte(inst));
 		if (cur_cpu.inst_table[inst_byte] == undefined)
 		{
 			out += `Undefined inst: [${hex_word(i)}] ${inst}\n`;
@@ -564,7 +571,7 @@ function Assembler(memory)
 	// Show Disassembly
 	function dump_stack(elements)
 	{
-		main.log_console("[Stack Dump]\n");
+		main.log_assemble("[Stack Dump]\n");
 				
 		/*var i = 0;
 		
@@ -572,10 +579,10 @@ function Assembler(memory)
 		{
 			var v = memory[i];
 			if (v != undefined)
-			main.log_console(hex_word(i) + "   " + hex_byte(v) + " (" + String.fromCharCode(v)+ ")\n"); // Address
+			main.log_assemble(hex_word(i) + "   " + hex_byte(v) + " (" + String.fromCharCode(v)+ ")\n"); // Address
 		}
 		
-		main.log_console("[End of Stack]\n");*/
+		main.log_assemble("[End of Stack]\n");*/
 	}		
 	
 	/* End of Disassembler */

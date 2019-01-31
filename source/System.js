@@ -153,6 +153,15 @@ function System()
 	}	
 			
 			
+	function user_assemble(prog)
+	{
+		// Assemble some code into memory
+		if(assembler.assemble(CPU, prog, 0x1000)) return;
+		
+		cpu_cores[0].reset();
+	}	
+			
+			
 	// Second Update
 	function second()
 	{
@@ -212,6 +221,6 @@ function System()
 		fb_updates++;
 	}
 	
-	return {init:init};
+	return {init:init, user_assemble:user_assemble};
 }
 

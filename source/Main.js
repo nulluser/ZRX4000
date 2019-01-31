@@ -17,8 +17,13 @@ var main = (function ()
 	var MODULE = "[Main]       ";
 	
 	// Private 
-	const MAX_LEN = 300; 			// Need weird size because of spaces, TODO fix
-	const MAX_LINES = 500;			// Log lines
+	const DEFAULT_PROG = vert_scroll;
+	
+	const MAX_LEN = 300; 			// Need weird size because of spaces, TODO fix	
+	const ASSM_MAX = 1000;
+	const CON_MAX = 500;
+	const OUT_MAX = 500;
+	
 
 	var debug_window;				// Popup debug window
 	var system = null;
@@ -36,9 +41,33 @@ var main = (function ()
 				
 		system = System();
 		
+		//load();
+
+		//assemble();
+		
 		//setInterval(function(){log_console("tesss222ssst " + t + "\n");t++; }, 10);
 		//setInterval(function(){log_output("tewwst " + t + "\n");t++; }, 100);
 	}
+	
+	// Load default program
+	function load()
+	{
+		load_area("assembler");
+		document.getElementById("assemble_text").value=DEFAULT_PROG;
+	}
+	
+	
+	// User wants to assemble
+	function assemble()
+	{
+		load_area("assembler");
+		document.getElementById("assemble").innerHTML = "";
+		document.getElementById("terminal").innerHTML = "";
+		
+		var t = document.getElementById("assemble_text").value;
+		system.user_assemble(t);
+	}
+	
 	
 	/* Logging */
 	// This has to be done to get around cross site scripting 
@@ -46,7 +75,7 @@ var main = (function ()
 	{
 		// Create log window
 		//debug_window = window.open("", "debug_window", "width=512,height=512,directories=0,titlebar=0,toolbar=0,location=0,status=0,menubar=0,scrollbars=yes,resizable=no");
-		debug_window = window.open("", "debug_window", "width=512,height=512");
+		/*debug_window = window.open("", "debug_window", "width=512,height=512");
 		
 		var html = 
 		`
@@ -66,8 +95,44 @@ var main = (function ()
 		</html>
 		`;
 
-		debug_window.document.write(html); // Inject
+		debug_window.document.write(html); // Inject*/
 	}
+	
+	
+	// Hide Area
+	function hide(area) 
+	{ 
+		var x = document.getElementById(area);
+		//x.style.display = "block";
+		x.style.display = "none";
+	} 
+	
+	// Hide Area
+	function show(area) 
+	{ 
+		var x = document.getElementById(area);
+		x.style.display = "block";
+		//x.style.display = "none";
+	} 
+	
+	
+	
+	// Hide all areas and display one
+	function load_area(area)
+	{
+		hide('system');
+		hide('console');
+		hide('terminal');
+		hide('assembler');
+		
+		show(area);
+	}
+	
+	
+	
+	
+	
+	
 	
 	
 	// Replace all in string
@@ -99,20 +164,20 @@ var main = (function ()
 	}
 		
 	// Add line to log
-	function shift_log(l)
+	function shift_log(l, max)
 	{
 		// Shift down
 		l.appendChild(document.createElement('div'));
 
 		// Limit
-		while(l.children.length > MAX_LINES-1) 
+		while(l.children.length > max-1) 
 			 l.removeChild(l.children[0]);
 	}
 	
 	// Add item to log list
-	function add_log(log_area, item)
+	function add_log(log_area, item, max)
 	{
-		var l = debug_window.document.getElementById(log_area)
+		var l = document.getElementById(log_area)
 
 		// Make sure we have at least one element
 		if (l.children.length == 0)
@@ -134,7 +199,7 @@ var main = (function ()
 			{
 				l.children[l.children.length-1].innerHTML += format_output(st);		
 				st = "";
-				shift_log(l);
+				shift_log(l, max);
 			}
 			else
 			{
@@ -159,20 +224,31 @@ var main = (function ()
 	// Log CPU Output
 	function log_output(item)
 	{
-		add_log("output", item);
+		add_log("terminal", item, OUT_MAX);
 		//log(item);
 	}
 
 	// Log Console messages
 	function log_console(item)
 	{
-		add_log("console", item);
+		add_log("console", item, CON_MAX);
 		//log(item);
 	}
 
+	// Log Console messages
+	function log_assemble(item)
+	{
+		add_log("assemble", item, ASSM_MAX);
+		//log(item);
+	}
+	
 	// Public Interface
 	return 	{init : init,
+			load:load, 
+			assemble:assemble,
 			log_console : log_console,
 			log_output : log_output,
-			log : log};
+			log_assemble : log_assemble,
+			log : log, 
+			load_area:load_area};
 }());
