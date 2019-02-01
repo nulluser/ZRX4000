@@ -9,6 +9,293 @@
 
 
 
+
+
+
+// scroll vert
+var OS = 
+ `
+ 
+start:		SP		start_str:
+			JSR		print_str:
+			
+ 
+			sp		1000
+ 
+			jsr		dump_mem:
+
+
+loop:
+			
+			jsr		get_cmd:
+			
+			jmp		loop:
+ 
+ 
+			end
+	
+
+/* Get next console command */
+get_cmd:
+			lda		'>'
+			out
+			lda		#20
+			out
+			
+			sp		cmd_str:
+			ldx		#14				// mac command
+			
+get_cmd1:							// Next char
+			in
+			
+			cmp		#00
+			je		get_cmd1:		// No char in buffer
+			
+			lp						// Store in cmd string
+			inp 
+			
+		
+			dex
+			cpx 	#0
+			jne		get_cmd2:		// Too many chars?
+			
+			
+			cmp		#0d
+			je		get_cmd2:
+			
+			inx
+			
+			dep
+			jmp		get_cmd1:
+			
+			
+			
+			
+			
+
+			
+get_cmd2:
+			out
+
+		
+			cmp		#0d
+			jne		get_cmd1:		// New line
+		
+			lda 	#0					// Term string
+			lp
+		
+			sp		cmd_str_hdr:	// Cmd: header
+			jsr	 	print_str:
+		
+			sp		cmd_str:		// Print cmd string
+			jsr 	print_str:
+
+			ret		
+	
+	
+	
+/* Dump memory starting in P */	
+dump_mem:	
+
+		
+			ldy		#10
+			
+			
+
+
+dump_mem1:	
+
+			pushp				// Display address
+			pop
+			jsr 	print_h8:
+			pop
+			jsr 	print_h8:
+			lda		#20				// Space
+			out
+			lda		#20				// Space
+			out
+
+			
+			
+			ldx		#10			// Dump line as hex
+dump_mem2:
+			gp
+			inp
+			jsr 	print_h8:
+			lda		#20
+			out
+			dex
+			cpx 	#0
+			jg		dump_mem2:
+
+			lda		#20				// Space
+			out
+			lda		#20				// Space
+			out
+
+			
+			
+			lda		#10
+			subp				// Back to start of line
+			ldx		#10
+dump_mem3:						// Dump line as ascii
+			gp
+			inp
+			cmp 	#20				// Make sure printable
+			jl		dump_mem4:
+			cmp 	#80
+			jg		dump_mem4:
+			out
+			jmp 	dump_mem5:
+			
+dump_mem4:				
+			lda 	#2e
+			out
+			
+dump_mem5:			
+			dex						// Next byte
+			cpx 	#0
+			jg		dump_mem3:
+
+			jsr		print_newline:
+			
+			dey						// Next line
+			cpy 	#0
+			jg		dump_mem1:
+
+			ret
+
+	
+	
+	
+/*** Library ***/	
+	
+	
+	
+	
+/* Print newline */
+print_newline:
+			push
+			lda		#0a
+			out
+			pop
+			ret
+	
+/* Print 4 bit hex char */
+print_h4:	and 	#0f
+			cmp		#0a
+			jl		print_h4_1:
+			add		#07
+print_h4_1:	add		#30
+			out
+			ret
+	
+/* Print 4 bit hex char */
+print_h8:	push
+			shr		#04
+			jsr		print_h4:
+			pop
+			jsr		print_h4:
+			ret
+			
+// Prints string that P points to		
+print_str:	GP
+			CMP		#00
+			JE		print_str1:
+		
+			OUT
+			INP
+			JMP		print_str:
+		
+print_str1:		
+			RET
+			
+
+// Program data
+					
+cmd_str:	DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			DB		#0
+			
+			
+cmd_str_hdr: 
+			DB		'C'
+			DB		'm'
+			DB		'd'
+			DB		':'
+			DB		#20
+			
+			DB		#0
+
+					
+					
+					
+counter1:	DB		#00				// Counters for graphics test
+counter2:	DB		#00
+
+start_str:							// Startup String
+			DB		'R'
+			DB		'O'
+			DB		'M'
+			DB		#20
+			DB		'M'
+			DB		'O'
+			DB		'N'
+			DB		#20
+			DB		'v'
+			DB		'l'
+			DB		'.'
+			DB		'0'
+			DB		#0a
+			DB		#0
+
+`;
+/* End of Program */
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Generic FB test
 // This one generally works
 var fb_gametest = 

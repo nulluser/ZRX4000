@@ -107,6 +107,10 @@ function System()
 		// Setup main memory
 		memory = Memory();
 
+		
+		// Setup IO object
+		io = IO();
+		
 		// Setup frame buffer
 		frame_buffer = FrameBuffer(memory, FB_ADDR);
 		
@@ -126,7 +130,7 @@ function System()
 		//assembler.assemble(CPU.inst_table, game,		0x4000);		
 		
 		// Create some cores
-		cpu_cores.push( new CPU("CPU1", memory, 0x1000) );
+		cpu_cores.push( new CPU("CPU1", memory, io, 0x1000) );
 		//cpu_cores.push( new CPU("CPU2", memory, 0x2000) );
 		//cpu_cores.push( new CPU("CPU3", memory, 0x3000) );
 		
@@ -141,10 +145,12 @@ function System()
 		// Create more cores
 		// They will all run the code at 0x2000, frame buffer test
 		for (var i = 0; i < TEST_CORES; i++)
-			cpu_cores.push( new CPU("CPUX" + i, memory, 0x2000) );		
+			cpu_cores.push( new CPU("CPUX" + i, memory, io, 0x2000) );		
 			
 		// Addach IO to CPU 0
-		io = IO(cpu_cores[0], memory, KEY_ADDR, INT_KEYBOARD);
+		//io = IO(cpu_cores[0], memory, KEY_ADDR, INT_KEYBOARD);
+		
+		io.init(cpu_cores[0], memory, KEY_ADDR, INT_KEYBOARD);
 		
 		// Dump memory
 		memory.dump(0x1000, 0x100);
