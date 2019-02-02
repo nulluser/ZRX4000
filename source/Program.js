@@ -9,6 +9,491 @@
 
 
 
+// scroll vert
+var gpu_test = 
+ `
+ 
+start:
+		
+
+loop:	
+		lda		#01					// Clear color
+		jsr 	gpu_clear:				// Clear
+
+		jsr		move_poly:
+		jsr 	draw_poly:			// Clear
+		
+		sync
+		//end
+		
+		jmp		loop:
+
+		
+		
+		
+move_poly:
+			// Move X1
+			lda		p1x:
+			sta		temp_v:
+			lda		p1dx:
+			sta		temp_dv:
+			jsr		move_value:
+			lda		temp_v:
+			sta		p1x:
+			lda		temp_dv:
+			sta		p1dx:
+			
+			// Move Y1
+			lda		p1y:
+			sta		temp_v:
+			lda		p1dy:
+			sta		temp_dv:
+			jsr		move_value:
+			lda		temp_v:
+			sta		p1y:
+			lda		temp_dv:
+			sta		p1dy:
+			
+			// Move X2
+			lda		p2x:
+			sta		temp_v:
+			lda		p2dx:
+			sta		temp_dv:
+			jsr		move_value:
+			lda		temp_v:
+			sta		p2x:
+			lda		temp_dv:
+			sta		p2dx:
+			
+			// Move Y2
+			lda		p2y:
+			sta		temp_v:
+			lda		p2dy:
+			sta		temp_dv:
+			jsr		move_value:
+			lda		temp_v:
+			sta		p2y:
+			lda		temp_dv:
+			sta		p2dy:
+			
+			// Move X3
+			lda		p3x:
+			sta		temp_v:
+			lda		p3dx:
+			sta		temp_dv:
+			jsr		move_value:
+			lda		temp_v:
+			sta		p3x:
+			lda		temp_dv:
+			sta		p3dx:
+			
+			// Move Y3
+			lda		p3y:
+			sta		temp_v:
+			lda		p3dy:
+			sta		temp_dv:
+			jsr		move_value:
+			lda		temp_v:
+			sta		p3y:
+			lda		temp_dv:
+			sta		p3dy:			
+			
+			ret
+		
+		
+		
+// value is on stack, dvalue is in A
+move_value:
+
+			lda		temp_v:
+			add		temp_dv:
+			sta		temp_v:		
+
+			cmp		#0
+			je		move_value1:
+			cmp		#3f
+			jg		move_value1:
+			
+			ret
+			
+move_value1:
+
+			lda		temp_dv:
+			neg
+			sta		temp_dv:
+			
+			lda		temp_v:
+			add		temp_dv:
+			sta		temp_v:	
+						
+move_value2:
+
+		
+		ret
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	
+			
+			
+			
+/* Draw the polygon  */
+draw_poly:
+			SP		B001			// cmd[1]
+		
+			lda		#90				// Draw polys
+			lp
+			inp
+
+			lda		#0				// No op
+			lp
+			
+			SP		B200			// Data[0]
+
+			
+			lda		#01		
+			lp
+			inp
+			
+			
+			lda		color:				// Color
+			lp
+			inp
+			
+			lda		p1x:				// X1
+			lp
+			inp
+
+			lda		p1y:				// Y1
+			lp
+			inp
+			
+			lda		p2x:				// X1
+			lp
+			inp
+
+			lda		p2y:				// Y1
+			lp
+			inp
+
+			lda		p3x:				// X1
+			lp
+			inp
+
+			lda		p3y:				// Y1
+			lp
+			inp
+			
+			SP		B000			// Cmd[1]
+			lda		#01				// Update
+			lp
+			
+			ret			
+			
+
+
+			
+/* Clear screen to color in A */			
+gpu_clear:
+			push
+			SP		B001			// cmd[1]
+			lda		#10				// Clear command
+			lp						
+			inp
+			lda		#0				// No op
+			lp
+			inp
+			
+			SP		B100			// Data[0]
+			pop						// Get color
+			lp
+
+			SP		B000			// Cmd[1]
+			lda		#01				// Update
+			lp
+			
+			ret
+			
+			
+			
+color:		DB		#32			
+p1x:		DB 		#05
+p1y:		DB 		#05
+p1dx:		DB 		#02
+p1dy:		DB 		#01
+
+p2x:		DB 		#16
+p2y:		DB 		#05
+p2dx:		DB 		#01
+p2dy:		DB 		#01
+
+p3x:		DB 		#09
+p3y:		DB 		#10			
+p3dx:		DB 		#01
+p3dy:		DB 		#01
+			
+temp_v:		DB		#00
+temp_dv:	DB		#00
+		
+			
+			
+			
+`;
+
+
+
+
+
+// scroll vert
+var gpu_test1 = 
+ `
+ 
+start:
+		
+
+loop:	
+		//lda		#01					// Clear color
+		//jsr 	gpu_clear:				// Clear
+		
+		//lda		#08					// NUmber of lines
+		//jsr 	gpu_test_lines:			// Draw lines
+			
+		ldx		#01						// num poly list draw calls before sync
+		
+loop1:	
+		
+		txa
+		push
+
+		lda		#1				// Number of polys
+		jsr 	gpu_test_polys:			// Clear
+		
+		pop
+		tax
+
+		dex
+		cpx		#0
+		jne		loop1:
+
+		
+		
+		//sp		d720					// pixel to test buffer
+		//lda		#03
+		lp
+		
+		
+		sync
+		//end
+		jmp 	loop:
+ 
+ 
+/* Draw some Lines  */
+gpu_test_lines:
+			cmp #0					// Make sure we have some lines
+			jne	lineck:
+			ret
+		
+lineck:
+			tax						// Save number of lines in A
+			
+			SP		B001			// cmd[1]
+		
+			lda		#80				// Draw lines
+			lp
+			inp
+
+			lda		#0				// No op
+			lp
+			
+			SP		B200			// Data[0]
+
+			txa						// number of lines in a
+			//lda		#01		
+			lp
+			inp
+
+linelp:									// Draw lines
+			
+			//lda		#46				// Color
+			rnd				
+			lp
+			inp
+			
+			//lda		#04				// X1
+			rnd
+			shr		#02
+			lp
+			inp
+
+			//lda		#07				// Y1
+			rnd
+			shr		#02
+			lp
+			inp
+			
+			//lda		#14				// X2
+			rnd
+			shr		#02
+			lp
+			inp
+
+			//lda		#17				// Y2
+			rnd
+			shr		#02
+			lp
+			inp			
+			
+			dex
+			cpx 	#0
+			jne 	linelp:
+			
+			SP		B000			// Cmd[1]
+			lda		#01				// Update
+			lp
+			
+			sync
+			//end
+			ret
+			
+			
+			
+			
+/* Draw some Lines  */
+gpu_test_polys:
+
+			cmp		#0					// Make sure we have some polys
+			jne		polyck:
+			ret
+		
+polyck:
+			tax						// Save number of polys in A
+			
+			SP		B001			// cmd[1]
+		
+			lda		#90				// Draw polys
+			lp
+			inp
+
+			lda		#0				// No op
+			lp
+			
+			SP		B200			// Data[0]
+
+				
+			txa						// number of polys in a
+			
+			//lda		#01		
+			lp
+			inp
+			
+			
+			
+
+polylp:									// Draw lines
+ 
+			
+			//lda		#46				// Color
+			rnd				
+			lp
+			inp
+			
+			//lda		#04				// X1
+			rnd
+			shr		#02
+			lp
+			inp
+
+			//lda		#07				// Y1
+			rnd
+			shr		#02
+			lp
+			inp
+			
+			//lda		#14				// X2
+			rnd
+			shr		#02
+			lp
+			inp
+
+			//lda		#17				// Y2
+			rnd
+			shr		#02
+			lp
+			inp		
+
+			//lda		#14				// X3
+			rnd
+			shr		#02
+			lp
+			inp
+
+			//lda		#17				// Y3
+			rnd
+			shr		#02
+			lp
+			inp		
+			
+			
+			dex
+			cpx 	#0
+			jne 	polylp:
+			
+			SP		B000			// Cmd[1]
+			lda		#01				// Update
+			lp
+			
+			//sync
+			//end
+			ret			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+/* Clear screen to color in A */			
+gpu_clear:
+			push
+			SP		B001			// cmd[1]
+			lda		#10				// Clear command
+			lp						
+			inp
+			lda		#0				// No op
+			lp
+			inp
+			
+			SP		B100			// Data[0]
+			pop						// Get color
+			lp
+
+			SP		B000			// Cmd[1]
+			lda		#01				// Update
+			lp
+			
+			ret
+`;
 
 
 

@@ -2,6 +2,8 @@
 	CPU
 	2019 nulluser, teth
 	
+	File: System.js
+	
 	CPU Emulator
 	
 	Memory and stack are stored seperatly
@@ -46,6 +48,9 @@ function System()
 	// Memory
 	const FB_ADDR = 0xD000; 		// Frame buffer address
 	const KEY_ADDR = 0xC100;		// Keyboard map
+	const GPU_CMD = 0xB000;			// GPU Cmd buffer base address
+	const GPU_DATA = 0xB200;		// GPU Data buffer base address
+	
 	const PROG1_ADDRESS = 0x1000;	// Program address for cpu1
 	const PROG2_ADDRESS = 0x2000;	// Program address for cpu1
 	const PROG3_ADDRESS = 0x3000;	// Program address for cpu1
@@ -62,6 +67,7 @@ function System()
 	var memory = null;				// Shared memory
 	var cpu_cores = [];				// CPU Cores
 	var frame_buffer = null;		// Frame buffer
+	var gpu = null;					// GPU
 	
 	// Assemble
 	var assembler = null;			// Assembler object
@@ -100,25 +106,19 @@ function System()
 	function connect_devices()
 	{
 		main.log_console(`${MODULE} Connecting Devices\n`);
-				
-		// Setup CPU
-		CPU.configure(); 		// Load instructions				
-				
-		// Setup main memory
-		memory = Memory();
-
 		
-		// Setup IO object
-		io = IO();
+		CPU.configure(); 		// Setup CPU template 
 		
-		// Setup frame buffer
-		frame_buffer = FrameBuffer(memory, FB_ADDR);
-		
-		// Create an assembler
-		assembler = Assembler(memory);
+		memory = Memory();											// Setup main memory
+		io = IO();													// Setup IO object
+		frame_buffer = FrameBuffer(memory, FB_ADDR);				// Setup frame buffer
+		gpu = GPU(memory, frame_buffer, GPU_CMD, GPU_DATA);			// Setup GPU
+		assembler = Assembler(memory);								// Create an assembler
 		
 		// Assemble some code into memory
-		if(assembler.assemble(CPU, vert_scroll,	0x1000)) return;
+		//if(assembler.assemble(CPU, vert_scroll,	0x1000)) return;
+		
+		if(assembler.assemble(CPU, gpu_test1,	0x1000)) return;
 		
 		
 		//if (assembler.assemble(CPU, fb_gametest,		0x1000)) return;
@@ -188,7 +188,10 @@ function System()
 			console.log(` Error: ${(error*100).toFixed(2)}% ${total_exec.toFixed(0)} \n`);
 		}
 		
-		main.log_console(`${MODULE} Frame Rate: ${average_fps.toFixed(2)} Inst Rate: ${total_inst}\n` );
+		var poly_rate = gpu.get_polys();
+		
+		if (DEBUG == 0)
+			main.log_console(`${MODULE} Frame Rate: ${average_fps.toFixed(2)} Poly Rate: ${poly_rate} Inst Rate: ${total_inst}\n` );
 
 		total_inst = 0;
 		fb_updates = 0;
@@ -222,7 +225,7 @@ function System()
 		for (var i = 0; i < cpu_cores.length; i++)
 			total_inst += cpu_cores[i].update(cpu_exec);
 	
-		frame_buffer.update();
+		 frame_buffer.update();
 		
 		fb_updates++;
 	}

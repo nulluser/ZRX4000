@@ -2,13 +2,13 @@
 	CPU
 	2019 nulluser
 	
-	File: Main.js
+	File: Logger.js
 */
 
 "use strict";
 
 /*
-	Main
+	Logger
 */
 
 // Main system object
@@ -16,10 +16,7 @@ var logger = (function ()
 {
 	var MODULE = "[Log]        ";
 		
-	const MAX_LEN = 300; 			// Need weird size because of spaces, TODO fix	
-	const ASSM_MAX = 1000;
-	const CON_MAX = 500;
-	const TERM_MAX = 20;
+	const MAX_LEN = 400; 			// Need weird size because of spaces, TODO fix	
 	
 	//var t = 0;
 
@@ -29,37 +26,6 @@ var logger = (function ()
 		log_terminal("[Terminal Output]\n");
 		log_console(MODULE + "Init\n");
 	}
-	
-	
-	/* Logging */
-	// This has to be done to get around cross site scripting 
-	function debug_init()
-	{
-		// Create log window
-		//debug_window = window.open("", "debug_window", "width=512,height=512,directories=0,titlebar=0,toolbar=0,location=0,status=0,menubar=0,scrollbars=yes,resizable=no");
-		/*debug_window = window.open("", "debug_window", "width=512,height=512");
-		
-		var html = 
-		`
-		<!DOCTYPE html>
-		<html>
-		<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-		<style> body {padding:0px; margin:0px; overflow:scroll-y;} </style>
-		</head>
-		<body>
-		<strong><code>
-		<div id="main-wrap" style="width:100%;">
-		<div id="console" style='width:50%; height:100%; float:left'></div>
-		<div id="output" style='width:50%; height:100%; float:right'></div>
-		</div>
-		</code></strong>
-		</body>
-		</html>
-		`;
-
-		debug_window.document.write(html); // Inject*/
-	}
-	
 	
 	// Replace all in string
 	function replace_all(str, find, replace) 
@@ -154,33 +120,9 @@ var logger = (function ()
 		item = replace_all(item, "\n", "");
 		console.log(item);		
 	}
-	
-	// Log CPU Output
-	function terminal(item)
-	{
-		add_log("terminal_out", item, TERM_MAX);
-		//log(item);
-	}
-
-	// Log Console messages
-	function console(item)
-	{
-		add_log("console", item, CON_MAX);
-		//log(item);
-	}
-
-	// Log Console messages
-	function assemble(item)
-	{
-		add_log("assemble", item, ASSM_MAX);
-		//log(item);
-	}
-	
+		
 	// Public Interface
 	return 	{init : init,
 			 add : add, 
-			console : console,
-			terminal : terminal,
-			assemble : assemble,
 			log : log};
 }());

@@ -34,8 +34,14 @@ var main = (function ()
 				
 		system = System();
 		
-		load(DEFAULT_PROG);
-		assemble();
+		//load(DEFAULT_PROG);
+		//assemble();
+
+		load(gpu_test1);
+		//assemble();
+
+		
+		
 	}
 	
 	// Load default program
@@ -64,7 +70,7 @@ var main = (function ()
 	{
 		load_area("assembler");
 		document.getElementById("assemble").innerHTML = "";
-		document.getElementById("terminal_out").innerHTML = "";
+		document.getElementById("terminal").innerHTML = "";
 		
 		var t = document.getElementById("assemble_text").value;
 		system.user_assemble(t);
@@ -103,8 +109,9 @@ var main = (function ()
 	// Log to javascript console
 	function log(item)
 	{
-		item = replace_all(item, "\n", "");
-		console.log(item);		
+		//item = replace_all(item, "\n", "");
+		//console.log(item);		
+		logger.log(item);
 	}
 	
 	// Log Console messages

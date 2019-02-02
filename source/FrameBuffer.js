@@ -2,6 +2,8 @@
 	CPU
 	2019 nulluser, teth
 	
+	File: FrameBuffer.js
+	
 	CPU Emulator
 	
 	Memory and stack are stored seperatly
@@ -27,23 +29,25 @@ function FrameBuffer(memory, base_addr)
 	const BUFFER_Y = 64;					// Frame buffer rows
 	const FB_SIZE = BUFFER_X * BUFFER_Y;	// Frame buffer size
 		
-	var color_table;			// Color lookup table
-
-	var canvas = null;			// Canvas
-	var ctx;					// Context
-	var canvas_width = 0;		// fb x size
-	var canvas_height = 0;		// fb y size
-	var buffer;					// 8 bit Frame buffer data
+	var color_table;						// Color lookup table
+	var color_table_canvas;					// Color lookup table for canvas access
 	
-	var os_canvas;				// Off Screen canvas
+
+	var canvas = null;					// Canvas
+	var ctx;							// Context
+	var canvas_width = 0;				// fb x size
+	var canvas_height = 0;				// fb y size
+	var buffer;							// 8 bit Frame buffer data
+	
+	var os_canvas;						// Off Screen canvas
 	var os_ctx;
 	var os_imagedata;
 	
-	var fb_data;				// Some references for pixel access
+	var fb_data;						// Some references for pixel access
 	var fb_data8;
 	var fb_data32;
 	
-	init(memory);				// Init
+	init(memory);						// Init
 	
 	// Returns device type
 	function get_type()
@@ -59,7 +63,7 @@ function FrameBuffer(memory, base_addr)
 				
 		// Get context
 		canvas = document.getElementById("fbuffer");
-		ctx = canvas.getContext("2d")
+		ctx = canvas.getContext("2d", { alpha: false });
 		
 		ctx.imageSmoothingEnabled = false; // Disable smooth scaling
 		
@@ -75,11 +79,12 @@ function FrameBuffer(memory, base_addr)
 
 		// Off screen canvas
 		os_canvas = document.createElement('canvas');
-		os_canvas.width = canvas_width;
-		os_canvas.height = canvas_height;
-		os_ctx = os_canvas.getContext('2d');
+		os_canvas.width = BUFFER_X;
+		os_canvas.height = BUFFER_Y;
+		os_ctx = os_canvas.getContext('2d', { alpha: false });
 		
 		os_ctx.imageSmoothingEnabled = false; // Disable smooth scaling
+		
 
 		
 		// Off screen image data
@@ -98,15 +103,21 @@ function FrameBuffer(memory, base_addr)
 		
 		create_color_table(); // For creating color table
 		
-		clear();
+		clear(0x01);
+	}
+	
+	// Return off screen context
+	function get_context()
+	{
+		return os_ctx;
+		//return ctx;
 	}
 	
 	// Clear frame buffer
-	function clear()
+	function clear(color)
 	{
-		
 		for (var a = 0; a < FB_SIZE; a++)
-			write_hook(a, 0);
+			write_hook(a, color);
 	}
 	
 	// Intercept memory read
@@ -126,7 +137,13 @@ function FrameBuffer(memory, base_addr)
 	}
 	
 	// Get color from value, return in hex
-	function get_color(v)
+	function get_canvas_color(v)
+	{
+		return color_table_canvas[v];
+	}
+	
+		// Get color from value, return in hex
+	function make_color(v)
 	{
 		const c_table = [0, 85, 171, 255]; // Color table for rgb
 		
@@ -138,15 +155,28 @@ function FrameBuffer(memory, base_addr)
 		return (0xff << 24) + (b << 16) + (g << 8) + r;
 	}
 	
+	function make_canvas_color(v)
+	{
+		const c_table = [0, 85, 171, 255]; // Color table for rgb
+		
+		// Data is in   0b00RRGGBB format
+		var r = c_table[(v >> 4) & 0x03];
+		var g = c_table[(v >> 2) & 0x03];
+		var b = c_table[v & 0x03];
+		
+		return "#" + hex_byte(r) + hex_byte(g) + hex_byte(b);
+	}	
+	
 	// Generate text color table 
 	function create_color_table()
 	{
 		color_table = new Uint32Array(256);
+		color_table_canvas = [];				// String array
 		
 		for (var i = 0; i < 256; i++)
 		{
-			color_table[i] = get_color(i);
-			//main.log(hex_dword(color_table[i]));
+			color_table[i] = make_color(i);
+			color_table_canvas[i] = make_canvas_color(i);
 		}
 	}
 	
@@ -159,16 +189,45 @@ function FrameBuffer(memory, base_addr)
 		// Write off screen image data to offscreen buffer
 		os_ctx.putImageData(os_imagedata, 0, 0);
 		
-		// Strech off screen canvas buffer to main canvas
+		// Stretch off screen canvas buffer to main canvas
 		ctx.drawImage(os_canvas, 0, 0, BUFFER_X, BUFFER_Y, 
 								 0, 0, canvas_width, canvas_height);		
 	}
-
+	
+	
+	// Copy current raw framebuffer data to off screen canvas
+	// This is a prestep to all GPU operations over top
+	function pre_sync()
+	{
+		// Link in 8 bit off screen data
+		os_imagedata.data.set(fb_data8);
+		
+		// Write current into off screen buffer
+		os_ctx.putImageData(os_imagedata, 0, 0);
+	}
+		
+	
+	// Update data buffer with os canvas data
+	// Save updated canvas back to raw 
+	function post_sync()
+	{
+		var data = os_ctx.getImageData(0, 0, BUFFER_X, BUFFER_Y).data;
+		
+		for (var i = 0; i <BUFFER_X * BUFFER_Y * 4; i++)
+			fb_data8[i] = data[i];
+	}
+	
+	
 	/* End of frame Buffer */	
 	
 	// Public Interface
 	return {get_type: get_type,
 			init:init,
-			update : update};
+			update : update,
+			get_context:get_context, 
+			get_canvas_color:get_canvas_color,
+			pre_sync:pre_sync,
+			post_sync:post_sync};
 }
+
 

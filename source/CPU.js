@@ -120,13 +120,14 @@ class CPU
 		CPU.INST(0x94,"SHL",  CPU.M_IMM, (m, io, s)=>{s.a = s.a << m.get_byte(s.ip);}  ); 						// Shift A left by immediate bits
 		CPU.INST(0x95,"SHR",  CPU.M_IMM, (m, io, s)=>{s.a = s.a >> m.get_byte(s.ip);}  ); 						// Shift A right by the immediate bits
 		CPU.INST(0x96,"ADD",  CPU.M_IMM, (m, io, s)=>{var sm = s.a + m.get_byte(s.ip); s.a = sm & 0xff; s.c = sm &0x0100} ); // Set A to A + operand Z_256
-		CPU.INST(0x97,"ADDP", CPU.M_IMP, (m, io, s)=>{s.p = (s.p + s.a) & 0xffff;}); 							// Set P to P + A
-		CPU.INST(0x98,"ADDX", CPU.M_IMP, (m, io, s)=>{s.x = (s.x + s.a) & 0xff;}); 								// Set A to A + X Z_256
-		CPU.INST(0x99,"SUB",  CPU.M_IMM, (m, io, s)=>{s.a = (s.a - m.get_byte(s.ip)) & 0xff;} ); 				// Set A to A + operand Z_256
-		CPU.INST(0x9A,"SUBP", CPU.M_IMP, (m, io, s)=>{s.p = (s.p - s.a) & 0xffff;}); 							// Set Set P to P - A
-		CPU.INST(0x9B,"MUL",  CPU.M_IMM, (m, io, s)=>{s.a = (s.a * m.get_byte(s.ip)) & 0xff;} ); 				// Set A to A * operand Z_256
-		CPU.INST(0x9C,"DIV",  CPU.M_IMM, (m, io, s)=>{s.a = (s.a / m.get_byte(s.ip)) & 0xff;} ); 				// Set A to A / operand Z_256
-		CPU.INST(0x9D,"NEG",  CPU.M_IMP, (m, io, s)=>{s.a = (65536 - s.a) & 0xff;} ); 							// Set A to the additive inverse of A in Z_256
+		CPU.INST(0x97,"ADD",  CPU.M_DIR, (m, io, s)=>{var sm = s.a + m.get_byte(m.get_word(s.ip)); s.a = sm & 0xff; s.c = sm &0x0100} ); // Set A to A + mem
+		CPU.INST(0x98,"ADDP", CPU.M_IMP, (m, io, s)=>{s.p = (s.p + s.a) & 0xffff;}); 							// Set P to P + A
+		CPU.INST(0x99,"ADDX", CPU.M_IMP, (m, io, s)=>{s.x = (s.x + s.a) & 0xff;}); 								// Set A to A + X Z_256
+		CPU.INST(0x9A,"SUB",  CPU.M_IMM, (m, io, s)=>{s.a = (s.a - m.get_byte(s.ip)) & 0xff;} ); 				// Set A to A + operand Z_256
+		CPU.INST(0x9B,"SUBP", CPU.M_IMP, (m, io, s)=>{s.p = (s.p - s.a) & 0xffff;}); 							// Set Set P to P - A
+		CPU.INST(0x9C,"MUL",  CPU.M_IMM, (m, io, s)=>{s.a = (s.a * m.get_byte(s.ip)) & 0xff;} ); 				// Set A to A * operand Z_256
+		CPU.INST(0x9D,"DIV",  CPU.M_IMM, (m, io, s)=>{s.a = (s.a / m.get_byte(s.ip)) & 0xff;} ); 				// Set A to A / operand Z_256
+		CPU.INST(0x9E,"NEG",  CPU.M_IMP, (m, io, s)=>{s.a = (255 - s.a) & 0xff;} ); 							// Set A to the additive inverse of A in Z_256
 		CPU.INST(0xB0,"RND",  CPU.M_IMP, (m, io, s)=>{s.a = (Math.random() * 255) & 0xff;} ); 					// Random number
 		CPU.INST(0xC0,"SYNC", CPU.M_IMP, (m, io, s)=>{s.fb_update=1;} ); 										// Render framebuffer
 		CPU.INST(0xFF,"END",  CPU.M_IMP, (m, io, s)=>{s.ip = CPU.IP_END;}  );									// Halt
@@ -153,9 +154,6 @@ class CPU
 		this.start_addr = start_addr;
 		this.realtime = false;
 		this.debug = false;
-		
-		console.log(this);
-		
 		
 		// CPU State
 		this.state = 

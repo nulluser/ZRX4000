@@ -37,6 +37,9 @@ function Memory()
 	
 	const MEM_SIZE 	= 65536;		// Memory space size
 	
+	
+	const RAM_LIMIT	= 0x8000;		// Cur off for ram. Below this is direct access
+	
 	var data = null;				// Memory	
 	var addr_hooks = [];			// Memory range hooks
 	
@@ -87,6 +90,9 @@ function Memory()
 	function get_byte(a) 
 	{ 
 		a &= 0xffff;
+	
+		// Bypass for pure ram
+		if (a < RAM_LIMIT) return data[a];
 	
 		/*if (!(a >= 0 && a <= 65536))
 		{
