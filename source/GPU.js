@@ -6,8 +6,8 @@
 	
 	
 	GPU Interface memory is seperated into command and data buffers
-	THe commands are loaded into the command buffer starting at location base+1
-	The data is then loaded into the datra buffer.
+	The commands are loaded into the command buffer starting at location base+1
+	The data is then loaded into the data buffer.
 	Once the data is in place a 1 is loaded into cmd_base + 0 to tell the GPU to run the commands.
 	The GPU then clears this location bhack to zero when done
 	
