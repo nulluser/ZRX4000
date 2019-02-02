@@ -9,9 +9,9 @@
 	The commands are loaded into the command buffer starting at location base+1
 	The data is then loaded into the data buffer.
 	Once the data is in place a 1 is loaded into cmd_base + 0 to tell the GPU to run the commands.
-	The GPU then clears this location bhack to zero when done
+	The GPU then clears this location back to zero when done
 	
-	The command advances a pointer in to the data. When the command is complete the next command will start where the previous one left off
+	The command advances a pointer into the data. When the command is complete the next command will start where the previous one left off
 	
 	GPU Commands
 	0x00	No command, stops update chain
@@ -182,8 +182,8 @@ function GPU(memory, fbuffer, _cmd_base, _data_base)
 			//main.log(`${MODULE} Cmd: ${cmd}\n`);	
 			
 			if (cmd	== CMD_NONE) break; else
-			if (cmd == CMD_CLEAR) clear_cmd();
-			if (cmd == CMD_LINES) draw_lines_cmd();
+			if (cmd == CMD_CLEAR) clear_cmd(); else
+			if (cmd == CMD_LINES) draw_lines_cmd(); else
 			if (cmd == CMD_POLYS) draw_polygons_cmd();
 		}
 		
