@@ -1,0 +1,147 @@
+* 
+{
+	margin: 0px;
+	padding: 0px;
+}
+	
+body 
+{
+  background: #ffffff;
+  font-family: monospace;
+}
+	
+/*article 
+{
+	width: 600px;
+	margin: 0 auto;
+	background: #000;
+	color: #fff;
+	border-radius: 5px;
+	box-shadow: 0 0 15px 2px #666;
+}*/
+	
+/*section 
+{
+	clear: left;
+}*/
+
+
+#container
+{
+	width:640px;
+}
+
+#fbuffer
+{
+	width:640px;
+	height:480px;
+}
+
+#system
+{
+}
+
+#console
+{
+  font-family: monospace;
+  height:100%;
+}
+
+#terminal
+{
+  font-family: monospace;
+  border-style: solid;
+  border-width: 1px;
+  height:480px;
+}
+
+#assembler
+{
+  font-family: monospace;
+}
+
+#assemble_text
+{
+	height: auto; 
+	width:640px;
+}
+
+/* Fix text box tab size */
+textarea, pre 
+{
+    -moz-tab-size : 4;
+      -o-tab-size : 4;
+         tab-size : 4;
+}
+
+
+/* Menu */
+
+#menu
+{
+	background-color: #303030;
+	width: 100%;
+	float: left;
+	/*border-bottom: 1px solid #ccc;*/
+}
+
+#main_nav ul 
+{
+/*  color:#000000;*/
+  float: left;
+}
+
+#main_nav li 
+{
+	float: left;
+	position: relative;
+	width: 130px;
+	list-style: none;
+}
+
+#main_nav a 
+{
+  color: #ffffff;
+  display: block;
+  text-decoration: none;
+  padding: 5px 15px;
+}
+
+#main_nav ul ul 
+{
+	position: absolute;
+	left: 0;
+	top: 100%;
+	visibility: hidden;
+	opacity: 0;
+}
+
+#main_nav ul ul ul 
+{
+  left: 100%;
+  top: 0;
+}
+
+#main_nav li:hover, #main_nav li:hover li 
+{
+  background-color: #404040;
+}
+
+#main_nav li li:hover, #main_nav li li:hover li 
+{
+  background-color: #404040;
+}
+
+#main_nav li li li:hover 
+{
+  background-color: #404040;
+}
+
+#main_nav li:hover > ul 
+{
+  visibility: visible;
+  opacity: 1;
+}
+
+
+

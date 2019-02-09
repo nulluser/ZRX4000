@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+    <title>CPU</title>
+    <script type='text/javascript' src='Program.js'>	</script>	
+	<script type='text/javascript' src='Logger.js'>		</script>
+	<script type='text/javascript' src='Utility.js'>	</script>
+	<script type='text/javascript' src='IO.js'>			</script>
+	<script type='text/javascript' src='Memory.js'>		</script>
+    <script type='text/javascript' src='FrameBuffer.js'></script>
+	<script type='text/javascript' src='GPU.js'></script>
+    <script type='text/javascript' src='CPU.js'>		</script>	
+    <script type='text/javascript' src='System.js'>		</script>	
+    <script type='text/javascript' src='Assembler.js'>	</script>	
+    <script type='text/javascript' src='Main.js'>		</script>
+	<link rel="stylesheet" type="text/css" href="Style.css">
+  </head>
+  <body onload='main.init();' style='padding:0px; margin:0px'>
+
+  <div id=container tabindex='1'>
+  
+    <ul>
+	      <li class="dropdown">
+      <a href="#" onclick=main.load_area('system');>System</a>
+      <div class="dropdown-content">
+        <a href="#"onclick=main.ui_click('system:start');>Start</a>
+		<a href="#"onclick=main.ui_click('system:stop');>Stop</a>
+		<a href="#"onclick=main.ui_click('system:reset');>Reset</a>
+      </div>
+      </li>
+      <li><a href='#' onclick=main.load_area('console');>Console</a></li>
+      <li><a href='#' onclick=main.load_area('terminal');>Terminal</a></li>
+      <li class="dropdown">
+      <a href="#" onclick=main.load_area('assembler');>Assembler</a>
+      <div class="dropdown-content">
+        <a href="#"onclick=main.load_click();>Load</a>
+        <a href="#" onclick=main.assemble_click();>Assemble</a>
+      </div>
+      </li>
+    </ul>
+
+    <div id='system'><canvas id='fbuffer' width=640 height=480 tabindex='2'></div>
+
+    <div id='console' style='display:none'></div>
+	
+    <div id='terminal' style='display:none' tabindex=3></div>
+  
+    <div id='assembler' style='display:none'>
+      <textarea id=assemble_text name=edit rows=30  onkeydown="if(event.keyCode===9){var v=this.value,s=this.selectionStart,e=this.selectionEnd;this.value=v.substring(0, s)+'\t'+v.substring(e);this.selectionStart=this.selectionEnd=s+1;return false;}">
+	  </textarea>
+	  <div id='assemble'>Output</div>
+    </div>  
+  
+  </div>
+  
+  </body>
+</html>
+
+
+
+
+
+
