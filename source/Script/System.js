@@ -36,6 +36,9 @@ function System()
 
 	const DEFAULT_PROG = tiny_basic;// Default program
 	
+	//const cpu_type = CPU;
+	const cpu_type = CPU6502;
+	
 	const DEBUG = 0;				// Master debug
 	
 	const UPDATE_RATE = 0;			// CPU Update (ms)
@@ -114,7 +117,7 @@ function System()
 	{
 		main.log_console(`${MODULE} Connecting Devices\n`);
 		
-		CPU6502.configure(); 		// Setup CPU template 
+		cpu_type.configure(); 		// Setup CPU template 
 		
 		memory = Memory();											// Setup main memory
 		io = IO();													// Setup IO object
@@ -125,9 +128,9 @@ function System()
 		// Assemble some code into memory
 		//if(assembler.assemble(CPU, vert_scroll,	0x1000)) return;
 		
-		//if(assembler.assemble(CPU6502, gpu_test1,	0x1000)) return;
+		//if(assembler.assemble(cpu_type, gpu_test1,	0x1000)) return;
 		
-		//if(assembler.assemble(CPU6502, DEFAULT_PROG,	0x1000)) return;
+		//if(assembler.assemble(cpu_type, DEFAULT_PROG,	0x1000)) return;
 		
 		
 		//if (assembler.assemble(CPU, fb_gametest,		0x1000)) return;
@@ -139,22 +142,22 @@ function System()
 		//assembler.assemble(CPU.inst_table, game,		0x4000);		
 		
 		// Create some cores
-		cpu_cores.push( new CPU6502("CPU1", memory, io, 0x1000) );
+		cpu_cores.push( new cpu_type("CPU1", memory, io, 0x1000) );
 		//cpu_cores.push( new CPU("CPU2", memory, 0x2000) );
 		//cpu_cores.push( new CPU("CPU3", memory, 0x3000) );
 		
 		// Set realtime option for game core
-		CPU6502.set_option(cpu_cores[0], CPU6502.OPTION_REALTIME, 1);
+		cpu_type.set_option(cpu_cores[0], cpu_type.OPTION_REALTIME, 1);
 		
 		// Set debug if needed
 		// Can debug by core
 		if (DEBUG)
-			CPU6502.set_option(cpu_cores[0], CPU6502.OPTION_DEBUG, 1);		
+			cpu_type.set_option(cpu_cores[0], cpu_type.OPTION_DEBUG, 1);		
 		
 		// Create more cores
 		// They will all run the code at 0x2000, frame buffer test
 		for (var i = 0; i < TEST_CORES; i++)
-			cpu_cores.push( new CPU6502("CPUX" + i, memory, io, 0x2000) );		
+			cpu_cores.push( new cpu_type("CPUX" + i, memory, io, 0x2000) );		
 			
 		// Addach IO to CPU 0
 		//io = IO(cpu_cores[0], memory, KEY_ADDR, INT_KEYBOARD);
@@ -192,7 +195,7 @@ function System()
 	function user_assemble(prog)
 	{
 		// Assemble some code into memory
-		if(assembler.assemble(CPU6502, prog, 0x1000)) return;
+		if(assembler.assemble(cpu_type, prog, 0x1000)) return;
 		
 		cpu_cores[0].reset();
 	}	

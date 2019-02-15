@@ -7,7 +7,7 @@
 body 
 {
   background: #ffffff;
-  font-family: monospace;
+ /* font-family: monospace;*/
 }
 	
 /*article 
@@ -55,10 +55,35 @@ body
   height:480px;
 }
 
-#assembler
+#assemble
 {
   font-family: monospace;
+  white-space:pre;
+  /*color:red;*/
 }
+
+
+.assemble_inst
+{
+    color: #0000A0;
+}
+
+.assemble_data
+{
+    color: #00A000;
+}
+
+.assemble_mode
+{
+    color: #ff00ff;
+}
+
+.assemble_addr
+{
+    color: #ff0000;
+}
+
+
 
 #assemble_text
 {

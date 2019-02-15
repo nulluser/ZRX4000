@@ -1,8 +1,5 @@
 var tiny_basic =
-
 `
-
-
 ; v0.2.2
 ;
 ; Bill O'Neill - Last update: 2011/11/11
@@ -26,6 +23,9 @@ var tiny_basic =
 ;
 ;
 ; Revision History:
+;
+;
+;	Modified IO - Nulluser
 ;
 ; v0.2.2 - 2011/11/11
 ;        Reduced version containing only a terminal monitor
@@ -1227,9 +1227,8 @@ ILTBL    .byte $24, $3E, $91, $27, $10, $E1, $59, $C5, $2A, $56, $10, $11, $2C, 
 ;
 ; Set some symbols
 ;
-ACIAregs = $F000                    ; Base address of 6850
-ACIAdata = ACIAregs+$01             ; 6850 registers 
-
+; ACIAregs = $F000                    ; Base address of 6850
+; ACIAdata = ACIAregs+$01             ; 6850 registers 
 
 ;         .ORG  $F800
 
@@ -1293,11 +1292,14 @@ EXSM     rts                        ; Return
 ; Get a character from the keyboard
 ; Runs into SNDCHR to provide echo
 ;
-RCCHR    lda $D011                  ; Keyboard CR
-         bpl RCCHR
-         lda $D010                  ; Keyboard data
+RCCHR    
+	lda $E004
+	;lda $D011                  ; Keyboard CR
+         ;bpl RCCHR
+         beq RCCHR
+         ;lda $D010                  ; Keyboard data
          ;and #%01111111             ; Clear high bit to be valid ASCII
-         lda #$7f
+         and #$7f
 
 ;
 ; Send a character to the screen
@@ -1313,13 +1315,16 @@ SNDCHR   sta $FE                    ; Save the character to be printed
          beq EXSC                   ;
          cmp #$80                   ;
          beq EXSC                   ;
-         cmp #$0A                   ; Ignore line feed
-         beq EXSC                   ;
+         ;cmp #$0A                   ; Ignore line feed
+         ;beq EXSC                   ;
 
-GETSTS   bit $D012                  ; bit (B7) cleared yet?
-         bmi GETSTS                 ; No, wait for display.
+;GETSTS   bit $D012                  ; bit (B7) cleared yet?
+;         bmi GETSTS                 ; No, wait for display.
          lda $FE                    ; Restore the character
-         sta $D012                  ; Output character.
+;         sta $D012                  ; Output character.
+
+         sta $E001                  ; Output character.
+
 EXSC     rts                        ; Return
 
 ;
@@ -1341,7 +1346,6 @@ NO_CHR   lda $FE                    ; Restore the saved A value
 ;         .ORG $FFFC                ; Address of reset vector
 
 ;         .WORD  FBLK               ; Reset vector
-
 
 `;
 

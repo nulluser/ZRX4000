@@ -51,16 +51,306 @@ class CPU6502
 		CPU6502.M_ANY  = 0xFF;				// Any mode mask for assembler
 		CPU6502.M_NONE = 0x00;				// No Mode (test)
 		CPU6502.M_IMP  = 0x01;				// Implied, no operand
-		CPU6502.M_IMM  = 0x02;				// Immediate mode
-		CPU6502.M_DIR  = 0x03;				// Direct mode, 16 bit address
-		CPU6502.M_IND  = 0x04;				// Indirect mode, 16 bit address	
+		CPU6502.M_ABS  = 0x02;				// Absolute
+		CPU6502.M_ABSX = 0x03;				// Absolute X
+		CPU6502.M_ABSY = 0x04;				// Absolute Y
+		CPU6502.M_IMM  = 0x05;				// Immediate
+		CPU6502.M_IND  = 0x06;				// Indirect
+		CPU6502.M_XIND = 0x07;				// X Indirect
+		CPU6502.M_INDY = 0x08;				// Indirect Y
+		CPU6502.M_REL  = 0x09;				// Relative
+		CPU6502.M_ZP   = 0x0A;				// Zero Page
+		CPU6502.M_ZPX  = 0x0B;				// Zero Page X
+		CPU6502.M_ZPY  = 0x0C;				// Zero Page Y
 		
 		CPU6502.IP_END = -1;			
 		
 		CPU6502.inst_table = [];
 		
 		//	 Fill instruction table so there are no gaps		
-		for (var i = 0; i < 256; i++) CPU6502.INST(i, "", 0, null);
+		for (var i = 0; i < 256; i++) 
+		{
+			CPU6502.INST(i, "", CPU6502.M_NONE, null);
+			CPU6502.inst_table[i].s = 0;
+			
+		}
+		
+		
+		CPU6502.INST(0x00,"BRK",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x01,"ORA",  CPU6502.M_XIND, (m, io, s)=>{} ); 
+		CPU6502.INST(0x02,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x03,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x04,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x05,"ORA",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0x06,"ASL",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0x07,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 		
+		CPU6502.INST(0x08,"PHP",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x09,"ORA",  CPU6502.M_IMM, (m, io, s)=>{} ); 
+		CPU6502.INST(0x0a,"ASL",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x0b,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 		
+		CPU6502.INST(0x0c,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 		
+		CPU6502.INST(0x0d,"ORA",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x0e,"ASL",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x0f,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 		
+
+		CPU6502.INST(0x10,"BPL",  CPU6502.M_REL, (m, io, s)=>{} ); 
+		CPU6502.INST(0x11,"ORA",  CPU6502.M_INDY,(m, io, s)=>{} ); 
+		CPU6502.INST(0x12,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x13,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x14,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x15,"ORA",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x16,"ASL",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x17,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 		
+		CPU6502.INST(0x18,"CLC",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x19,"ORA",  CPU6502.M_ABSY,(m, io, s)=>{} ); 
+		CPU6502.INST(0x1a,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x1b,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x1c,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 		
+		CPU6502.INST(0x1d,"ORA",  CPU6502.M_ABSX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x1e,"ASL",  CPU6502.M_ABSX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x1f,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+
+		CPU6502.INST(0x20,"JSR",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x21,"AND",  CPU6502.M_XIND,(m, io, s)=>{} ); 
+		CPU6502.INST(0x22,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x23,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x24,"BIT",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0x25,"AND",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0x26,"ROL",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0x27,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x28,"PLP",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x29,"AND",  CPU6502.M_IMM, (m, io, s)=>{} ); 
+		CPU6502.INST(0x2A,"ROL",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x1B,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x2C,"BIT",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x2D,"AND",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x2E,"ROL",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x2F,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+			
+		CPU6502.INST(0x30,"BMI",  CPU6502.M_REL, (m, io, s)=>{} ); 
+		CPU6502.INST(0x31,"AND",  CPU6502.M_INDY, (m, io, s)=>{} ); 
+		CPU6502.INST(0x32,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x33,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x34,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x35,"AND",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x36,"ROL",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x37,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x38,"SEC",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x39,"AND",  CPU6502.M_ABSY,(m, io, s)=>{} ); 
+		CPU6502.INST(0x3A,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x3B,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x3C,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x3D,"AND",  CPU6502.M_ABSX,(m, io, s)=>{} ); 
+		CPU6502.INST(0x3E,"ROL",  CPU6502.M_ABSX,(m, io, s)=>{} ); 
+		CPU6502.INST(0x3F,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		
+		CPU6502.INST(0x40,"RTI",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x41,"EOR",  CPU6502.M_XIND,(m, io, s)=>{} ); 
+		CPU6502.INST(0x42,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x43,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x44,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x45,"EOR",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0x46,"LSR",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0x47,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x48,"PHA",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x49,"EOR",  CPU6502.M_IMM, (m, io, s)=>{} ); 
+		CPU6502.INST(0x4A,"LSR",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x4B,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x4C,"JMP",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x4D,"EOR",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x4E,"LSR",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x4F,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		
+		CPU6502.INST(0x50,"BVC",  CPU6502.M_REL, (m, io, s)=>{} ); 
+		CPU6502.INST(0x51,"EOR",  CPU6502.M_INDY,(m, io, s)=>{} ); 
+		CPU6502.INST(0x52,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x53,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x54,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x55,"EOR",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x56,"LSR",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x57,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x58,"CLI",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x59,"EOR",  CPU6502.M_ABSY,(m, io, s)=>{} ); 
+		CPU6502.INST(0x5A,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x5B,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x5C,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x5D,"EOR",  CPU6502.M_ABSX,(m, io, s)=>{} ); 
+		CPU6502.INST(0x5E,"LSR",  CPU6502.M_ABSX,(m, io, s)=>{} ); 
+		CPU6502.INST(0x5F,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		
+		CPU6502.INST(0x60,"RTS",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x61,"ADC",  CPU6502.M_XIND,(m, io, s)=>{} ); 
+		CPU6502.INST(0x62,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x63,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x64,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x65,"ADC",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0x66,"ROR",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0x67,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x68,"PLA",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x69,"ADC",  CPU6502.M_IMM, (m, io, s)=>{} ); 
+		CPU6502.INST(0x6A,"ROR",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x6B,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x6C,"JMP",  CPU6502.M_IND, (m, io, s)=>{} ); 
+		CPU6502.INST(0x6D,"ADC",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x6E,"ROR",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x6F,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		
+		CPU6502.INST(0x70,"BVS",  CPU6502.M_REL, (m, io, s)=>{} ); 
+		CPU6502.INST(0x71,"ADC",  CPU6502.M_INDY,(m, io, s)=>{} ); 
+		CPU6502.INST(0x72,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x73,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x74,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x75,"ADC",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x76,"ROR",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x77,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x78,"SEI",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x79,"ADC",  CPU6502.M_ABSY,(m, io, s)=>{} ); 
+		CPU6502.INST(0x7A,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x7B,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x7C,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x7D,"ADC",  CPU6502.M_ABSX,(m, io, s)=>{} ); 
+		CPU6502.INST(0x7E,"ROR",  CPU6502.M_ABSX,(m, io, s)=>{} ); 
+		CPU6502.INST(0x7F,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+
+		CPU6502.INST(0x80,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x81,"STA",  CPU6502.M_XIND,(m, io, s)=>{} ); 
+		CPU6502.INST(0x82,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x83,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x84,"STY",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0x85,"STA",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0x86,"STX",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0x87,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x88,"DEY",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x89,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x8A,"TXA",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x8B,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x8C,"STY",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x8D,"STA",  CPU6502.M_ABS, (m, io, s)=>{} );  
+		CPU6502.INST(0x8E,"STX",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0x8F,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		
+		CPU6502.INST(0x90,"BCC",  CPU6502.M_REL, (m, io, s)=>{} ); 
+		CPU6502.INST(0x91,"STA",  CPU6502.M_INDY,(m, io, s)=>{} ); 
+		CPU6502.INST(0x92,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x93,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x94,"STY",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x95,"STA",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x96,"STX",  CPU6502.M_ZPY, (m, io, s)=>{} ); 
+		CPU6502.INST(0x97,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x98,"TYA",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x99,"STA",  CPU6502.M_ABSY,(m, io, s)=>{} ); 
+		CPU6502.INST(0x9A,"TXS",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0x9B,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x9C,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x9D,"STA",  CPU6502.M_ABSX, (m, io, s)=>{} ); 
+		CPU6502.INST(0x9E,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0x9F,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		
+		CPU6502.INST(0xA0,"LDY",  CPU6502.M_IMM, (m, io, s)=>{} ); 
+		CPU6502.INST(0xA1,"LDA",  CPU6502.M_XIND,(m, io, s)=>{} ); 
+		CPU6502.INST(0xA2,"LDX",  CPU6502.M_IMM, (m, io, s)=>{} ); 
+		CPU6502.INST(0xA3,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xA4,"LDY",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0xA5,"LDA",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0xA6,"LDX",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0xA7,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xA8,"TAY",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0xA9,"LDA",  CPU6502.M_IMM, (m, io, s)=>{} ); 
+		CPU6502.INST(0xAA,"TAX",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0xAB,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xAC,"LDY",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0xAD,"LDA",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0xAE,"LDX",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0xAF,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		
+		CPU6502.INST(0xB0,"BCS",  CPU6502.M_REL, (m, io, s)=>{} ); 
+		CPU6502.INST(0xB1,"LDA",  CPU6502.M_INDY, (m, io, s)=>{} ); 
+		CPU6502.INST(0xB2,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xB3,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xB4,"LDY",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0xB5,"LDA",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0xB6,"LDX",  CPU6502.M_ZPY, (m, io, s)=>{} ); 
+		CPU6502.INST(0xB7,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xB8,"CLV",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0xB9,"LDA",  CPU6502.M_ABSY,(m, io, s)=>{} ); 
+		CPU6502.INST(0xBA,"TSX",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0xBB,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xBC,"LDY",  CPU6502.M_ABSX, (m, io, s)=>{} ); 
+		CPU6502.INST(0xBD,"LDA",  CPU6502.M_ABSX, (m, io, s)=>{} ); 
+		CPU6502.INST(0xBE,"LDX",  CPU6502.M_ABSY, (m, io, s)=>{} ); 
+		CPU6502.INST(0xBF,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		
+		CPU6502.INST(0xC0,"CPY",  CPU6502.M_IMM, (m, io, s)=>{} ); 
+		CPU6502.INST(0xC1,"CMP",  CPU6502.M_XIND,(m, io, s)=>{} ); 
+		CPU6502.INST(0xC2,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xC3,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xC4,"CPY",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0xC5,"CMP",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0xC6,"DEC",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0xC7,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xC8,"INY",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0xC9,"CMP",  CPU6502.M_IMM, (m, io, s)=>{} ); 
+		CPU6502.INST(0xCA,"DEX",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0xCB,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xCC,"CPY",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0xCD,"CMP",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0xCE,"DEC",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0xCF,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		
+		CPU6502.INST(0xD0,"BNE",  CPU6502.M_REL, (m, io, s)=>{} ); 
+		CPU6502.INST(0xD1,"CMP",  CPU6502.M_INDY,(m, io, s)=>{} ); 
+		CPU6502.INST(0xD2,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xD3,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xD4,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xD5,"CMP",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0xD6,"DEC",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0xD7,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xD8,"CLD",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0xD9,"CMP",  CPU6502.M_ABSY,(m, io, s)=>{} ); 
+		CPU6502.INST(0xDA,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xDB,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xDC,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xDD,"CMP",  CPU6502.M_ABSX,(m, io, s)=>{} ); 
+		CPU6502.INST(0xDE,"DEC",  CPU6502.M_ABSX, (m, io, s)=>{} ); 
+		CPU6502.INST(0xDF,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		
+		CPU6502.INST(0xE0,"CPX",  CPU6502.M_IMM, (m, io, s)=>{} ); 
+		CPU6502.INST(0xE1,"SBC",  CPU6502.M_XIND,(m, io, s)=>{} ); 
+		CPU6502.INST(0xE2,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xE3,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xE4,"CPX",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0xE5,"SBC",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0xE6,"INC",  CPU6502.M_ZP,  (m, io, s)=>{} ); 
+		CPU6502.INST(0xE7,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xE8,"INX",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0xE9,"SBC",  CPU6502.M_IMM, (m, io, s)=>{} ); 
+		CPU6502.INST(0xEA,"NOP",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0xEB,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xEC,"CPX",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0xED,"SBC",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0xEE,"INC",  CPU6502.M_ABS, (m, io, s)=>{} ); 
+		CPU6502.INST(0xEF,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		
+		CPU6502.INST(0xF0,"BEQ",  CPU6502.M_REL, (m, io, s)=>{} ); 
+		CPU6502.INST(0xF1,"SBC",  CPU6502.M_INDY,(m, io, s)=>{} ); 
+		CPU6502.INST(0xF2,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xF3,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xF4,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xF5,"SBC",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0xFD,"INC",  CPU6502.M_ZPX, (m, io, s)=>{} ); 
+		CPU6502.INST(0xFD,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xF8,"SED",  CPU6502.M_IMP, (m, io, s)=>{} ); 
+		CPU6502.INST(0xF9,"SBC",  CPU6502.M_ABSY,(m, io, s)=>{} ); 
+		CPU6502.INST(0xFA,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xFB,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xFC,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		CPU6502.INST(0xFD,"SBC",  CPU6502.M_ABSX,(m, io, s)=>{} ); 
+		CPU6502.INST(0xFE,"INC",  CPU6502.M_ABSX,(m, io, s)=>{} ); 
+		CPU6502.INST(0xFF,"",     CPU6502.M_NONE, (m, io, s)=>{} ); 
+		
+		
+/*		
+		
 		
 		//       OP   Text    Inst mode  Func Ptr
 		CPU6502.INST(0x00,"NOP",  CPU6502.M_IMP, (m, io, s)=>{} ); 														// No Operation	
@@ -132,13 +422,29 @@ class CPU6502
 		CPU6502.INST(0xC0,"SYNC", CPU6502.M_IMP, (m, io, s)=>{s.fb_update=1;} ); 										// Render framebuffer
 		CPU6502.INST(0xFF,"END",  CPU6502.M_IMP, (m, io, s)=>{s.ip = CPU6502.IP_END;}  );									// Halt
 		
+*/		
+		
 		// Compute sizes
 		for (var i in CPU6502.inst_table)
 		{
-			if (CPU6502.inst_table[i].m == CPU6502.M_IMP) CPU6502.inst_table[i].s = 0;
-			if (CPU6502.inst_table[i].m == CPU6502.M_IMM) CPU6502.inst_table[i].s = 1;
-			if (CPU6502.inst_table[i].m == CPU6502.M_DIR) CPU6502.inst_table[i].s = 2;
-			if (CPU6502.inst_table[i].m == CPU6502.M_IND) CPU6502.inst_table[i].s = 2;
+			var s = 0;
+			var m = CPU6502.inst_table[i].m;
+			
+			if (m == CPU6502.M_NONE) s = 0;
+			if (m == CPU6502.M_IMP)  s = 0;
+			if (m == CPU6502.M_ABS)  s = 2;
+			if (m == CPU6502.M_ABSX) s = 2;
+			if (m == CPU6502.M_ABSY) s = 2;
+			if (m == CPU6502.M_IMM)  s = 1;
+			if (m == CPU6502.M_IND)  s = 2;
+			if (m == CPU6502.M_XIND) s = 1;
+			if (m == CPU6502.M_INDY) s = 1;
+			if (m == CPU6502.M_REL)  s = 1;
+			if (m == CPU6502.M_ZP)   s = 1;
+			if (m == CPU6502.M_ZPX)  s = 1;
+			if (m == CPU6502.M_ZPY)  s = 1;
+			
+			CPU6502.inst_table[i].s = s;
 		}
 		
 		
@@ -193,10 +499,10 @@ class CPU6502
 	static set_option(cpu, option, state)
 	{
 		if (option == CPU6502.OPTION_REALTIME)
-			cpu.realtime = state;
+			CPU6502.realtime = state;
 		
 		if (option == CPU6502.OPTION_DEBUG)
-			cpu.debug = state;
+			CPU6502.debug = state;
 		
 	}
 	
@@ -331,6 +637,28 @@ class CPU6502
 	
 	// Load inst slot
 	static INST(op, text, mode, func){ CPU6502.inst_table[op] = {text:text, m:mode, f:func}; };
+	
+	
+	static MODE_TEXT(m)
+	{
+		// Instruction modes
+		if (m == 0xff) return ("ANY"); 
+		if (m == 0x00) return ("NONE");// 
+		if (m == 0x01) return ("IMP"); // 
+		if (m == 0x02) return ("ABS"); // 
+		if (m == 0x03) return ("ABSX");// 
+		if (m == 0x04) return ("ABSY");// 
+		if (m == 0x05) return ("IMM"); // 
+		if (m == 0x06) return ("IND"); //
+		if (m == 0x07) return ("XIND");// 
+		if (m == 0x08) return ("INDY");// 
+		if (m == 0x09) return ("REL"); // 
+		if (m == 0x0A) return ("ZP");  // 
+		if (m == 0x0B) return ("ZPX"); // 
+		if (m == 0x0C) return ("ZPY"); // 
+		return ("Unknown");
+		
+	}
 	
 	
 	// Core Update

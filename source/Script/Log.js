@@ -37,7 +37,7 @@ var logger = (function ()
 	function format_output(d)
 	{
 		d = replace_all(d, "\n", "");
-		d = replace_all(d, " ", "&nbsp;");
+		//d = replace_all(d, " ", "&nbsp;");
 		
 		return d;
 	}

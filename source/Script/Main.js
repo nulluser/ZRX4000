@@ -18,7 +18,8 @@ var main = (function ()
 	
 	// Private 
 	//const DEFAULT_PROG = vert_scroll;
-	const DEFAULT_PROG = OS;
+	const DEFAULT_PROG = "tiny_basic";// Default program
+	//const DEFAULT_PROG = OS;
 	
 	const ASSM_MAX = 1000;
 	const CON_MAX = 500;
@@ -38,10 +39,10 @@ var main = (function ()
 		//load(DEFAULT_PROG);
 		//assemble();
 
-		load_prog("OS");
+		load_prog(DEFAULT_PROG);
 		//load_prog("tiny_basic");
-		//load_area("assembler");
-		load_area("terminal");
+		load_area("assembler");
+		//load_area("terminal");
 		
 		//assemble();
 
@@ -54,7 +55,7 @@ var main = (function ()
 	{
 		var cmds = item.split(":");
 		
-		console.log(cmds);
+		//console.log(cmds);
 		
 		if (cmds[0] == "system")
 		{

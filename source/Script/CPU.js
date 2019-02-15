@@ -61,7 +61,8 @@ class CPU
 		
 		//	 Fill instruction table so there are no gaps		
 		for (var i = 0; i < 256; i++) CPU.INST(i, "", 0, null);
-		
+	
+				
 		//       OP   Text    Inst mode  Func Ptr
 		CPU.INST(0x00,"NOP",  CPU.M_IMP, (m, io, s)=>{} ); 														// No Operation	
 		CPU.INST(0x01,"JMP",  CPU.M_DIR, (m, io, s)=>{s.ip = m.get_word(s.ip) - 2;});							// Jump to location
@@ -111,8 +112,8 @@ class CPU
 		CPU.INST(0x71,"TAS",  CPU.M_IMP, (m, io, s)=>{s.e = s.a >> 3; s.l = (s.a >> 2) & 1; s.g = (s.a >> 1) & 1; s.c = s.a & 1; } ); // Transfer A to Status
 		CPU.INST(0x72,"CLC",  CPU.M_IMP, (m, io, s)=>{s.c = 0;} );									 			// Clear Carry
 		CPU.INST(0x73,"SET",  CPU.M_IMP, (m, io, s)=>{s.c = 1;} ); 												// Set Carry		
-		CPU.INST(0x80,"OUT",  CPU.M_IMP, (m, io, s)=>{io.terminal_out(get_char(s.a));}  );				 	// Output A to terminal
-		CPU.INST(0x81,"IN",   CPU.M_IMP, (m, io, s)=>{s.a = io.terminal_in();}  );				 			// Terminal to A
+		CPU.INST(0x80,"OUT",  CPU.M_IMP, (m, io, s)=>{} );				 	// Output A to terminal
+		CPU.INST(0x81,"IN",   CPU.M_IMP, (m, io, s)=>{} );				 			// Terminal to A
 		CPU.INST(0x90,"AND",  CPU.M_IMM, (m, io, s)=>{s.a = s.a & m.get_byte(s.ip);}  ); 						// Set A to A & immediate
 		CPU.INST(0x91,"OR",   CPU.M_IMM, (m, io, s)=>{s.a = s.a | m.get_byte(s.ip);}   ); 						// Set A to A | immediate
 		CPU.INST(0x92,"XOR",  CPU.M_IMM, (m, io, s)=>{s.a = s.a ^ m.get_byte(s.ip);}  ); 						// Set A to A ^ immediate
@@ -131,6 +132,7 @@ class CPU
 		CPU.INST(0xB0,"RND",  CPU.M_IMP, (m, io, s)=>{s.a = (Math.random() * 255) & 0xff;} ); 					// Random number
 		CPU.INST(0xC0,"SYNC", CPU.M_IMP, (m, io, s)=>{s.fb_update=1;} ); 										// Render framebuffer
 		CPU.INST(0xFF,"END",  CPU.M_IMP, (m, io, s)=>{s.ip = CPU.IP_END;}  );									// Halt
+		
 		
 		// Compute sizes
 		for (var i in CPU.inst_table)
@@ -328,6 +330,41 @@ class CPU
 	
 	// Load inst slot
 	static INST(op, text, mode, func){ CPU.inst_table[op] = {text:text, m:mode, f:func}; };
+	
+	
+	
+/*static get_src()
+{
+//    write_console("mode: %d\n", mode);
+    
+      // Decode the size
+    switch(mode)
+    {
+//        case m_inv: op_map[num].size = 1; break;
+//        case m_imp: op_map[num].size = 1; break;
+
+        case m_acc: src_8 = acc; break;
+
+        case m_imm: src_8 = p1; break;
+        case m_zp:  src_8 = mem[p1]; break;
+        case m_zpx: src_8 = mem[p1+ix]; break;
+        case m_zpy: src_8 = mem[p1+iy]; break;
+        case m_rel: src_8 = p1; break;
+        case m_ab:  src_16 = ab_addr; break;
+        case m_abx: src_16 = ab_addr; break;
+        case m_aby: src_16 = ab_addr; break;
+        case m_ind: src_16 = get_16(ab_addr); break;
+        case m_idx: src_8 = mem[get_16(p1+ix)]; break;
+        case m_idy: src_8 = mem[get_16(p1)+iy]; break;
+    }  
+}
+*/	
+	
+	
+	
+	
+	
+	
 	
 	
 	// Core Update

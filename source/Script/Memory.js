@@ -120,7 +120,9 @@ function Memory()
 	// Get word from memory
 	function get_word(a) 
 	{ 
-		return (get_byte(a) << 8) + get_byte(a+1); 
+		//return (get_byte(a) << 8) + get_byte(a+1); 
+		return get_byte(a) + (get_byte(a+1) << 8) ; 
+		
 	}
 
 	// Set byte in memory	
@@ -141,8 +143,8 @@ function Memory()
 	// Set word in memory
 	function set_word(a, v) 
 	{ 
-		set_byte(a, v >> 8); 
-		set_byte(a + 1, v & 0xff); 
+		set_byte(a, v & 0xff); 
+		set_byte(a + 1, v >> 8); 
 	}
 
 	// Show Disassembly
