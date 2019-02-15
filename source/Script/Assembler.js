@@ -19,6 +19,8 @@ function Assembler(memory)
 	
 	const DEBUG = 0;			// True for assembly debug
 	
+	
+	const DISS_LEN = 0x400;		// How much to disassemble
 	const M_ABS = 1;			// Modes for addresses
 	const M_REL = 2;			// Relative
 	const M_OFS = 3;			// Offset
@@ -28,8 +30,11 @@ function Assembler(memory)
 	var address_table = [];  	// Stores known addresses
 	var resolve_table = [];  	// Stores address that need resolved
 	var cur_prog = 0;			// Location of next load 
-
+	var last_org = 0;			// Last origin
+	
 	var cur_cpu = null;			// Reference to CPU 
+		
+		
 		
 	/* 
 		Public 
@@ -59,7 +64,7 @@ function Assembler(memory)
 		
 		cur_cpu = cpu;
 		
-		cur_prog = prog_addr;
+		cur_prog = prog_addr; // TODO: can be removed probably
 		
 		address_table = [];
 		resolve_table = [];
@@ -81,11 +86,14 @@ function Assembler(memory)
 			return 1;
 		}
 		
-		disassemble(main.log_assemble, 0x7600, 0x8000);
+		disassemble(main.log_assemble, last_org, last_org + DISS_LEN);
 		
 		return 0;
 	}
 	
+	/* 
+		Private
+	*/	
 	
 	
 	// Return index into address table if label found, -1 otherwise
@@ -113,11 +121,10 @@ function Assembler(memory)
 				return 1;				
 			}
 			
-			var address = address_table[label_index];		// Element that knows the address
+			// Known address
+			var address = address_table[label_index];		
 
-			//console.log("Resolve : " + resolve.label + " addr: " + address.label);
-			//console.log(resolve);
-					
+			// Check address modes
 			
 			// Absolute address
 			if(resolve.mode == M_ABS)
@@ -131,13 +138,11 @@ function Assembler(memory)
 
 				if (delta < -128 || delta > 127)
 				{
-					//console.log("Jump to far.  Label: " + resolve.label + "  Location: " + hex_word(resolve.addr) + " Jump too far: " + hex_byte(delta));
+					console.log("Jump to far.  Label: " + resolve.label + "  Loc: " + hex_word(resolve.addr) + " Delta: " + hex_byte(delta));
 					return 1;
 				}
 						
 				memory.set_byte(resolve.addr, delta);
-						
-				//console.log("Rel addr req: Label: " + resolve.label + " "  + hex_word(resolve.addr) + " " + hex_word(address.addr) + " " + delta);
 			} else
 			// Offset Address
 			if(resolve.mode == M_OFS)
@@ -220,11 +225,9 @@ function Assembler(memory)
 	
 	
 	
-	/* 
-		Private
-	*/	
+
 	
-	// Assemble all tokens
+	// Assemble all lines
 	function assemble_lines(lines)
 	{
 		var cur_line = 0;
@@ -244,6 +247,8 @@ function Assembler(memory)
 		return 0;
 	}
 	
+	/* Core assembler */
+	
 	// Assemble a line
 	function assemble_line(line)
 	{
@@ -258,14 +263,8 @@ function Assembler(memory)
 		// See if token is label
 		if (is_label(line_tokens[0]))
 		{
-			//console.log("is label");
-			
-			var label = line_tokens[0];//(token)
-			
-			//console.log("Add Label: " + label);
-				
-			address_table.push({addr:cur_prog, label:label});
-			
+			// Add to known addresses
+			address_table.push({addr:cur_prog, label:line_tokens[0]});
 			
 			// Remove label token
 			line_tokens.splice(0, 1);
@@ -294,7 +293,7 @@ function Assembler(memory)
 			return (assemble_byte(line_tokens, next));
 		}
 		
-		// See if token is a define byte
+		// See if token is a define word
 		if (token == ".word")
 		{
 			return (assemble_word(line_tokens, next));
@@ -313,6 +312,10 @@ function Assembler(memory)
 	
 
 
+	/* 
+		High Level assembly 
+	*/
+	
 	
 	// Assemble an instruction
 	function assemble_inst(found_inst, next)
@@ -392,6 +395,8 @@ function Assembler(memory)
 			
 			mode = cur_cpu.M_IMM;
 		} else
+		
+	
 		if (is_immediate(next))
 		{
 			//console.lof("is_immediate " + next);
@@ -565,62 +570,6 @@ function Assembler(memory)
 	
 	
 	
-		// Assemble a label
-	function assemble_offset_label(token)
-	{
-		var label = token;//(token)
-			
-		//log("Add Label: " + label);
-				
-		address_table.push({addr:cur_prog, label:label});
-	}	
-	
-	
-	// Assemble a label
-	function assemble_label(label)
-	{
-		//var label = token;//(token)
-			
-		console.log("Assemble Label: " + label);
-				
-		//address_table.push({addr:cur_prog, label:label});
-		
-		resolve_table.push({addr:cur_prog+1, label:label, mode:M_ABS});		
-		
-	}
-	
-	
-	
-	function assemble_offset_label(next)
-	{
-					
-			
-			var label = next.substr(0, next.length-4);
-			var ofs = next.substr(next.length-4, next.length);
-			
-			var sign = ofs[0];
-			var ofs_value = parseInt(ofs.substr(2, ofs.length), 16);
-			
-			if (sign == '-') ofs_value *= -1;
-			
-			//console.log("L: " + label);
-			//console.log("O: " + ofs);
-			//console.log("S: " + sign);
-			//console.log("V: " + ofs_value);
-			
-			// Need to add one to account for inst byte
-			resolve_table.push({addr:cur_prog+1, label:label, rel:0, ofs:ofs_value, mode:M_OFS});
-			
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	
 	
@@ -755,18 +704,12 @@ function Assembler(memory)
 	// Assemble a define byte
 	function assemble_org(tokens, next)
 	{
-		
-		
-		//console.log("Assemble org");
-		//console.log("Assemble db : " + next);
-		
 		if (next == undefined)
 		{
-			main.log_assemble(`${MODULE} org value expected\n`);
+			main.log_assemble(`${MODULE} ORG value expected\n`);
 			return 1;
 		}
 
-		
 		// Check for invalid address
 		if(!is_address(next))
 		{
@@ -776,14 +719,78 @@ function Assembler(memory)
 
 		cur_prog = hex_value(next);
 		
-		main.log_assemble(`${MODULE} ORG prog: (${hex_word(cur_prog)})\n`);
+		last_org = cur_prog;
 		
-		//cur_token++;	// Consume byte
-		//next = tokens[cur_token+1];	// compute next
-		
-		//console.log("Return ok");
+		main.log_assemble(`${MODULE} ORG (${hex_word(cur_prog)})\n`);
+
 		return 0;
 	}	
+	
+	
+	/* 
+		End of High Level assembly 
+	*/
+
+	
+	
+	/// Helpers
+	
+	
+	
+	
+	// Assemble a label
+	function assemble_offset_label(token)
+	{
+		var label = token;//(token)
+			
+		//log("Add Label: " + label);
+				
+		address_table.push({addr:cur_prog, label:label});
+	}	
+	
+	
+	// Assemble a label
+	function assemble_label(label)
+	{
+		//var label = token;//(token)
+			
+		console.log("Assemble Label: " + label);
+				
+		//address_table.push({addr:cur_prog, label:label});
+		
+		resolve_table.push({addr:cur_prog+1, label:label, mode:M_ABS});		
+		
+	}
+	
+	
+	
+	function assemble_offset_label(next)
+	{
+					
+			
+			var label = next.substr(0, next.length-4);
+			var ofs = next.substr(next.length-4, next.length);
+			
+			var sign = ofs[0];
+			var ofs_value = parseInt(ofs.substr(2, ofs.length), 16);
+			
+			if (sign == '-') ofs_value *= -1;
+			
+			//console.log("L: " + label);
+			//console.log("O: " + ofs);
+			//console.log("S: " + sign);
+			//console.log("V: " + ofs_value);
+			
+			// Need to add one to account for inst byte
+			resolve_table.push({addr:cur_prog+1, label:label, rel:0, ofs:ofs_value, mode:M_OFS});
+			
+	}
+	
+	
+	
+	
+	
+	
 	
 	
 	
@@ -1368,30 +1375,6 @@ function Assembler(memory)
 	}
 	
 	
-	// Pad inst for display 
-	function pad_inst(str) 
-	{
-		var pad = "    ";
-
-		return (str + pad).substring(0, pad.length);
-	}
-		
-	// Show Disassembly
-	function dump_stack(elements)
-	{
-		main.log_assemble("[Stack Dump]\n");
-				
-		/*var i = 0;
-		
-		for (var i = start; i < end; i++)
-		{
-			var v = memory[i];
-			if (v != undefined)
-			main.log_assemble(hex_word(i) + "   " + hex_byte(v) + " (" + String.fromCharCode(v)+ ")\n"); // Address
-		}
-		
-		main.log_assemble("[End of Stack]\n");*/
-	}		
 	
 	/* End of Disassembler */
 
