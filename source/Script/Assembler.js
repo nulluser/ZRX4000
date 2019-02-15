@@ -81,7 +81,7 @@ function Assembler(memory)
 			return 1;
 		}
 		
-		disassemble(main.log_assemble, 0x7600, 0x7700);
+		disassemble(main.log_assemble, 0x7600, 0x8000);
 		
 		return 0;
 	}
@@ -260,8 +260,12 @@ function Assembler(memory)
 		{
 			//console.log("is label");
 			
-			if (assemble_label(line_tokens[0]))
-				return 1;
+			var label = line_tokens[0];//(token)
+			
+			//console.log("Add Label: " + label);
+				
+			address_table.push({addr:cur_prog, label:label});
+			
 			
 			// Remove label token
 			line_tokens.splice(0, 1);
@@ -334,6 +338,9 @@ function Assembler(memory)
 
 		
 		// Implied mode
+		// TODO: Don't compare agaisnt undefined 
+		// This works because implied instructions never take args
+		//if (cur_cpu.inst_table[found_inst].m == cur_cpu.M_IMP)
 		if (next == undefined)
 		{
 			//main.log_assemble("Assemble_inst Operand expected");
@@ -358,23 +365,12 @@ function Assembler(memory)
 		// Add to resolve list if operand is a label
 		if (is_offset_label(next))
 		{
+						
 			//console.log("Offset label: " + next);
 			
-			var label = next.substr(0, next.length-4);
-			var ofs = next.substr(next.length-4, next.length);
+			assemble_offset_label(next);
 			
-			var sign = ofs[0];
-			var ofs_value = parseInt(ofs.substr(2, ofs.length), 16);
-			
-			if (sign == '-') value *= -1;
-			
-			//console.log("L: " + label);
-			//console.log("O: " + ofs);
-			//console.log("S: " + sign);
-			//console.log("V: " + ofs_value);
-			
-			// Need to add one to account for inst byte
-			resolve_table.push({addr:cur_prog+1, label:label, rel:0, ofs:ofs_value, mode:M_OFS});
+
 			
 			mode = cur_cpu.M_ABS;
 			
@@ -454,8 +450,8 @@ function Assembler(memory)
 		if (is_zpx(next))
 		{
 			//console.log("Is zpx " + next);
-			
-			operand = 0xff;
+			operand = hex_value(next.substr(0, next.length-2));
+			//operand = 0xff;
 			
 			mode = cur_cpu.M_ZPX;
 		} else
@@ -463,8 +459,8 @@ function Assembler(memory)
 		if (is_zpy(next))
 		{
 			//console.log("Is zpy " + next);
-			
-			operand = 0xff;
+			operand = hex_value(next.substr(0, next.length-2));
+			//operand = 0xff;
 			
 			mode = cur_cpu.M_ZPY;
 		} else
@@ -474,8 +470,8 @@ function Assembler(memory)
 		{
 			//console.log("Is ind " + next);
 						
-			operand = 0xff;
-			
+			operand = hex_value(next.substr(1, next.length-1));						
+						
 			mode = cur_cpu.M_IND;
 		} else
 		
@@ -483,21 +479,38 @@ function Assembler(memory)
 		
 		if (is_absx(next))
 		{
-			//console.log("Is absx " + next);
+			main.log("Is absx " + next + "\n");
+			var label = next.substr(0, next.length-2);
 			
+			main.log("label: " + label + "\n");
+			if (is_label(label)) assemble_label(label); else
+			if (is_offset_label(label)) assemble_offset_label(label); else
+			{
+				main.log_assemble(`${MODULE} ABSX: Unknown label type ${label}\n`);
+				return 1;
+			}
 			
-			operand = 0xff;
+			operand = 0xffff;
 			
 			mode = cur_cpu.M_ABSX;
 		} else
 		
 		if (is_absy(next))
 		{
-			//console.log("Is absy " + next);
+			main.log_assemble("Is absy " + next + "\n");
+			var label = next.substr(0, next.length-2);
 			
-			operand = 0xff;
+			main.log_assemble("label: " + label + "\n");
+			if (is_label(label)) assemble_label(label); else
+			if (is_offset_label(label)) assemble_offset_label(label); else
+			{
+				main.log_assemble(`${MODULE} ABSY: Unknown label type ${label}\n`);
+				return 1;
+			}
 			
-			mode = cur_cpu.M_ABSY;
+			operand = 0xffff;
+			
+			mode = cur_cpu.M_ABSX;
 		} else
 				
 		if (is_xind(next))
@@ -564,15 +577,41 @@ function Assembler(memory)
 	
 	
 	// Assemble a label
-	function assemble_label(token)
+	function assemble_label(label)
 	{
-		var label = token;//(token)
+		//var label = token;//(token)
 			
-		//log("Add Label: " + label);
+		console.log("Assemble Label: " + label);
 				
-		address_table.push({addr:cur_prog, label:label});
+		//address_table.push({addr:cur_prog, label:label});
+		
+		resolve_table.push({addr:cur_prog+1, label:label, mode:M_ABS});		
+		
 	}
 	
+	
+	
+	function assemble_offset_label(next)
+	{
+					
+			
+			var label = next.substr(0, next.length-4);
+			var ofs = next.substr(next.length-4, next.length);
+			
+			var sign = ofs[0];
+			var ofs_value = parseInt(ofs.substr(2, ofs.length), 16);
+			
+			if (sign == '-') ofs_value *= -1;
+			
+			//console.log("L: " + label);
+			//console.log("O: " + ofs);
+			//console.log("S: " + sign);
+			//console.log("V: " + ofs_value);
+			
+			// Need to add one to account for inst byte
+			resolve_table.push({addr:cur_prog+1, label:label, rel:0, ofs:ofs_value, mode:M_OFS});
+			
+	}
 	
 	
 	
@@ -881,7 +920,7 @@ function Assembler(memory)
 	// True if char is hex
 	function is_offset_label(s)
 	{
-//		console.log("Is offset: " + s);
+		main.log_assemble("Is offset label " + s + "\n");
 		
 		var ofs_len = 5;
 		
@@ -1015,7 +1054,7 @@ function Assembler(memory)
 	
 	function is_absx(s)
 	{
-		//console.log("ABSX");
+		console.log("ABSX");
 		//if (s[0] != '$') return 0;
 		//if (s.length != 3) return 0;
 		//if (!is_hex_str(s.substr(1, s.length))) return 0;
