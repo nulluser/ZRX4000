@@ -7,20 +7,15 @@
 
 "use strict";
 
-// CPU
-// Pass in name, Memory, program and address
+// Assembler
 function Assembler(memory)
 {
 	const MODULE = "[Assembler] ";
 	
 	// Private 
-	
-	// Assembler
-	
 	const DEBUG = 0;			// True for assembly debug
 	
-	
-	const DISS_LEN = 0x400;		// How much to disassemble
+	const DISS_LEN = 0xA00;		// How much to disassemble
 	const M_ABS = 1;			// Modes for addresses
 	const M_REL = 2;			// Relative
 	const M_OFS = 3;			// Offset
@@ -33,7 +28,6 @@ function Assembler(memory)
 	var last_org = 0;			// Last origin
 	
 	var cur_cpu = null;			// Reference to CPU 
-		
 		
 		
 	/* 
@@ -96,6 +90,43 @@ function Assembler(memory)
 	*/	
 	
 	
+	// Remove block comments from string
+	function remove_block_comments(str)
+	{
+		while (true)
+		{
+			var p1 = str.indexOf("/*");
+			if (p1 == -1) break;			// No comment found
+			var p2 = str.indexOf("*/");
+			str = str.slice(0, p1) + str.slice(p2+2);			
+		}
+				
+		return str;
+	}
+
+	
+	// Assemble all lines
+	function assemble_lines(lines)
+	{
+		var cur_line = 0;
+		
+		while(cur_line < lines.length)
+		{
+			if (assemble_line(lines[cur_line]))
+			{
+				main.log_assemble(`Assembly failed on line ${cur_line+1} (${lines[cur_line]})\n`);
+				return 1;
+			}
+				
+			cur_line++;
+		}
+		
+		return 0;
+	}
+	
+	
+	
+	
 	// Return index into address table if label found, -1 otherwise
 	function find_label(label)
 	{
@@ -104,6 +135,7 @@ function Assembler(memory)
 
 		return -1;
 	}
+	
 	
 	// Fill in addresses they were unknown in first pass
 	function resolve_addresses()
@@ -125,14 +157,11 @@ function Assembler(memory)
 			var address = address_table[label_index];		
 
 			// Check address modes
-			
-			// Absolute address
-			if(resolve.mode == M_ABS)
-			{
-				memory.set_word(resolve.addr, address.addr);
-			} else 
-			// Relative address
-			if(resolve.mode == M_REL)
+			if(resolve.mode == M_ABS) memory.set_word(resolve.addr, address.addr); else 				// Absolute address
+			if(resolve.mode == M_OFS) memory.set_word(resolve.addr, address.addr + resolve.ofs); else	// Offset Address
+			if(resolve.mode == M_HI)  memory.set_byte(resolve.addr, address.addr >> 8); else			// High byte of address
+			if(resolve.mode == M_LO)  memory.set_byte(resolve.addr, address.addr & 0xff); else			// Low byte of address
+			if(resolve.mode == M_REL) // Relative address
 			{
 				var delta = address.addr - resolve.addr - 1;
 
@@ -143,21 +172,6 @@ function Assembler(memory)
 				}
 						
 				memory.set_byte(resolve.addr, delta);
-			} else
-			// Offset Address
-			if(resolve.mode == M_OFS)
-			{
-				memory.set_word(resolve.addr, address.addr + resolve.ofs);
-			} else
-			// High byte of address
-			if(resolve.mode == M_HI)
-			{
-				memory.set_byte(resolve.addr, address.addr >> 8);
-			} else
-			// Low byte of address
-			if(resolve.mode == M_LO)
-			{
-				memory.set_byte(resolve.addr, address.addr & 0xff);
 			} else
 			// Unknown mode
 			{
@@ -176,136 +190,59 @@ function Assembler(memory)
 		return 0;
 	}
 	
-	
-	// Remove block comments from string
-	function remove_block_comments(str)
-	{
-		while (true)
-		{
-			var p1 = str.indexOf("/*");
-			
-			if (p1 == -1) break;			// No comment found
-			
-			var p2 = str.indexOf("*/");
-			
-			str = str.slice(0, p1) + str.slice(p2+2);			
-		}
-				
-		return str;
-	}
-	
-	
+		
 	// Get tokens from input string
 	function parse_tokens(line)
 	{
 		var tokens = [];
-
-		// Remove line comments
-		var p = line.indexOf(";");
+		
+		var p = line.indexOf(";");				// Remove line comments
 		if (p != -1) line = line.substr(0, p);
 		
-		// Create captured group
-		var myRegexp = /[^\s"]+|"([^"]*)"/gi;
+		var regx = /[^\s"]+|"([^"]*)"/gi; 		// Create captured group
 	
-		do 
-		{
-			//Each call to exec returns the next regex match as an array
-			var match = myRegexp.exec(line);
-			if (match != null)
-			{
-				//Index 1 in the array is the captured group if it exists. 
-				// Add quote to detect as string later
-				//Index 0 is the matched text, which we use if no captured group exists
+		//Each call to exec returns the next regex match as an array
+		//Index 1 is the string. Add quotes to detect as string later
+		//Index 0 is the matched token
+		
+		var match;
+		while ((match = regx.exec(line)) != null)
 				tokens.push(match[1] ? "\"" + match[1] + "\"" : match[0]);
-			}
-		} while (match != null);
 			
 		return tokens;
 	}
-	
-	
-	
 
-	
-	// Assemble all lines
-	function assemble_lines(lines)
-	{
-		var cur_line = 0;
-		
-		while(cur_line < lines.length)
-		{
-			if (assemble_line(lines[cur_line]))
-			{
-				main.log_assemble(`Assembly failed on line ${cur_line+1} (${lines[cur_line]})\n`);
-				
-				return 1;
-			}
-				
-			cur_line++;
-		}
-		
-		return 0;
-	}
 	
 	/* Core assembler */
 	
 	// Assemble a line
 	function assemble_line(line)
 	{
-		if (line == "") return 0;	// Do not process plank lines
+		if (line == "") return 0;				// Do not process plank lines
 	
-		//console.log("Assemble line (" + line + ")");
+		var tokens = parse_tokens(line);		// Split line into tokens by whitespace. Keep strings
 
-		var line_tokens = parse_tokens(line);		// Split line into tokens
+		if (tokens.length == 0) return 0;		// No tokens in line		
 
-		if (line_tokens.length == 0) return 0;		// No tokens in line
-		
-		// See if token is label
-		if (is_label(line_tokens[0]))
+		// See if token is label. This is added to address table and consumed
+		if (is_label(tokens[0]))
 		{
 			// Add to known addresses
-			address_table.push({addr:cur_prog, label:line_tokens[0]});
+			address_table.push({addr:cur_prog, label:tokens[0]});
 			
 			// Remove label token
-			line_tokens.splice(0, 1);
+			tokens.splice(0, 1);
 			
-			// No other token left on line
-			if (line_tokens.length == 0)
-				return 0;
+			if (tokens.length == 0) return 0;					// No tokens left line		
 		}		
-
-		// Get instruction token and next token
-		var token = line_tokens[0];
-		var next =  line_tokens[1];
-			
-		// See if token is instruction	
-		var inst = find_inst(token, cur_cpu.M_ANY);
-					
-		// Found instruction, add it to program listing
-		if (inst != -1)
-		{
-			return (assemble_inst(inst, next));
-		}
+	
+		if (assemble_inst(tokens) == 0) return 0;		// Try Instruction
+		if (assemble_byte(tokens) == 0) return 0;		// Try .byte
+		if (assemble_word(tokens) == 0) return 0;		// Try .word
+		if (assemble_org(tokens) == 0) return 0;		// try .org
 		
-		// See if token is a define byte
-		if (token == ".byte")
-		{
-			return (assemble_byte(line_tokens, next));
-		}
-		
-		// See if token is a define word
-		if (token == ".word")
-		{
-			return (assemble_word(line_tokens, next));
-		}
-		
-		// See if token is an origin
-		if (token == ".org")
-		{
-			return (assemble_org(line_tokens, next));
-		}
-		
-		main.log_assemble(`${MODULE} Invalid Token: (${token})\n`);
+		// Unknown
+		main.log_assemble(`${MODULE} Invalid Token: (${tokens[0]})\n`);
 		
 		return 1;
 	}
@@ -318,273 +255,335 @@ function Assembler(memory)
 	
 	
 	// Assemble an instruction
-	function assemble_inst(found_inst, next)
+	//function assemble_inst(found_inst, next)
+	function assemble_inst(line_tokens)
 	{
+		// See if token is instruction. Correct instruction for mode will be determined later	
+		var inst_index = find_inst(line_tokens[0], cur_cpu.M_ANY);
+					
+		// Did not find as instruction
+		if (inst_index == -1) return 1;
+		
+		var next = line_tokens[1];
+		
 		var operand = 0;
 		
-		var inst = cur_cpu.inst_table[found_inst];
-			
-		//console.log("Inst: " + inst.text + " next: " + next);
-			
-		/*// Implied mode
-		if (inst.s == 0)
-		//if (is_inst(next))
-		{
-			add_inst(found_inst, cur_cpu.M_IMP, 0);	// Add to memory
-			return 0;
-		}*/
-
-
-		var mode = cur_cpu.M_NONE;	// No mod known yet
-			
-		// parse operand
-
+		var result = decode_operand(inst_index, next);	
 		
-		// Implied mode
-		// TODO: Don't compare agaisnt undefined 
-		// This works because implied instructions never take args
-		//if (cur_cpu.inst_table[found_inst].m == cur_cpu.M_IMP)
-		if (next == undefined)
-		{
-			//main.log_assemble("Assemble_inst Operand expected");
-			//return 1;
-			
-			mode = cur_cpu.M_IMP;
-		} else
-		
-		// See if address is relative
-		if (cur_cpu.inst_table[found_inst].m == cur_cpu.M_REL)
-		{
-			var label = next;
-			
-			//console.log("Push rel " + hex_byte(found_inst) + " " + label);
-			
-			// Need to add one to account for inst byte. Mark as relative
-			resolve_table.push({addr:cur_prog+1, label:label, rel:1, mode:M_REL});
-			
-			mode = cur_cpu.M_REL;		
-		}else
-		
-		// Add to resolve list if operand is a label
-		if (is_offset_label(next))
-		{
-						
-			//console.log("Offset label: " + next);
-			
-			assemble_offset_label(next);
-			
-
-			
-			mode = cur_cpu.M_ABS;
-			
-		}else 		
-		if (is_label(next))
-		{
-			var label = next;
-			
-			// Need to add one to account for inst byte
-			resolve_table.push({addr:cur_prog+1, label:label, rel:0, mode:M_ABS});
-			
-			mode = cur_cpu.M_ABS;
-			
-		}else 
-		// Check for char literal
-		if (is_literal(next))
-		{
-			operand = ascii(next[1]);
-			
-			mode = cur_cpu.M_IMM;
-		} else
-		
-	
-		if (is_immediate(next))
-		{
-			//console.lof("is_immediate " + next);
-			
-			// Check for address operators
-			
-			// Low address
-			if (next[1] == '<')
-			{
-				
-				label = next.substr(2, next.length);
-				
-				//console.log("Low address label: " + label);
-				resolve_table.push({addr:cur_prog+1, label:label, rel:0, mode:M_LO});	
-				
-				
-				operand = 0;
-			}
-			else
-			if (next[1] == '>')
-			{
-				
-				label = next.substr(2, next.length);
-				
-				//console.log("High address label: " + label);
-				resolve_table.push({addr:cur_prog+1, label:label, rel:0, mode:M_HI});	
-				
-				
-				operand = 0;
-			}
-			else
-			{
-				operand = parseInt(next.substr(2, next.length-1), 16); 
-			}
-			
-			mode = cur_cpu.M_IMM;				
-			
-		} else
-		if (is_address(next))
-		{
-			
-			
-			//operand = parseInt(next, 16); 
-			operand = hex_value(next);
-			
-			
-			mode = cur_cpu.M_ABS;
-		} else
-		if (is_zp(next))
-		{
-			operand = hex_value(next);
-			
-			mode = cur_cpu.M_ZP;
-		} else
-			
-		if (is_zpx(next))
-		{
-			//console.log("Is zpx " + next);
-			operand = hex_value(next.substr(0, next.length-2));
-			//operand = 0xff;
-			
-			mode = cur_cpu.M_ZPX;
-		} else
-			
-		if (is_zpy(next))
-		{
-			//console.log("Is zpy " + next);
-			operand = hex_value(next.substr(0, next.length-2));
-			//operand = 0xff;
-			
-			mode = cur_cpu.M_ZPY;
-		} else
-
-			
-		if (is_ind(next))
-		{
-			//console.log("Is ind " + next);
-						
-			operand = hex_value(next.substr(1, next.length-1));						
-						
-			mode = cur_cpu.M_IND;
-		} else
-		
-			
-		
-		if (is_absx(next))
-		{
-			main.log("Is absx " + next + "\n");
-			var label = next.substr(0, next.length-2);
-			
-			main.log("label: " + label + "\n");
-			if (is_label(label)) assemble_label(label); else
-			if (is_offset_label(label)) assemble_offset_label(label); else
-			{
-				main.log_assemble(`${MODULE} ABSX: Unknown label type ${label}\n`);
-				return 1;
-			}
-			
-			operand = 0xffff;
-			
-			mode = cur_cpu.M_ABSX;
-		} else
-		
-		if (is_absy(next))
-		{
-			main.log_assemble("Is absy " + next + "\n");
-			var label = next.substr(0, next.length-2);
-			
-			main.log_assemble("label: " + label + "\n");
-			if (is_label(label)) assemble_label(label); else
-			if (is_offset_label(label)) assemble_offset_label(label); else
-			{
-				main.log_assemble(`${MODULE} ABSY: Unknown label type ${label}\n`);
-				return 1;
-			}
-			
-			operand = 0xffff;
-			
-			mode = cur_cpu.M_ABSX;
-		} else
-				
-		if (is_xind(next))
-		{
-			operand = hex_value(next.substr(1, 3));
-			
-			//console.log("xind op " + operand);
-			
-			mode = cur_cpu.M_INDY;
-			
-		} else		
-		
-		if (is_indy(next))
-		{
-			operand = hex_value(next.substr(1, 3));
-			
-			//console.log("indy op " + hex_byte(operand) + " n:" + next);
-			
-			mode = cur_cpu.M_INDY;
-			
-		} else
-		
-			
-		// Assume hex
+		// Unable to decode mode
+		if (result.mode == cur_cpu.M_NONE) 
 		{
 			main.log_assemble(`${MODULE} assemble inst: Invalid operand ${next}\n`);
-			
-			// Get value of operand
-			//operand = parseInt(next, 16); 
 			return 1;
 		}
 		
 		// Adjust instruction for known address mode
-		found_inst = find_inst(inst.text, mode);
+		inst_index = find_inst(line_tokens[0], result.mode);
 		
-		if (found_inst == -1)
+		if (inst_index == -1)
 		{
-			main.log_assemble(`${MODULE} Address mode not found for ${inst.text} ${cur_cpu.MODE_TEXT(mode)}\n`);
-			
+			main.log_assemble(`${MODULE} Address mode not found for ${line_tokens[0]} ${cur_cpu.MODE_TEXT(result.mode)}\n`);
+			console.log(`${MODULE} Address mode not found for ${line_tokens[0]} ${cur_cpu.MODE_TEXT(result.mode)}\n`);
 			return 1;
 		}
 		
-	
-		//cur_token += inst.s > 0 ? 1 : 0;		// Consume operands
+		add_inst(inst_index, result.mode, result.operand);	// Add to memory
 		
-		add_inst(found_inst, mode, operand);	// Add to memory
+		return 0;
+	}
+	
+	// Decode the operand
+	function decode_operand(inst_index, next)
+	{
+		var result = {mode:cur_cpu.M_NONE, operand:0};
+		
+		// Mode from first match instruction. Used for implied and relative
+		var mode = cur_cpu.inst_table[inst_index].m;
+		
+		// Build a list of functions to  check the operand against. Must be checked in order
+		
+		var check_funcs = {	check_implied, check_relative, check_abs,
+							check_immediate, check_zp, check_zpx, check_zpy, 
+							check_ind, check_absx, check_absy, check_xind, check_indy};
+		
+		// Look for a match
+		for (var i in check_funcs)
+			if (check_funcs[i](next, mode, result)) return result;
+		
+		return result;
+	}
+	
+	
+	/* Address mode checks */
+	
+	
+	// Implied
+	function check_implied(op, mode, result)
+	{
+		if (op != undefined) return 0; // Todo: needs a better check
+		
+		result.mode = cur_cpu.M_IMP;
+
+		return 1;
+	}
+	
+
+	// See if address is relative
+	function check_relative(op, mode, result)
+	{
+		if (mode != cur_cpu.M_REL) return 0;
+		
+		resolve_table.push({addr:cur_prog+1, label:op, mode:M_REL});
+			
+		result.mode = cur_cpu.M_REL;		
+			
+		return 1;
+	}
+	
+	// Absolute
+	function check_abs(op, mode, result)
+	{
+		if (is_offset_label(op))
+		{
+			assemble_offset_label(op);
+			result.mode = cur_cpu.M_ABS;
+			return 1;
+		}
+
+		if (is_label(op))
+		{
+			resolve_table.push({addr:cur_prog+1, label:op, mode:M_ABS});
+			result.mode = cur_cpu.M_ABS;
+			return 1;
+		}
+		
+		if (is_address(op)) 
+		{
+			result.operand = hex_value(op);
+			result.mode = cur_cpu.M_ABS;
+			return 1;
+		}
 		
 		return 0;
 	}
 	
 	
 	
+	// immediate
+	function check_immediate(op, mode, result)
+	{
+		// Check for char literal
+		if (is_literal(op))
+		{
+			operand = ascii(op[1]);
+			
+			result.mode = cur_cpu.M_IMM;
+			
+			return 1;
+		}
+		
+		
+		if (is_immediate(op))
+		{
+			// Check for address operators
+		
+			// Low address
+			if (op[1] == '<')
+			{
+				var label = op.substr(2, op.length);
+				resolve_table.push({addr:cur_prog+1, label:label, mode:M_LO});	
+			}
+			else
+			if (op[1] == '>')
+			{
+				var label = op.substr(2, op.length);
+				resolve_table.push({addr:cur_prog+1, label:label, mode:M_HI});	
+			}
+			else
+			{
+				result.operand = parseInt(op.substr(2, op.length-1), 16); 
+			}
+			
+			result.mode = cur_cpu.M_IMM;
+
+			return 1;
+		}
+		
+		return 0;
+	}
 	
-	
-	
-	
-	
-	
+		
+	// Zero page
+	function check_zp(op, mode, result)
+	{	
+		// Match $XX
+		if (op[0] != '$') return 0;
+		if (op.length != 3) return 0;
+		if (!is_hex_str(op.substr(1, op.length))) return 0;
+
+		result.operand = hex_value(op);
+		result.mode = cur_cpu.M_ZP;
+		
+		return 1;
+	}
+		
+		
+	// Zero page X
+	function check_zpx(op, mode, result)		
+	{
+		if (op.length != 5) return 0;
+		
+		if (op[0] != '$') return 0;
+		if (op[3] != ',') return 0;
+		if (op[4] != 'X') return 0;
+		
+		if (!is_hex_str(op.substr(1, 2))) return 0;		
+
+		result.operand = hex_value(op.substr(0, op.length-2));
+		result.mode = cur_cpu.M_ZPX;
+		
+		return 1;
+	}
+			
+	// Zero page Y
+	function check_zpy(op, mode, result)	
+	{	
+		if (op.length != 5) return 0;
+		if (op[0] != '$') return 0;
+		if (op[3] != ',') return 0;
+		if (op[4] != 'Y') return 0;
+		if (!is_hex_str(op.substr(1, 2))) return 0;
+
+		result.operand = hex_value(op.substr(0, op.length-2));
+		result.mode = cur_cpu.M_ZPY;
+		
+		return 1;
+	}
+			
+	// Indirect
+	function check_ind(op, mode, result)
+	{	
+		// Check for (xxxx)
+		if (op[0] != '(' || op[op.length-1] != ')') return 0;
+
+		var addr = op.substr(1, op.length-2);
+		
+		// TODO need to check for a label here
+
+		result.operand = hex_value(addr);						
+		result.mode = cur_cpu.M_IND;
+			
+		return 1;
+	}
+		
+	// Absolute X
+	function check_absx(op, mode, result)
+	{	
+		if (op[op.length-2] != ',') return 0;
+		if (op[op.length-1] != 'X') return 0;
+		
+		var  addr = op.substr(0, op.length-2);
+		//console.log("Addr: " + addr);
+		
+		// make sure it's a valid address type
+		if (!is_label(addr) && !is_offset_label(addr) && !is_address(addr)) return 0;
+		
+		
+		if (is_address(addr)) 
+		{
+			result.operand = hex_value(op);
+			result.mode = cur_cpu.M_ABS;
+			
+		} else
+		if (is_label(addr)) 
+		{
+			assemble_label(addr); 
+			result.operand = 0xffff;
+			result.mode = cur_cpu.M_ABSX;	
+		} else
+		{
+			main.log_assemble(`${MODULE} ABSX: Unknown label type ${label}\n`);
+			return 0;
+		}
+		
+		return 1;
+	}
+		
+	// Absolute Y		
+	function check_absy(op, mode, result)		
+	{
+		if (op[op.length-2] != ',') return 0;
+		if (op[op.length-1] != 'Y') return 0;
+		
+		var addr = op.substr(0, op.length-2);
+		
+		// Make sure it's a valid address type
+		if (!is_label(addr) && !is_offset_label(addr) && !is_address(addr)) return 0;
+		
+			
+		if (is_address(addr)) 
+		{
+			result.operand = hex_value(op);
+			result.mode = cur_cpu.M_ABS;
+			
+		} else
+		if (is_label(addr)) 
+		{
+			assemble_label(addr); 
+			result.operand = 0xffff;
+			result.mode = cur_cpu.M_ABSY;	
+		} else
+		{
+			main.log_assemble(`${MODULE} ABSY: Unknown label type ${label}\n`);
+			return 0;
+		}
+		
+		return 1;
+	}
+				
+	// X Indirect
+	function check_xind(op, mode, result)	
+	{	
+		// TODO replace with match(
+		if (op[0] != '(' || op[1] != '$') return 0;
+		if (!is_hex_char(op[op])) return 0;
+		if (!is_hex_char(op[op])) return 0;
+		if (op[4] != ',' || op[5] != 'X' || op[6] != ')') return 0;
+		
+		result.operand = hex_value(op.substr(1, 3));
+			
+		result.mode = cur_cpu.M_INDY;
+			
+		return 1;	
+	}
+		
+	// Indirect Y
+	function check_indy(op, mode, result)		
+	{
+		if (op[0] != '(' || op[1] != '$') return 0;
+		if (!is_hex_char(op[2])) return 0;
+		if (!is_hex_char(op[3])) return 0;
+		if (op[4] != ')' || op[5] != ',' || op[6] != 'Y') return 0;
+		
+		result.operand = hex_value(op.substr(1, 3));
+		result.mode = cur_cpu.M_INDY;
+			
+		return 1;
+	} 
+
+
+
+	/* Assemble Items */
 	
 	
 	// Assemble a define byte
-	function assemble_word(tokens, next)
+	function assemble_word(tokens)
 	{
-		//console.log("Assemble word : " + next);
-		//console.log(tokens);
+		if (tokens[0] != ".word") return 1;
 		
 		tokens.splice(0, 1); // Consume ".word"
 
-		next = tokens[0];
+		var next = tokens[0];
 		
 		if (next == undefined)
 		{
@@ -592,33 +591,18 @@ function Assembler(memory)
 			
 			return 1;
 		}
-		
-		//tokens.splice(0, 2); // Consume 
-		
+				
 		var cur_token = 0;
 		
 		while(cur_token < tokens.length)
 		{
 			next = tokens[cur_token];	// compute next
-			
-			//console.log("assemble word next: " + next);
-			/*if (is_literal(next))
-			{
-				add_byte(ascii(next[1]));
-				
-			} else*/
+
 			if (is_label(next))
 			{
-				//assemble_label(next);
-				
-				//console.log("Word label: " + next);
-				
-				resolve_table.push({addr:cur_prog, label:next, rel:0, mode:M_ABS});
-				
+				resolve_table.push({addr:cur_prog, label:next, mode:M_ABS});
 				add_word(0); 
-				
 			} else
-			
 			if (is_address(next))
 			{
 				add_word(parseInt(next, 16)); 
@@ -626,11 +610,9 @@ function Assembler(memory)
 			{
 				main.log_assemble("assemble_word: no operand\n");
 				return 1;
-				
 			}
 			
 			cur_token++;	
-			
 		}
 		
 		return 0;
@@ -639,14 +621,13 @@ function Assembler(memory)
 	
 		
 	// Assemble a define byte
-	function assemble_byte(tokens, next)
+	function assemble_byte(tokens)
 	{
-		//console.log("Assemble byte : " + next + "\n");
-		//console.log(tokens);
+		if (tokens[0] != ".byte") return 1;
 		
-		tokens.splice(0, 1); // Consume ".word"
+		tokens.splice(0, 1); // Consume ".byte"
 
-		next = tokens[0];		
+		var next = tokens[0];		
 		
 		if (next == undefined)
 		{
@@ -654,23 +635,15 @@ function Assembler(memory)
 			return 1;
 		}
 		
-		
 		var cur_token = 0;
 		
 		while(cur_token < tokens.length)
 		{
 			next = tokens[cur_token];	
-		
-			/*if (is_literal(next))
-			{
-				add_byte(ascii(next[1]));
-				
-			} else*/
 			
 			// get rid of comma if present
 			if (next.substr(next.length-1, next.length) == ',')
 				next = next.substr(0, next.length-1);
-			
 			
 			if (is_hex_byte(next))
 			{
@@ -686,12 +659,9 @@ function Assembler(memory)
 					add_byte(ascii(next[i]));
 				
 			} else
-				
 			{
 				main.log_assemble(`${MODULE} byte value expected ${next}\n`);
-				console.log(`${MODULE} byte value expected ${next}\n`);
-				
-				
+				return 1;
 			}
 		
 			//cur_token++;	// Consume byte
@@ -702,15 +672,19 @@ function Assembler(memory)
 	}
 	
 	// Assemble a define byte
-	function assemble_org(tokens, next)
+	function assemble_org(tokens)
 	{
+		if (tokens[0] != ".org") return 1;
+		
+		var next = tokens[1];
+		
 		if (next == undefined)
 		{
 			main.log_assemble(`${MODULE} ORG value expected\n`);
 			return 1;
 		}
 
-		// Check for invalid address
+		// Check for valid address
 		if(!is_address(next))
 		{
 			main.log_assemble(`${MODULE} ORG address expected (${next})\n`);
@@ -726,73 +700,42 @@ function Assembler(memory)
 		return 0;
 	}	
 	
-	
-	/* 
-		End of High Level assembly 
-	*/
-
-	
-	
-	/// Helpers
-	
-	
-	
-	
-	// Assemble a label
-	function assemble_offset_label(token)
-	{
-		var label = token;//(token)
-			
-		//log("Add Label: " + label);
-				
-		address_table.push({addr:cur_prog, label:label});
-	}	
-	
-	
 	// Assemble a label
 	function assemble_label(label)
 	{
-		//var label = token;//(token)
-			
-		console.log("Assemble Label: " + label);
-				
-		//address_table.push({addr:cur_prog, label:label});
+		// Check for offset label
+		if (is_offset_label(label)) 
+		{
+			assemble_offset_label(label); 
+			return;
+		}
 		
 		resolve_table.push({addr:cur_prog+1, label:label, mode:M_ABS});		
-		
 	}
 	
 	
 	
 	function assemble_offset_label(next)
 	{
-					
+		var label = next.substr(0, next.length-4);
+		var ofs = next.substr(next.length-4, next.length);
 			
-			var label = next.substr(0, next.length-4);
-			var ofs = next.substr(next.length-4, next.length);
+		var sign = ofs[0];
+		var ofs_value = parseInt(ofs.substr(2, ofs.length), 16);
 			
-			var sign = ofs[0];
-			var ofs_value = parseInt(ofs.substr(2, ofs.length), 16);
-			
-			if (sign == '-') ofs_value *= -1;
-			
-			//console.log("L: " + label);
-			//console.log("O: " + ofs);
-			//console.log("S: " + sign);
-			//console.log("V: " + ofs_value);
-			
-			// Need to add one to account for inst byte
-			resolve_table.push({addr:cur_prog+1, label:label, rel:0, ofs:ofs_value, mode:M_OFS});
-			
+		if (sign == '-') ofs_value *= -1;
+		
+		//console.log("L: " + label);
+		//console.log("O: " + ofs);
+		//console.log("S: " + sign);
+		//console.log("V: " + ofs_value);
+		
+		// Need to add one to account for inst byte
+		resolve_table.push({addr:cur_prog+1, label:label, ofs:ofs_value, mode:M_OFS});
 	}
 	
 	
-	
-	
-	
-	
-	
-	
+	/* Memory Access */
 	
 	// Add instruction to memory
 	function add_inst(inst, mode, p1)
@@ -812,24 +755,19 @@ function Assembler(memory)
 	function add_byte(v)
 	{
 		//console.log(hex_byte(v));
-		
 		memory.set_byte(cur_prog++, v); 
-		
 	}
 	
 	// Add instruction word to program
-	//function add_word(v) { add_byte(v >> 8); add_byte(v & 0xff); }	
 	function add_word(v) { add_byte(v & 0xff); add_byte(v >> 8);  }	
-	
-	
-	
-	
+
+
+	/* Type checks */
 	
 		
 	// Look for inst in table
 	function find_inst(token, mode)
 	{
-		var found_inst = -1;
 		for (var inst in cur_cpu.inst_table) 
 		{
 			if (token.toUpperCase() == cur_cpu.inst_table[inst].text)
@@ -849,22 +787,40 @@ function Assembler(memory)
 	}
 	
 	
-	
-			
-	// Look for inst in table
-	function is_inst(token)
+	// True if char is hex
+	function is_hex_char(c)
 	{
-		for (var inst in cur_cpu.inst_table) 
-		{
-			if (token.toUpperCase() == cur_cpu.inst_table[inst].text) return 1;
-		}
-		
+		if (c >= '0' && c <= '9') return 1;
+		if (c >= 'a' && c <= 'f') return 1;	
+		if (c >= 'A' && c <= 'F') return 1;	
+
 		return 0;
 	}
+
+		
+	// True if string is hex
+	function is_hex_str(s)
+	{
+		for (var i = 0; i < s.length; i++)
+		{
+			if (!is_hex_char(s[i])) return 0;
+		}
+		return 1;
+	}
+			
+	function is_hex_byte(s)
+	{
+		//console.log("is address y: " + s);
+		
+		if (s[0] != '$') return 0;
+		if (s.length != 3) return 0;
+		if (!is_hex_str(s.substr(1, s.length))) return 0;
+		
+		return 1;
+	}	
 	
 	
-	
-	
+	// True if token is string
 	function is_string(s)
 	{
 		
@@ -872,20 +828,16 @@ function Assembler(memory)
 		if (s[s.length-1] != '"') return 0;
 		
 		return 1;
-		
 	}
 	
 	
-	
-	
-	
-	// True if is label
+	// True if token is label
 	function is_literal(s)
 	{
 		return s[0] == '\'' && s[s.length-1] == '\'' && s.length == 3;
 	}	
 	
-	// True if is valid label char
+	// True if token is valid label char
 	function is_label_char(c, first)
 	{
 		// Upper and lower case ok for first char
@@ -902,32 +854,35 @@ function Assembler(memory)
 		return 0;
 	}
 
-
 	
-	// True if char is hex
+	// True if label or offset label
 	function is_label(s)
 	{
+		//if (s == undefined) return 0;
+		
+		// Check for offset label first
+		if (is_offset_label(s)) return 1; 
+		
+		// Make sure all chars are valid
 		for (var i = 0; i < s.length; i++)
 		{
 			if ( !is_label_char(s[i], i == 0)) return 0; 
 		}
 		
-		
 		// Make sure it is not an instruction
 		if (find_inst(s, cur_cpu.M_ANY) != -1) return 0;
-		
-		
-		
-		
 		
 		return 1;
 	}	
 	
 	
-	// True if char is hex
+	// True if toke is offset label
 	function is_offset_label(s)
 	{
-		main.log_assemble("Is offset label " + s + "\n");
+		// Match ADDR+$xx or ADDR-$xx
+		
+		if (s == undefined) return 0;
+		//main.log_assemble("Is offset label " + s + "\n");
 		
 		var ofs_len = 5;
 		
@@ -941,47 +896,13 @@ function Assembler(memory)
 		
 		return 1;
 	}	
-		
-	
-	
-	// True if char is hex
-	function is_hex_char(c)
-	{
-		if (c >= '0' && c <= '9') return 1;
-		if (c >= 'a' && c <= 'f') return 1;	
-		if (c >= 'A' && c <= 'F') return 1;	
 
-		return 0;
-	}
-
-		
-	// True if char is hex
-	function is_hex_str(s)
-	{
-		for (var i = 0; i < s.length; i++)
-		{
-			if (!is_hex_char(s[i])) return 0;
-		}
-		return 1;
-	}
-			
-	function is_hex_byte(s)
-	{
-			///console.log("is address y: " + s);
-		
-		
-		if (s[0] != '$') return 0;
-		if (s.length != 3) return 0;
-		if (!is_hex_str(s.substr(1, s.length))) return 0;
-		
-		return 1;
-	}
-			
+	
+	// True if is hex address
 	function is_address(s)
 	{
 		//console.log("is address y: " + s);
 		
-		
 		if (s[0] != '$') return 0;
 		if (s.length != 5) return 0;
 		if (!is_hex_str(s.substr(1, s.length))) return 0;
@@ -990,189 +911,19 @@ function Assembler(memory)
 	}
 	
 
-
-	function is_ind(s)
-	{
-		if (s[0] != '(') return 0;
-		if (s[s.length-1] != ')') return 0;
-		
-		
-		return 1;
-	}
-	
-
-
-		
-
-
-
-
-
-
-
-
-
-	function is_zp(s)
-	{
-		if (s[0] != '$') return 0;
-		if (s.length != 3) return 0;
-		if (!is_hex_str(s.substr(1, s.length))) return 0;
-		
-		return 1;
-	}	
-
-
-	function is_zpx(s)
-	{
-		//   $xx,X
-
-		if (s.length != 5) return 0;
-		
-		if (s[0] != '$') return 0;
-		if (s[3] != ',') return 0;
-		if (s[4] != 'X') return 0;
-		
-		if (!is_hex_str(s.substr(1, 2))) return 0;
-		
-		return 1;
-	}	
-
-	
-	
-	function is_zpy(s)
-	{
-		//   $xx,Y
-
-		if (s.length != 5) return 0;
-		
-		if (s[0] != '$') return 0;
-		if (s[3] != ',') return 0;
-		if (s[4] != 'Y') return 0;
-		
-		if (!is_hex_str(s.substr(1, 2))) return 0;
-		
-		return 1;
-	}	
-
-	
-	
-	
-	
-	
-	function is_absx(s)
-	{
-		console.log("ABSX");
-		//if (s[0] != '$') return 0;
-		//if (s.length != 3) return 0;
-		//if (!is_hex_str(s.substr(1, s.length))) return 0;
-//		if (length != 7) return 0;
-		
-		
-		if (s[s.length-2] != ',') return 0;
-		if (s[s.length-1] != 'X') return 0;
-		
-		
-		var  addr = s.substr(0, s.length-2);
-		//console.log("Addr: " + addr);
-		
-		
-		if (is_label(addr)) return 1;
-		if (is_offset_label(addr)) return 1;
-		if (is_address(addr)) return 1;
-		
-		return 0;
-	}	
-		
-	function is_absy(s)
-	{
-		//if (s[0] != '$') return 0;
-		//if (s.length != 3) return 0;
-		//if (!is_hex_str(s.substr(1, s.length))) return 0;
-		
-		
-		if (s[s.length-2] != ',') return 0;
-		if (s[s.length-1] != 'Y') return 0;
-		
-		if (!is_label(s.substr(0, s.lengyth-2)) || is_offset_label(s.substr(0, s.lengyth-2))) return 0;
-		
-		
-		return 1;
-	}	
-	
-	
-	function is_xind(s)
-	{
-		//console.log(s);
-		
-		if (s[0] != '(') return 0;
-		if (s[1] != '$') return 0;
-		if (!is_hex_char(s[2])) return 0;
-		if (!is_hex_char(s[3])) return 0;
-		if (s[4] != ',') return 0;
-		if (s[5] != 'X') return 0;
-		if (s[6] != ')') return 0;
-		
-		return 1;
-		
-		
-		
-		
-	}	
-	
-
-	function is_indy(s)
-	{
-		//console.log(s);
-		
-		if (s[0] != '(') return 0;
-		if (s[1] != '$') return 0;
-		if (!is_hex_char(s[2])) return 0;
-		if (!is_hex_char(s[3])) return 0;
-		if (s[4] != ')') return 0;
-		if (s[5] != ',') return 0;
-		if (s[6] != 'Y') return 0;
-		
-		return 1;
-		
-		
-		
-		
-	}
-	
-	
-	
-	
-
+	// True if starts with #
 	function is_immediate(next)
 	{
 		return next[0] == '#';
 	}
 	
 	
-	// True if is label
-	/*function is_label(s)
-	{
-		return s[s.length-1] == ':';
-	}*/
-	
-	// Get label from string
-	function get_label(s)
-	{
-		return s.substring(0, s.length-1);
-	}
-	
-	
-	
-	
-	
+	// Get Hex value from $....
 	function hex_value(h)
 	{
+		//console.log(h);
 		return parseInt(h.substr(1, h.length), 16); 
-		
 	}
-	
-	
-	
 	
 	/* End of Assembler */
 	
@@ -1187,40 +938,9 @@ function Assembler(memory)
 		var i = start;
 		
 		// Disassemble and consume operands
-		while(i <= end) 
-			i = disassemble_inst(target, i);
+		while(i < end) i = disassemble_inst(target, i);
 		
-		
-		
-		// Dump hex
-		
-		var c = 0;
-		var str = "";
-		
-		for (var i = start; i <= end; i++)
-		{
-			var b = memory.get_byte(i);;
-			
-			if (c == 0)  str += "e" + hex_word(i) + ":  .DB ";
-			
-			str += "$" + hex_byte(b);
-
-		if (c != 7) str += ",";
-
-			str += 			 " " ;
-			
-			if (++c >= 8) { str += "\n"; c = 0; } 
-			
-			
-			
-		}
-		
-		
-		console.log(str);
-		
-		
-		
-		
+		dump_hex(start, end);
 	}
 	
 	// Disassemble single inst 
@@ -1230,12 +950,10 @@ function Assembler(memory)
 
 		out += `${MODULE} `;
 
-		out += `<span class="assemble_addr">`;
-		out += `  ${hex_word(i)}    `; // Address
-		out += `</span>`;
-				
+		// Address
+		out += `<span class="assemble_addr">${hex_word(i)}</span>   `;
 		
-		var inst_byte = memory.get_byte(i);	// instruction
+		var inst_byte = memory.get_byte(i);	// Instruction
 		
 		//main.log_assemble(hex_byte(inst));
 		if (cur_cpu.inst_table[inst_byte] == undefined)
@@ -1250,21 +968,16 @@ function Assembler(memory)
 		
 		var inst = cur_cpu.inst_table[inst_byte];
 		
-		
-			out += `<span class="assemble_data">`;
-		// Show instruction bytes
+		// Show instruction bytes		
+		out += `<span class="assemble_data">`;
 		var byte_str = hex_byte(memory.get_byte(i))
 		if (inst.s >= 1) byte_str += " " + hex_byte(memory.get_byte(i+1));
 		if (inst.s == 2) byte_str  += " " + hex_byte(memory.get_byte(i+2));
-
 		out += byte_str.padEnd(12);
-		
-
 		out += `</span>`;		
-		
-		
-				out += `<span class="assemble_mode">`;
+
 		// Address mode 
+		out += `<span class="assemble_mode">`;
 		if (inst.m == CPU6502.M_NONE) out += `     `; else
 		if (inst.m == CPU6502.M_IMP)  out += `IMP  `; else
 		if (inst.m == CPU6502.M_ABS)  out += `ABS  `; else
@@ -1278,24 +991,12 @@ function Assembler(memory)
 		if (inst.m == CPU6502.M_ZP)   out += `ZP   `; else
 		if (inst.m == CPU6502.M_ZPX)  out += `ZPX  `; else
 		if (inst.m == CPU6502.M_ZPY)  out += `ZPY  `; 
-		out += `</span>`;	
-		
-		out += "      ";
-		
-		
-		
-		out += `<span class="assemble_inst">`;
+		out += `</span>  `;	
 		
 		// Inst name
-		out += inst.text.padEnd(6);
-
-		out += `</span>`;
-		
-		
+		out += `<span class="assemble_inst"> ${inst.text.padEnd(6)} </span>`;   	
 		
 		// Decode address mode
-		
-		
 		if (inst.m == CPU6502.M_IMP)  out += ``;
 		if (inst.m == CPU6502.M_ABS)  out += `$${hex_word(memory.get_word(i+1))}`;
 		if (inst.m == CPU6502.M_ABSX) out += `$${hex_word(memory.get_word(i+1))},X`;
@@ -1309,54 +1010,40 @@ function Assembler(memory)
 		if (inst.m == CPU6502.M_ZPX) out += `$${hex_byte(memory.get_byte(i+1))},X`;
 		if (inst.m == CPU6502.M_ZPY) out += `$${hex_byte(memory.get_byte(i+1))},Y`;
 		
-
 		out += "\n";
 
-		
-		
-				//CPU6502.M_ANY  = 0xFF;				// Any mode mask for assembler
-		//CPU6502.M_NONE = 0x00;				// No Mode (test)
-		//CPU6502.M_IMP  = 0x01;				// Implied, no operand
-		//CPU6502.M_ABS  = 0x02;				// Absolute
-		//CPU6502.M_ABSX = 0x03;				// Absolute X
-		//CPU6502.M_ABSY = 0x04;				// Absolute Y
-		//CPU6502.M_IMM  = 0x05;				// Immediate
-		//CPU6502.M_IND  = 0x06;				// Indirect
-		//CPU6502.M_XIND = 0x07;				// X Indirect
-		//CPU6502.M_INDY = 0x08;				// Indirect Y
-		//CPU6502.M_REL  = 0x09;				// Relative
-		//CPU6502.M_ZP   = 0x0A;				// Zero Page
-		//CPU6502.M_ZPX  = 0x0B;				// Zero Page X
-		//CPU6502.M_ZPY  = 0x0C;				// Zero Page Y
-		
+		i += inst.s + 1; // Next inst	
 
-		
-		
-		
-		//if (inst.s == 0)	out += "    "; 
-		//if (inst.s == 1)	out += hex_byte(memory.get_byte(i+1)).padEnd(4); 
-		//if (inst.s == 2)	out += hex_word(memory.get_word(i+1));
-	
-	
-		//log(address_table);
-		//log_console("[" + find_addr_name(i) + "]");
-		
-		//console.log(inst.s + " " + inst.m);
-		//console.log(inst);
-		
-		i += inst.s + 1;	
-		
-		//console.log(inst);
-		//console.log(inst.s);
-		
-	
-		//out += "\n";
-		
 		target(out);
-		
-		//console.log(out);
+
 		return i;
 	}		
+	
+	
+	// Hex dump for degugging
+	function dump_hex(start, end)
+	{
+		var c = 0;
+		var str = "";
+		
+		for (var i = start; i < end; i++)
+		{
+			var b = memory.get_byte(i);;
+			
+			if (c == 0)  str += "e" + hex_word(i) + ":  .DB ";
+			
+			str += "$" + hex_byte(b);
+
+			if (c != 7 && i <= end-1) str += ",";
+
+			str += 			 " " ;
+			
+			if (++c >= 8) { str += "\n"; c = 0; } 
+		}
+		
+		console.log(str);
+	}
+	
 	
 	// Get name of address
 	function find_addr_name(i)
@@ -1373,7 +1060,6 @@ function Assembler(memory)
 		}*/
 		return "";
 	}
-	
 	
 	
 	/* End of Disassembler */
