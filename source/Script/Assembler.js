@@ -8,14 +8,15 @@
 "use strict";
 
 // Assembler
-function Assembler(memory)
+function Assembler(cpu, memory)
 {
-	const MODULE = "[Assembler] ";
+	const MODULE = "[Assembler]  ";
 	
 	// Private 
 	const DEBUG = 0;			// True for assembly debug
 	
-	const DISS_LEN = 0xA00;		// How much to disassemble
+	//const DISS_LEN = 0xA00;		// How much to disassemble
+	const DISS_LEN = 0x100;		// How much to disassemble
 	const M_ABS = 1;			// Modes for addresses
 	const M_REL = 2;			// Relative
 	const M_OFS = 3;			// Offset
@@ -25,10 +26,16 @@ function Assembler(memory)
 	var address_table = [];  	// Stores known addresses
 	var resolve_table = [];  	// Stores address that need resolved
 	var cur_prog = 0;			// Location of next load 
-	var last_org = 0;			// Last origin
+	var first_org = 0;			// Last origin
 	
-	var cur_cpu = null;			// Reference to CPU 
+	var inst_table = null;
+	var inst_modes = null;
+	
+	
+	//var cpu = null;			// Reference to CPU 
 		
+		
+	init();
 		
 	/* 
 		Public 
@@ -38,6 +45,12 @@ function Assembler(memory)
 	function init()
 	{
 		main.log_console(MODULE + "Init\n");	
+		
+		inst_table = cpu.get_inst_table();
+		inst_modes = cpu.get_addr_modes();
+		//console.log(inst_table);
+		
+	//	cpu=cpu;
 	}
 			
 	
@@ -45,27 +58,27 @@ function Assembler(memory)
 			
 			
 	// Assemble a string
-	function assemble(cpu, str, prog_addr)
+	function assemble(prog_str, prog_addr)
 	{
 		main.log_assemble(`${MODULE} [Assemble]\n`);
 		//main.log(str);
 
-		if (str == "")
+		if (prog_str == "")
 		{
-			main.log_assemble(`No Program ${str}\n`);
+			main.log_assemble(`No Program ${prog_str}\n`);
 			return;
 		}		
 		
-		cur_cpu = cpu;
+		//cpu = cpu;
 		
 		cur_prog = prog_addr; // TODO: can be removed probably
 		
 		address_table = [];
 		resolve_table = [];
 		
-		str = remove_block_comments(str);		// Eat block comments in plain text
+		prog_str = remove_block_comments(prog_str);		// Eat block comments in plain text
 
-		var lines = str.split("\n");
+		var lines = prog_str.split("\n");
 		
 		// Assemble entire program
 		if (assemble_lines(lines))
@@ -80,7 +93,7 @@ function Assembler(memory)
 			return 1;
 		}
 		
-		disassemble(main.log_assemble, last_org, last_org + DISS_LEN);
+		disassemble(main.log_assemble, first_org, 0x8000);
 		
 		return 0;
 	}
@@ -236,10 +249,11 @@ function Assembler(memory)
 			if (tokens.length == 0) return 0;					// No tokens left line		
 		}		
 	
-		if (assemble_inst(tokens) == 0) return 0;		// Try Instruction
+		if (assemble_cpu(tokens) == 0) return 0;		// try .cpu
+		if (assemble_org(tokens) == 0) return 0;		// try .org
 		if (assemble_byte(tokens) == 0) return 0;		// Try .byte
 		if (assemble_word(tokens) == 0) return 0;		// Try .word
-		if (assemble_org(tokens) == 0) return 0;		// try .org
+		if (assemble_inst(tokens) == 0) return 0;		// Try Instruction		
 		
 		// Unknown
 		main.log_assemble(`${MODULE} Invalid Token: (${tokens[0]})\n`);
@@ -259,7 +273,7 @@ function Assembler(memory)
 	function assemble_inst(line_tokens)
 	{
 		// See if token is instruction. Correct instruction for mode will be determined later	
-		var inst_index = find_inst(line_tokens[0], cur_cpu.M_ANY);
+		var inst_index = find_inst(line_tokens[0], inst_modes.M_ANY);
 					
 		// Did not find as instruction
 		if (inst_index == -1) return 1;
@@ -271,7 +285,7 @@ function Assembler(memory)
 		var result = decode_operand(inst_index, next);	
 		
 		// Unable to decode mode
-		if (result.mode == cur_cpu.M_NONE) 
+		if (result.mode == inst_modes.M_NONE) 
 		{
 			main.log_assemble(`${MODULE} assemble inst: Invalid operand ${next}\n`);
 			return 1;
@@ -282,8 +296,8 @@ function Assembler(memory)
 		
 		if (inst_index == -1)
 		{
-			main.log_assemble(`${MODULE} Address mode not found for ${line_tokens[0]} ${cur_cpu.MODE_TEXT(result.mode)}\n`);
-			console.log(`${MODULE} Address mode not found for ${line_tokens[0]} ${cur_cpu.MODE_TEXT(result.mode)}\n`);
+			main.log_assemble(`${MODULE} Address mode not found for ${line_tokens[0]} ${cpu.mode_text(result.mode)}\n`);
+			console.log(`${MODULE} Address mode not found for ${line_tokens[0]} ${cpu.mode_text(result.mode)}\n`);
 			return 1;
 		}
 		
@@ -295,10 +309,10 @@ function Assembler(memory)
 	// Decode the operand
 	function decode_operand(inst_index, next)
 	{
-		var result = {mode:cur_cpu.M_NONE, operand:0};
+		var result = {mode:inst_modes.M_NONE, operand:0};
 		
 		// Mode from first match instruction. Used for relative
-		var mode = cur_cpu.inst_table[inst_index].m;
+		var mode = inst_table[inst_index].m;
 		
 		// Build a list of functions to check the operand against. Must be checked in order
 		var check_funcs = {	check_implied, check_relative, check_abs,
@@ -321,7 +335,7 @@ function Assembler(memory)
 	{
 		if (op != undefined) return 0; // Todo: needs a better check
 		
-		result.mode = cur_cpu.M_IMP;
+		result.mode = inst_modes.M_IMP;
 
 		return 1;
 	}
@@ -330,11 +344,11 @@ function Assembler(memory)
 	// See if address is relative
 	function check_relative(op, mode, result)
 	{
-		if (mode != cur_cpu.M_REL) return 0;
+		if (mode != inst_modes.M_REL) return 0;
 		
 		resolve_table.push({addr:cur_prog+1, label:op, mode:M_REL});
 			
-		result.mode = cur_cpu.M_REL;		
+		result.mode = inst_modes.M_REL;		
 			
 		return 1;
 	}
@@ -345,21 +359,21 @@ function Assembler(memory)
 		if (is_offset_label(op))
 		{
 			assemble_offset_label(op);
-			result.mode = cur_cpu.M_ABS;
+			result.mode = inst_modes.M_ABS;
 			return 1;
 		}
 
 		if (is_label(op))
 		{
 			resolve_table.push({addr:cur_prog+1, label:op, mode:M_ABS});
-			result.mode = cur_cpu.M_ABS;
+			result.mode = inst_modes.M_ABS;
 			return 1;
 		}
 		
 		if (is_address(op)) 
 		{
 			result.operand = hex_value(op);
-			result.mode = cur_cpu.M_ABS;
+			result.mode = inst_modes.M_ABS;
 			return 1;
 		}
 		
@@ -374,7 +388,7 @@ function Assembler(memory)
 		{
 			operand = ascii(op[1]);
 			
-			result.mode = cur_cpu.M_IMM;
+			result.mode = inst_modes.M_IMM;
 			
 			return 1;
 		}
@@ -401,7 +415,7 @@ function Assembler(memory)
 				result.operand = parseInt(op.substr(2, op.length-1), 16); 
 			}
 			
-			result.mode = cur_cpu.M_IMM;
+			result.mode = inst_modes.M_IMM;
 
 			return 1;
 		}
@@ -418,7 +432,7 @@ function Assembler(memory)
 		if (!is_hex_str(op.substr(1, op.length))) return 0;
 
 		result.operand = hex_value(op);
-		result.mode = cur_cpu.M_ZP;
+		result.mode = inst_modes.M_ZP;
 		
 		return 1;
 	}
@@ -435,7 +449,7 @@ function Assembler(memory)
 		if (!is_hex_str(op.substr(1, 2))) return 0;		
 
 		result.operand = hex_value(op.substr(0, op.length-2));
-		result.mode = cur_cpu.M_ZPX;
+		result.mode = inst_modes.M_ZPX;
 		
 		return 1;
 	}
@@ -450,7 +464,7 @@ function Assembler(memory)
 		if (!is_hex_str(op.substr(1, 2))) return 0;
 
 		result.operand = hex_value(op.substr(0, op.length-2));
-		result.mode = cur_cpu.M_ZPY;
+		result.mode = inst_modes.M_ZPY;
 		
 		return 1;
 	}
@@ -466,7 +480,7 @@ function Assembler(memory)
 		// TODO need to check for a label here
 
 		result.operand = hex_value(addr);						
-		result.mode = cur_cpu.M_IND;
+		result.mode = inst_modes.M_IND;
 			
 		return 1;
 	}
@@ -485,14 +499,14 @@ function Assembler(memory)
 		if (is_address(addr)) 
 		{
 			result.operand = hex_value(op);
-			result.mode = cur_cpu.M_ABS;
+			result.mode = inst_modes.M_ABS;
 			
 		} else
 		if (is_label(addr)) 
 		{
 			assemble_label(addr); 
 			result.operand = 0xffff;
-			result.mode = cur_cpu.M_ABSX;	
+			result.mode = inst_modes.M_ABSX;	
 		} else
 		{
 			main.log_assemble(`${MODULE} ABSX: Unknown label type ${label}\n`);
@@ -516,14 +530,14 @@ function Assembler(memory)
 		if (is_address(addr)) 
 		{
 			result.operand = hex_value(op);
-			result.mode = cur_cpu.M_ABS;
+			result.mode = inst_modes.M_ABS;
 			
 		} else
 		if (is_label(addr)) 
 		{
 			assemble_label(addr); 
 			result.operand = 0xffff;
-			result.mode = cur_cpu.M_ABSY;	
+			result.mode = inst_modes.M_ABSY;	
 		} else
 		{
 			main.log_assemble(`${MODULE} ABSY: Unknown label type ${label}\n`);
@@ -544,7 +558,7 @@ function Assembler(memory)
 		
 		result.operand = hex_value(op.substr(1, 3));
 			
-		result.mode = cur_cpu.M_INDY;
+		result.mode = inst_modes.M_INDY;
 			
 		return 1;	
 	}
@@ -558,7 +572,7 @@ function Assembler(memory)
 		if (op[4] != ')' || op[5] != ',' || op[6] != 'Y') return 0;
 		
 		result.operand = hex_value(op.substr(1, 3));
-		result.mode = cur_cpu.M_INDY;
+		result.mode = inst_modes.M_INDY;
 			
 		return 1;
 	} 
@@ -678,12 +692,41 @@ function Assembler(memory)
 
 		cur_prog = hex_value(next);
 		
-		last_org = cur_prog;
+		//Only set once
+		if (first_org == 0)
+			first_org = cur_prog;
+		
+		
 		
 		main.log_assemble(`${MODULE} ORG (${hex_word(cur_prog)})\n`);
 
 		return 0;
 	}	
+	
+	
+	// Assemble a define byte
+	function assemble_cpu(tokens)
+	{
+		if (tokens[0] != ".cpu") return 1;
+		
+		var cpu_type = tokens[1];
+		
+		if (cpu_type == undefined)
+		{
+			main.log_assemble(`${MODULE} CPU expected\n`);
+			return 1;
+		}
+		
+		// Load the CPU
+		//cpu = window[cpu_type]; 
+		//cpu.configure(); Assume configured
+		
+		main.log_assemble(`${MODULE} CPU (${cpu.get_name()})\n`);
+
+		return 0;
+	}		
+	
+	
 	
 	// Assemble a label
 	function assemble_label(label)
@@ -717,13 +760,13 @@ function Assembler(memory)
 	// Add instruction to memory
 	function add_inst(inst, mode, p1)
 	{
-		var val = cur_cpu.inst_table[inst].s == 0 ? "" : (cur_cpu.inst_table[inst].s == 1 ? hex_byte(p1) : hex_word(p1) )   ;
+		var val = inst_table[inst].s == 0 ? "" : (inst_table[inst].s == 1 ? hex_byte(p1) : hex_word(p1) )   ;
 		
 		// Add instruction
 		add_byte(inst);
 		
-		if (cur_cpu.inst_table[inst].s == 1) add_byte(p1);
-		if (cur_cpu.inst_table[inst].s == 2) add_word(p1);
+		if (inst_table[inst].s == 1) add_byte(p1);
+		if (inst_table[inst].s == 2) add_word(p1);
 	}
 	
 	// Add instruction byte to program
@@ -741,15 +784,17 @@ function Assembler(memory)
 	// Look for inst in table
 	function find_inst(token, mode)
 	{
-		for (var inst in cur_cpu.inst_table) 
+		if (cpu == null) return -1;
+		
+		for (var inst in inst_table) 
 		{
-			if (token.toUpperCase() == cur_cpu.inst_table[inst].text)
+			if (token.toUpperCase() == inst_table[inst].text)
 			{
 				// Just match the text
-				if (mode == cur_cpu.M_ANY) return inst;
+				if (mode == inst_modes.M_ANY) return inst;
 					
 				// Also match mode
-				if (cur_cpu.inst_table[inst].m == mode)
+				if (inst_table[inst].m == mode)
 					return inst;
 			}
 		}
@@ -830,7 +875,7 @@ function Assembler(memory)
 		}
 		
 		// Make sure it is not an instruction
-		if (find_inst(s, cur_cpu.M_ANY) != -1) return 0;
+		if (find_inst(s, inst_modes.M_ANY) != -1) return 0;
 		
 		return 1;
 	}	
@@ -892,7 +937,7 @@ function Assembler(memory)
 		// Disassemble and consume operands
 		while(i < end) i = disassemble_inst(target, i);
 		
-		dump_hex(start, end);
+		//dump_hex(start, end);
 	}
 	
 	// Disassemble single inst 
@@ -905,7 +950,7 @@ function Assembler(memory)
 		// Address
 		out += `<span class="assemble_addr">${hex_word(i)}</span>   `;
 		
-		var inst = cur_cpu.inst_table[memory.get_byte(i)];
+		var inst = inst_table[memory.get_byte(i)];
 		
 		// Show instruction bytes		
 		out += `<span class="assemble_data">`;
@@ -916,24 +961,24 @@ function Assembler(memory)
 		out += `</span>`;		
 
 		// Address mode 
-		out += `<span class="assemble_mode"> ${cur_cpu.MODE_TEXT(inst.m).padEnd(6)}</span>  `;	
+		out += `<span class="assemble_mode"> ${cpu.mode_text(inst.m).padEnd(6)}</span>  `;	
 		
 		// Inst name
 		out += `<span class="assemble_inst"> ${inst.text.padEnd(6)} </span>`;   	
 		
 		// Decode address mode
-		if (inst.m == CPU6502.M_IMP)  out += ``;
-		if (inst.m == CPU6502.M_ABS)  out += `$${hex_word(memory.get_word(i+1))}`;
-		if (inst.m == CPU6502.M_ABSX) out += `$${hex_word(memory.get_word(i+1))},X`;
-		if (inst.m == CPU6502.M_ABSY) out += `$${hex_word(memory.get_word(i+1))},Y`;
-		if (inst.m == CPU6502.M_IMM)  out += `#$${hex_byte(memory.get_byte(i+1))}`;
-		if (inst.m == CPU6502.M_IND)  out += `($${hex_word(memory.get_word(i+1))})`;
-		if (inst.m == CPU6502.M_XIND) out += `($${hex_byte(memory.get_byte(i+1))},X)`;
-		if (inst.m == CPU6502.M_INDY) out += `($${hex_byte(memory.get_byte(i+1))}),Y`;
-		if (inst.m == CPU6502.M_REL)  out += `$${hex_word(i+(memory.get_byte(i+1)+2))}`;
-		if (inst.m == CPU6502.M_ZP)   out += `$${hex_byte(memory.get_byte(i+1))}`;
-		if (inst.m == CPU6502.M_ZPX)  out += `$${hex_byte(memory.get_byte(i+1))},X`;
-		if (inst.m == CPU6502.M_ZPY)  out += `$${hex_byte(memory.get_byte(i+1))},Y`;
+		if (inst.m == inst_modes.M_IMP)  out += ``;
+		if (inst.m == inst_modes.M_ABS)  out += `$${hex_word(memory.get_word(i+1))}`;
+		if (inst.m == inst_modes.M_ABSX) out += `$${hex_word(memory.get_word(i+1))},X`;
+		if (inst.m == inst_modes.M_ABSY) out += `$${hex_word(memory.get_word(i+1))},Y`;
+		if (inst.m == inst_modes.M_IMM)  out += `#$${hex_byte(memory.get_byte(i+1))}`;
+		if (inst.m == inst_modes.M_IND)  out += `($${hex_word(memory.get_word(i+1))})`;
+		if (inst.m == inst_modes.M_XIND) out += `($${hex_byte(memory.get_byte(i+1))},X)`;
+		if (inst.m == inst_modes.M_INDY) out += `($${hex_byte(memory.get_byte(i+1))}),Y`;
+		if (inst.m == inst_modes.M_REL)  out += `$${hex_word(i+(memory.get_byte(i+1)+2))}`;
+		if (inst.m == inst_modes.M_ZP)   out += `$${hex_byte(memory.get_byte(i+1))}`;
+		if (inst.m == inst_modes.M_ZPX)  out += `$${hex_byte(memory.get_byte(i+1))},X`;
+		if (inst.m == inst_modes.M_ZPY)  out += `$${hex_byte(memory.get_byte(i+1))},Y`;
 		
 		out += "\n";
 

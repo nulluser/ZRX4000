@@ -9,6 +9,66 @@
 
 
 
+var test = 
+
+`
+
+		.cpu	CPU6502
+		.org	$7600
+
+
+start
+
+		ldx		#$00
+
+loop
+
+		lda		string,X
+
+		cmp		#$00
+		
+		beq		start
+		
+		sta		$C000
+
+		inx
+		
+		jmp		loop
+		
+
+
+
+
+
+		
+string
+		
+		.byte "/---------------\"
+		.byte $0d
+		.byte "|  Hello 6502!  |"
+		.byte $0d
+		.byte "\---------------/"
+		.byte $0d
+		.byte $00
+	
+		.org	$FFFA                ; Address of reset vector
+		.word	start               ; NMI
+		.word	start               ; Reset vector
+		.word	start               ; IRQ	
+	
+
+`;
+
+
+
+
+
+
+
+
+
+
+
 // scroll vert
 var gpu_test1 = 
  `

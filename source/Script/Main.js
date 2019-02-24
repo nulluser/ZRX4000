@@ -19,9 +19,11 @@ var main = (function ()
 	// Private 
 	//const DEFAULT_PROG = vert_scroll;
 	const DEFAULT_PROG = "tiny_basic";// Default program
+	//const DEFAULT_PROG = "test";// Default program
+	
 	//const DEFAULT_PROG = OS;
 	
-	const ASSM_MAX = 1000;
+	const ASSM_MAX = 3000;
 	const CON_MAX = 500;
 
 	var debug_window;				// Popup debug window
@@ -40,9 +42,11 @@ var main = (function ()
 		//assemble();
 
 		load_prog(DEFAULT_PROG);
-		//load_prog("tiny_basic");
-		load_area("assembler");
+		
+		//load_area("assembler");
 		//load_area("terminal");
+		load_area("console");
+		
 		
 		//assemble();
 

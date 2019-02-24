@@ -77,9 +77,11 @@ function Memory()
 		for (var i = 0; i < addr_hooks.length; i++)
 		{
 			var hook = addr_hooks[i];
-			
+
 			if (a >= hook.start && a < hook.start + hook.length)
+			{
 				return hook;
+			}
 		}
 		
 		return null;
@@ -117,6 +119,17 @@ function Memory()
 		return data[a]; 
 	}
 	
+	// Get signed byte
+	function get_sbyte(a)
+	{
+		var v = get_byte(a);
+			
+		if (v > 128)
+			v = v - 256;
+		
+		return v;
+	}	
+	
 	// Get word from memory
 	function get_word(a) 
 	{ 
@@ -134,6 +147,7 @@ function Memory()
 		{
 			if (h.write == null) return;
 			h.write(a - h.start, v);
+			
 			return;
 		}	
 	
@@ -181,6 +195,7 @@ function Memory()
 			clear : clear,
 			dump : dump,
 			get_byte : get_byte,
+			get_sbyte:get_sbyte,
 			get_word : get_word,
 			set_byte : set_byte,
 			set_word : set_word};

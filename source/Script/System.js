@@ -37,12 +37,14 @@ function System()
 	const DEFAULT_PROG = tiny_basic;// Default program
 	
 	//const cpu_type = CPU;
-	const cpu_type = CPU6502;
+	//const cpu_type = CPU6502;
 	
-	const DEBUG = 0;				// Master debug
+	const DEBUG = 1;				// Master debug
 	
 	const UPDATE_RATE = 0;			// CPU Update (ms)
-	const DEBUG_TIME = 50;			// Time to wait between updates in debug
+	const DEBUG_TIME = 250;			// Time to wait between updates in debug
+	//const DEBUG_TIME = 0;			// Time to wait between updates in debug
+	
 	const SECOND_RATE = 1000;		// Status update
 
 	const TARGET_FPS = 60;			// Target fps
@@ -70,12 +72,13 @@ function System()
 	const INT_KEYBOARD =	0x01    // Keyboard interrupt
 	
 	// Cores
-	const TEST_CORES = 0;			// Number of cores
+	//const TEST_CORES = 0;			// Number of cores
 	
 	// Devices
+	var cpu = null;					// CPU
 	var io = null;					// IO
 	var memory = null;				// Shared memory
-	var cpu_cores = [];				// CPU Cores
+	//var cpu_cores = [];				// CPU Cores
 	var frame_buffer = null;		// Frame buffer
 	var gpu = null;					// GPU
 	
@@ -115,15 +118,34 @@ function System()
 	// Hook devices into system
 	function connect_devices()
 	{
+
+		
+		
 		main.log_console(`${MODULE} Connecting Devices\n`);
 		
-		cpu_type.configure(); 		// Setup CPU template 
+		//cpu_type.configure(); 		// Setup CPU template 
+		
+		
+		
+		
 		
 		memory = Memory();											// Setup main memory
 		io = IO();													// Setup IO object
 		frame_buffer = FrameBuffer(memory, FB_ADDR);				// Setup frame buffer
 		gpu = GPU(memory, frame_buffer, GPU_CMD, GPU_DATA);			// Setup GPU
-		assembler = Assembler(memory);								// Create an assembler
+		
+		
+		
+
+		cpu = CPU6502("Core", memory, io, 0x7600);
+
+		cpu.configure();		
+		
+		
+		
+		assembler = Assembler(cpu, memory);								// Create an assembler
+		
+		//
 		
 		// Assemble some code into memory
 		//if(assembler.assemble(CPU, vert_scroll,	0x1000)) return;
@@ -142,30 +164,34 @@ function System()
 		//assembler.assemble(CPU.inst_table, game,		0x4000);		
 		
 		// Create some cores
-		cpu_cores.push( new cpu_type("CPU1", memory, io, 0x1000) );
+		//cpu_cores.push( new cpu_type("CPU1", memory, io, 0x7600) );
 		//cpu_cores.push( new CPU("CPU2", memory, 0x2000) );
 		//cpu_cores.push( new CPU("CPU3", memory, 0x3000) );
 		
 		// Set realtime option for game core
-		cpu_type.set_option(cpu_cores[0], cpu_type.OPTION_REALTIME, 1);
+		//cpu.set_option(cpu_cores[0], cpu_type.OPTION_REALTIME, 1);
 		
 		// Set debug if needed
 		// Can debug by core
 		if (DEBUG)
-			cpu_type.set_option(cpu_cores[0], cpu_type.OPTION_DEBUG, 1);		
+			cpu.set_option("debug", 1);		
 		
 		// Create more cores
 		// They will all run the code at 0x2000, frame buffer test
-		for (var i = 0; i < TEST_CORES; i++)
-			cpu_cores.push( new cpu_type("CPUX" + i, memory, io, 0x2000) );		
+		//for (var i = 0; i < TEST_CORES; i++)
+//			cpu_cores.push( new cpu_type("CPUX" + i, memory, io, 0x2000) );		
 			
 		// Addach IO to CPU 0
 		//io = IO(cpu_cores[0], memory, KEY_ADDR, INT_KEYBOARD);
 		
-		io.init(cpu_cores[0], memory, OUT_ADDR, IN_ADDR, KEY_ADDR, INT_KEYBOARD);
+		io.init(cpu, memory, OUT_ADDR, IN_ADDR, KEY_ADDR, INT_KEYBOARD);
+		
+		
+		//cpu.reset();
+		
 		
 		// Dump memory
-		memory.dump(0x1000, 0x100);
+		//memory.dump(0x1000, 0x100);
 
 		update_enable = true;
 	}	
@@ -187,7 +213,7 @@ function System()
 
 	function reset()
 	{
-		cpu_cores[0].reset();
+		cpu.reset();
 		start();
 	}
 	
@@ -195,9 +221,9 @@ function System()
 	function user_assemble(prog)
 	{
 		// Assemble some code into memory
-		if(assembler.assemble(cpu_type, prog, 0x1000)) return;
+		if(assembler.assemble(prog, 0x1000)) return;
 		
-		cpu_cores[0].reset();
+		cpu.reset();
 	}	
 			
 			
@@ -253,10 +279,10 @@ function System()
 
 		//console.log("Update");
 				
-		var cpu_exec = Math.floor(total_exec / cpu_cores.length);
+		var cpu_exec = total_exec;
 				
-		for (var i = 0; i < cpu_cores.length; i++)
-			total_inst += cpu_cores[i].update(cpu_exec);
+		//for (var i = 0; i < cpu_cores.length; i++)
+		total_inst += cpu.update(cpu_exec);
 	
 		 frame_buffer.update();
 		

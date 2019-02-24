@@ -16,7 +16,7 @@ var logger = (function ()
 {
 	var MODULE = "[Log]        ";
 		
-	const MAX_LEN = 400; 			// Need weird size because of spaces, TODO fix	
+	const MAX_LEN = 500; 			// Need weird size because of spaces, TODO fix	
 	
 	//var t = 0;
 

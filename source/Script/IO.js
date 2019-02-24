@@ -129,7 +129,7 @@ function IO()
 	function terminal_write(a, c)
 	{
 		c = get_char(c);
-		
+				
 		logger.add(TERM_DIV, c, TERM_MAX);
 	}		
 		

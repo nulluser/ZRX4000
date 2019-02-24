@@ -24,8 +24,11 @@ var tiny_basic =
 ;
 ; Revision History:
 ;
+; v0.5.0 - 2019/2/14
+;		Modified IO - Nulluser
+;		Added CPU command
+;		Relocated to end of rom
 ;
-;	Modified IO - Nulluser
 ;
 ; v0.2.2 - 2011/11/11
 ;        Reduced version containing only a terminal monitor
@@ -59,7 +62,6 @@ var tiny_basic =
 ;    other reason than I think it looks a bit better. The prompt character
 ;    is the second byte of the IL program table.
 ;
-;  - This version is to run in the OMS-03,  The memory map is as follows.
 ;
 ;    $0000-$7FFF     RAM
 ;    $8000-$EFFF     ROM - Tiny Basic
@@ -73,6 +75,7 @@ var tiny_basic =
 ;
 ; Tiny Basic starts here
 ;
+         .cpu     CPU6502           ; Assemble for this CPU
          .org     $7600             ; Start of Basic.
 START
 
@@ -1293,7 +1296,8 @@ EXSM     rts                        ; Return
 ; Runs into SNDCHR to provide echo
 ;
 RCCHR    
-	lda $E004
+	;lda $E004
+	lda $c001
 	;lda $D011                  ; Keyboard CR
          ;bpl RCCHR
          beq RCCHR
@@ -1322,8 +1326,8 @@ SNDCHR   sta $FE                    ; Save the character to be printed
 ;         bmi GETSTS                 ; No, wait for display.
          lda $FE                    ; Restore the character
 ;         sta $D012                  ; Output character.
-
-         sta $E001                  ; Output character.
+;         sta $E001                  ; Output character.
+         sta $C000                  ; Output character.
 
 EXSC     rts                        ; Return
 
@@ -1341,11 +1345,12 @@ NO_CHR   lda $FE                    ; Restore the saved A value
          rts                        ; Return
 
 ;
-; Setup reset vector         
-;
-;         .ORG $FFFC                ; Address of reset vector
+; Setup Interrupt vectors
 
-;         .WORD  FBLK               ; Reset vector
+         .org $FFFA                ; Address of reset vector
+         .word START               ; NMI
+		 .word START               ; Reset vector
+		 .word START               ; IRQ
 
 `;
 
